@@ -1,4 +1,4 @@
-import { invoke as tauriInvoke, isTauri } from '@tauri-apps/api/core'
+import {invoke as tauriInvoke, isTauri} from '@tauri-apps/api/core'
 
 export const isDesktop = isTauri()
 

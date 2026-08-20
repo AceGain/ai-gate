@@ -13,25 +13,40 @@ async function greet() {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center gap-6 min-h-dvh p-4">
-    <h1 class="text-2xl font-bold">Welcome to Tauri + Nuxt</h1>
+  <div class="flex min-h-full flex-col gap-6">
+    <AppPageHeader title="概览" description="查看网关运行状态" />
 
-    <form class="flex items-center gap-2" @submit.prevent="greet">
-      <UInput
-        v-model="name"
-        placeholder="Enter a name..."
-        class="w-64"
-      />
-      <UButton
-        type="submit"
-        icon="i-lucide-hand"
-      >
-        Greet
-      </UButton>
-    </form>
+    <div class="grid grid-cols-4 gap-4">
+      <AppStatCard label="供应商" value="—" icon="i-lucide-server" />
+      <AppStatCard label="API 密钥" value="—" icon="i-lucide-key-round" />
+      <AppStatCard label="今日请求" value="—" icon="i-lucide-activity" />
+      <AppStatCard label="今日 Token" value="—" icon="i-lucide-coins" />
+    </div>
 
-    <p class="text-muted">
-      {{ greetMsg }}
-    </p>
+    <UCard>
+      <template #header>
+        <div class="flex items-center gap-2">
+          <UIcon name="i-lucide-plug-zap" class="size-4 text-muted" />
+          <span class="text-sm font-medium">Tauri 连通性测试</span>
+        </div>
+      </template>
+
+      <form class="flex items-center gap-3" @submit.prevent="greet">
+        <UInput
+          v-model="name"
+          placeholder="输入名称..."
+          class="w-72"
+        />
+        <UButton
+          type="submit"
+          icon="i-lucide-hand"
+        >
+          Greet
+        </UButton>
+      </form>
+      <p v-if="greetMsg" class="mt-3 text-sm text-muted">
+        {{ greetMsg }}
+      </p>
+    </UCard>
   </div>
 </template>

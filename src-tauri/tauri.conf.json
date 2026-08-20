@@ -12,11 +12,13 @@
   "app": {
     "windows": [
       {
-        "title": "ai-gate",
-        "width": 960,
-        "height": 600,
-        "minWidth": 960,
-        "minHeight": 600
+        "title": "AI Gate",
+        "width": 1168,
+        "height": 769,
+        "minWidth": 976,
+        "minHeight": 649,
+        "center": true,
+        "decorations": false
       }
     ],
     "security": {
