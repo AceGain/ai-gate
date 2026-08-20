@@ -40,7 +40,7 @@ onMounted(() => {
     class="flex h-10 shrink-0 select-none items-center border-b border-default bg-elevated/50"
   >
     <div data-tauri-drag-region class="flex items-center gap-2 px-3">
-      <UIcon name="i-lucide-waypoints" class="size-4 text-primary" />
+      <img src="/ai-gate-symbol.png" alt="AI Gate" class="size-5 shrink-0" >
       <span data-tauri-drag-region class="text-sm font-semibold text-highlighted">AI Gate</span>
     </div>
 
