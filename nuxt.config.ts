@@ -5,7 +5,8 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-06-30',
 
   modules: [
-    '@nuxt/ui'
+    '@nuxt/ui',
+    '@nuxt/fonts'
   ],
 
   // 启用 Nuxt 调试工具

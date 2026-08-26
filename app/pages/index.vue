@@ -14,7 +14,7 @@ async function greet() {
 
 <template>
   <div class="flex min-h-full flex-col gap-6">
-    <AppPageHeader title="概览" description="查看网关运行状态" />
+    <AppPageHeader title="概览" />
 
     <div class="grid grid-cols-4 gap-4">
       <AppStatCard label="供应商" value="—" icon="i-lucide-server" />

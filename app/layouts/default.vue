@@ -1,7 +1,7 @@
 <script setup lang="ts">
-const route = useRoute()
+import type { NavigationMenuItem } from '@nuxt/ui'
 
-const navItems = [
+const navItems: NavigationMenuItem[] = [
   {
     label: '概览',
     icon: 'i-lucide-house',
@@ -28,42 +28,30 @@ const navItems = [
     to: '/settings'
   }
 ]
-
-function isActive(to: string) {
-  return to === '/' ? route.path === '/' : route.path.startsWith(to)
-}
 </script>
 
 <template>
   <div class="flex h-dvh flex-col overflow-hidden">
-    <AppTitlebar/>
+    <AppTitlebar />
 
     <div class="flex min-h-0 flex-1">
       <aside class="flex w-52 shrink-0 flex-col border-e border-default bg-elevated/25">
-        <nav class="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
-          <NuxtLink
-            v-for="item in navItems"
-            :key="item.to"
-            :to="item.to"
-            class="flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors"
-            :class="isActive(item.to)
-              ? 'bg-primary/10 font-medium text-primary'
-              : 'text-muted hover:bg-elevated hover:text-default'"
-          >
-            <UIcon :name="item.icon" class="size-4.5 shrink-0"/>
-            <span>{{ item.label }}</span>
-          </NuxtLink>
-        </nav>
+        <UNavigationMenu
+          orientation="vertical"
+          :items="navItems"
+          :ui="{ link: 'py-2.5', linkLeadingIcon: 'size-4.5' }"
+          class="w-full flex-1 overflow-y-auto p-3"
+        />
 
         <div class="flex items-center justify-between gap-2 border-t border-default px-4 py-2.5">
-          <UColorModeButton size="xs" color="neutral" variant="ghost"/>
+          <UColorModeButton size="xs" color="neutral" variant="ghost" />
           <span class="text-xs text-dimmed">v0.1.0</span>
         </div>
       </aside>
 
       <main class="min-w-0 flex-1 overflow-y-auto">
         <div class="mx-auto flex min-h-full w-full max-w-6xl flex-col px-8 py-6">
-          <slot/>
+          <slot />
         </div>
       </main>
     </div>
