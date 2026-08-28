@@ -31,7 +31,7 @@ const primaryItems = computed(() => primaryValues.map(value => ({
 const neutralItems = computed(() => neutralValues.map(value => ({
   label: t(`settings.colors.${value}`),
   value,
-  swatch: value === 'neutral' ? 'old-neutral' : value
+  swatch: value
 })))
 
 const primaryModel = computed({

@@ -32,12 +32,20 @@ function close() {
   })
 }
 
-onMounted(() => {
+let unlisten: (() => void) | undefined
+
+onMounted(async () => {
   if (!isDesktop || !win)
     return
-  refreshMaximized()
-  win.onResized(refreshMaximized).catch(() => {
-  })
+  await refreshMaximized()
+  try {
+    unlisten = await win.onResized(refreshMaximized)
+  } catch {
+  }
+})
+
+onUnmounted(() => {
+  unlisten?.()
 })
 </script>
 

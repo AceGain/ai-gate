@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "AI Gate",
         "width": 1168,
         "height": 769,

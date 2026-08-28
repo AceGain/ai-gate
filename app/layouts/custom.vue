@@ -63,7 +63,7 @@ const groups = computed(() => [{
     <div class="relative min-h-0 flex-1">
       <UDashboardGroup
         unit="rem"
-        :ui="{ base: () => 'absolute inset-0 flex overflow-hidden' }"
+        :ui="{ base: 'absolute inset-0 flex overflow-hidden' }"
       >
         <UDashboardSidebar
           id="custom"
