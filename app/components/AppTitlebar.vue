@@ -42,9 +42,14 @@ onMounted(() => {
     <div data-tauri-drag-region class="flex items-center gap-2 px-3">
       <img src="/ai-gate-symbol.png" alt="AI Gate" class="size-5 shrink-0" >
       <span data-tauri-drag-region class="text-sm font-semibold text-highlighted">AI Gate</span>
+      <span data-tauri-drag-region class="text-[10px] text-dimmed">v0.1.0</span>
     </div>
 
     <div data-tauri-drag-region class="h-full flex-1" />
+
+    <div class="flex h-full items-center px-2">
+      <UColorModeButton size="xs" color="neutral" variant="ghost" />
+    </div>
 
     <div v-if="isDesktop" class="flex h-full items-stretch">
       <button

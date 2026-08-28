@@ -10,6 +10,11 @@ const navItems = computed<NavigationMenuItem[]>(() => [
     to: '/'
   },
   {
+    label: t('nav.endpoints'),
+    icon: 'i-carbon-gateway-api',
+    to: '/endpoints'
+  },
+  {
     label: t('nav.providers'),
     icon: 'i-lucide-server',
     to: '/providers'
@@ -18,7 +23,10 @@ const navItems = computed<NavigationMenuItem[]>(() => [
     label: t('nav.virtualModels'),
     icon: 'i-lucide-layers',
     to: '/models'
-  },
+  }
+])
+
+const bottomItems = computed<NavigationMenuItem[]>(() => [
   {
     label: t('nav.settings'),
     icon: 'i-lucide-settings',
@@ -40,10 +48,14 @@ const navItems = computed<NavigationMenuItem[]>(() => [
           class="w-full flex-1 overflow-y-auto p-3"
         />
 
-        <div class="flex items-center justify-between gap-2 border-t border-default px-4 py-2.5">
-          <UColorModeButton size="xs" color="neutral" variant="ghost" />
-          <span class="text-xs text-dimmed">v0.1.0</span>
-        </div>
+<!--        <USeparator class="shrink-0" />-->
+
+        <UNavigationMenu
+          orientation="vertical"
+          :items="bottomItems"
+          :ui="{ link: 'py-2.5', linkLeadingIcon: 'size-4.5' }"
+          class="w-full shrink-0 p-3"
+        />
       </aside>
 
       <main class="min-w-0 flex-1 overflow-y-auto">

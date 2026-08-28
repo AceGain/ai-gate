@@ -1,6 +1,7 @@
 {
   "nav": {
     "dashboard": "Dashboard",
+    "endpoints": "Endpoint",
     "providers": "Provider",
     "virtualModels": "Virtual Model",
     "settings": "Settings"
@@ -11,6 +12,11 @@
     "statVirtualModels": "Virtual Models",
     "statTodayRequests": "Requests Today",
     "statTodayTokens": "Tokens Today"
+  },
+  "endpoints": {
+    "title": "Endpoint",
+    "add": "New Endpoint",
+    "empty": "No endpoints yet"
   },
   "providers": {
     "title": "Provider",
@@ -24,6 +30,9 @@
   },
   "settings": {
     "title": "Settings",
-    "empty": "Settings coming soon"
+    "appearance": "Appearance",
+    "appearanceDesc": "Customize the light or dark theme",
+    "language": "Language",
+    "languageDesc": "Customize the display language"
   }
 }

@@ -1,6 +1,7 @@
 {
   "nav": {
     "dashboard": "仪表盘",
+    "endpoints": "端点",
     "providers": "供应商",
     "virtualModels": "虚拟模型",
     "settings": "设置"
@@ -11,6 +12,11 @@
     "statVirtualModels": "虚拟模型",
     "statTodayRequests": "今日请求",
     "statTodayTokens": "今日 Token"
+  },
+  "endpoints": {
+    "title": "端点",
+    "add": "新建端点",
+    "empty": "暂无端点"
   },
   "providers": {
     "title": "供应商",
@@ -24,6 +30,9 @@
   },
   "settings": {
     "title": "设置",
-    "empty": "设置待开发"
+    "appearance": "外观主题",
+    "appearanceDesc": "自定义应用的明暗外观",
+    "language": "界面语言",
+    "languageDesc": "自定义界面显示语言"
   }
 }
