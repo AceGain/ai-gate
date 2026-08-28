@@ -7,6 +7,11 @@ const {t} = useI18n()
     <AppPageHeader :title="t('virtualModels.title')">
       <UButton icon="i-lucide-plus" size="sm">{{ t('virtualModels.add') }}</UButton>
     </AppPageHeader>
-    <AppEmpty icon="i-lucide-layers" :text="t('virtualModels.empty')"/>
+    <UEmpty
+      icon="i-lucide-layers"
+      :title="t('virtualModels.empty')"
+      variant="naked"
+      class="flex-1"
+    />
   </div>
 </template>

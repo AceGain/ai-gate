@@ -11,7 +11,7 @@ const navItems = computed<NavigationMenuItem[]>(() => [
   },
   {
     label: t('nav.endpoints'),
-    icon: 'i-carbon-gateway-api',
+    icon: 'i-lucide-network',
     to: '/endpoints'
   },
   {

@@ -7,6 +7,11 @@ const {t} = useI18n()
     <AppPageHeader :title="t('endpoints.title')">
       <UButton icon="i-lucide-plus" size="sm">{{ t('endpoints.add') }}</UButton>
     </AppPageHeader>
-    <AppEmpty icon="i-carbon-gateway-api" :text="t('endpoints.empty')"/>
+    <UEmpty
+      icon="i-lucide-network"
+      :title="t('endpoints.empty')"
+      variant="naked"
+      class="flex-1"
+    />
   </div>
 </template>
