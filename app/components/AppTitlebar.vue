@@ -6,7 +6,7 @@ const {isDesktop, maximized, minimize, toggleMaximize, close} = useWindowControl
 <template>
   <header
     data-tauri-drag-region
-    class="flex h-10 shrink-0 select-none items-center border-b border-default bg-elevated/50"
+    class="relative z-30 flex h-10 shrink-0 select-none items-center border-b border-default bg-elevated/50"
   >
     <div data-tauri-drag-region class="flex items-center gap-2 px-3">
       <img src="/ai-gate-symbol.png" alt="AI Gate" class="size-5 shrink-0">
