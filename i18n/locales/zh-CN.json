@@ -1,0 +1,29 @@
+{
+  "nav": {
+    "dashboard": "仪表盘",
+    "providers": "供应商",
+    "virtualModels": "虚拟模型",
+    "settings": "设置"
+  },
+  "dashboard": {
+    "title": "仪表盘",
+    "statProviders": "供应商",
+    "statVirtualModels": "虚拟模型",
+    "statTodayRequests": "今日请求",
+    "statTodayTokens": "今日 Token"
+  },
+  "providers": {
+    "title": "供应商",
+    "add": "添加供应商",
+    "empty": "尚未配置供应商"
+  },
+  "virtualModels": {
+    "title": "虚拟模型",
+    "add": "新建虚拟模型",
+    "empty": "暂无虚拟模型"
+  },
+  "settings": {
+    "title": "设置",
+    "empty": "设置待开发"
+  }
+}

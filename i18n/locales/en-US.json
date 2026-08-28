@@ -1,0 +1,29 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "providers": "Provider",
+    "virtualModels": "Virtual Model",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "statProviders": "Providers",
+    "statVirtualModels": "Virtual Models",
+    "statTodayRequests": "Requests Today",
+    "statTodayTokens": "Tokens Today"
+  },
+  "providers": {
+    "title": "Provider",
+    "add": "Add Provider",
+    "empty": "No providers configured"
+  },
+  "virtualModels": {
+    "title": "Virtual Model",
+    "add": "New Virtual Model",
+    "empty": "No virtual models"
+  },
+  "settings": {
+    "title": "Settings",
+    "empty": "Settings coming soon"
+  }
+}

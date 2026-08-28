@@ -1,33 +1,30 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 
-const navItems: NavigationMenuItem[] = [
+const { t } = useI18n()
+
+const navItems = computed<NavigationMenuItem[]>(() => [
   {
-    label: '概览',
-    icon: 'i-lucide-house',
+    label: t('nav.dashboard'),
+    icon: 'i-lucide-layout-dashboard',
     to: '/'
   },
   {
-    label: '供应商',
+    label: t('nav.providers'),
     icon: 'i-lucide-server',
     to: '/providers'
   },
   {
-    label: 'API 密钥',
-    icon: 'i-lucide-key-round',
-    to: '/keys'
+    label: t('nav.virtualModels'),
+    icon: 'i-lucide-layers',
+    to: '/models'
   },
   {
-    label: '日志',
-    icon: 'i-lucide-scroll-text',
-    to: '/logs'
-  },
-  {
-    label: '设置',
+    label: t('nav.settings'),
     icon: 'i-lucide-settings',
     to: '/settings'
   }
-]
+])
 </script>
 
 <template>

@@ -6,8 +6,24 @@ export default defineNuxtConfig({
 
   modules: [
     '@nuxt/ui',
-    '@nuxt/fonts'
+    '@nuxt/fonts',
+    '@nuxtjs/i18n'
   ],
+
+  // 国际化：支持简体中文（默认）和美式英语
+  i18n: {
+    strategy: 'no_prefix',
+    defaultLocale: 'zh-CN',
+    locales: [
+      { code: 'zh-CN', language: 'zh-CN', name: '简体中文', file: 'zh-CN.json' },
+      { code: 'en-US', language: 'en-US', name: 'English (US)', file: 'en-US.json' }
+    ],
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_redirected',
+      redirectOn: 'root'
+    }
+  },
 
   // 启用 Nuxt 调试工具
   devtools: {
