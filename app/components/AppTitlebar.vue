@@ -1,52 +1,6 @@
 <script setup lang="ts">
-import {getCurrentWindow} from '@tauri-apps/api/window'
-import {isDesktop} from '~/utils/tauri'
-
 const {t} = useI18n()
-
-const win = isDesktop ? getCurrentWindow() : null
-const maximized = ref(false)
-
-async function refreshMaximized() {
-  if (!win)
-    return
-  try {
-    maximized.value = await win.isMaximized()
-  } catch {
-    maximized.value = false
-  }
-}
-
-function minimize() {
-  win?.minimize().catch(() => {
-  })
-}
-
-function toggleMaximize() {
-  win?.toggleMaximize().catch(() => {
-  })
-}
-
-function close() {
-  win?.close().catch(() => {
-  })
-}
-
-let unlisten: (() => void) | undefined
-
-onMounted(async () => {
-  if (!isDesktop || !win)
-    return
-  await refreshMaximized()
-  try {
-    unlisten = await win.onResized(refreshMaximized)
-  } catch {
-  }
-})
-
-onUnmounted(() => {
-  unlisten?.()
-})
+const {isDesktop, maximized, minimize, toggleMaximize, close} = useWindowControls()
 </script>
 
 <template>
