@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { NavigationMenuItem } from '@nuxt/ui'
+import type {NavigationMenuItem} from '@nuxt/ui'
 
-const { t } = useI18n()
+const {t} = useI18n()
 
 const navItems = computed<NavigationMenuItem[]>(() => [
   {
@@ -37,7 +37,7 @@ const bottomItems = computed<NavigationMenuItem[]>(() => [
 
 <template>
   <div class="flex h-dvh flex-col overflow-hidden">
-    <AppTitlebar />
+    <AppTitlebar/>
 
     <div class="flex min-h-0 flex-1">
       <aside class="flex w-52 shrink-0 flex-col border-e border-default bg-elevated/25">
@@ -48,7 +48,7 @@ const bottomItems = computed<NavigationMenuItem[]>(() => [
           class="w-full flex-1 overflow-y-auto p-3"
         />
 
-<!--        <USeparator class="shrink-0" />-->
+        <!--        <USeparator class="shrink-0" />-->
 
         <UNavigationMenu
           orientation="vertical"
@@ -60,7 +60,7 @@ const bottomItems = computed<NavigationMenuItem[]>(() => [
 
       <main class="min-w-0 flex-1 overflow-y-auto">
         <div class="mx-auto flex min-h-full w-full max-w-6xl flex-col px-8 py-6">
-          <slot />
+          <slot/>
         </div>
       </main>
     </div>

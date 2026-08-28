@@ -29,6 +29,11 @@
     "add": "New Virtual Model",
     "empty": "No virtual models"
   },
+  "titlebar": {
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "close": "Close"
+  },
   "settings": {
     "title": "Settings",
     "appearance": "Appearance",

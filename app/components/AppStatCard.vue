@@ -9,7 +9,7 @@ defineProps<{
 <template>
   <UCard :ui="{ body: 'flex items-center gap-4 p-5' }">
     <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-      <UIcon :name="icon" class="size-5 text-primary" />
+      <UIcon :name="icon" class="size-5 text-primary"/>
     </div>
     <div class="min-w-0">
       <p class="truncate text-xs text-muted">

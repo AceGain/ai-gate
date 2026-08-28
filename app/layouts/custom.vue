@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { CommandPaletteItem, NavigationMenuItem } from '@nuxt/ui'
+import type {CommandPaletteItem, NavigationMenuItem} from '@nuxt/ui'
 
-const { t } = useI18n()
+const {t} = useI18n()
 
 const open = ref(false)
 
@@ -58,7 +58,7 @@ const groups = computed(() => [{
 
 <template>
   <div class="flex h-dvh flex-col overflow-hidden">
-    <AppTitlebar />
+    <AppTitlebar/>
 
     <div class="relative min-h-0 flex-1">
       <UDashboardGroup
@@ -74,7 +74,7 @@ const groups = computed(() => [{
           :ui="{ root: 'min-h-0', footer: 'lg:border-t lg:border-default' }"
         >
           <template #header="{ collapsed }">
-            <UDashboardSearchButton :collapsed="collapsed" class="max-w-full bg-transparent ring-default" />
+            <UDashboardSearchButton :collapsed="collapsed" class="max-w-full bg-transparent ring-default"/>
           </template>
 
           <template #default="{ collapsed }">
@@ -99,11 +99,11 @@ const groups = computed(() => [{
           </template>
         </UDashboardSidebar>
 
-        <UDashboardSearch :groups="groups" />
+        <UDashboardSearch :groups="groups"/>
 
         <main class="min-w-0 flex-1 overflow-y-auto">
           <div class="mx-auto flex min-h-full w-full max-w-6xl flex-col px-8 py-6">
-            <slot />
+            <slot/>
           </div>
         </main>
       </UDashboardGroup>

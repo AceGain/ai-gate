@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const {t} = useI18n()
 </script>
 
 <template>
@@ -7,6 +7,6 @@ const { t } = useI18n()
     <AppPageHeader :title="t('endpoints.title')">
       <UButton icon="i-lucide-plus" size="sm">{{ t('endpoints.add') }}</UButton>
     </AppPageHeader>
-    <AppEmpty icon="i-carbon-gateway-api" :text="t('endpoints.empty')" />
+    <AppEmpty icon="i-carbon-gateway-api" :text="t('endpoints.empty')"/>
   </div>
 </template>

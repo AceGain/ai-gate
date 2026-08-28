@@ -1,17 +1,17 @@
 <script setup lang="ts">
-const { t, locale, setLocale } = useI18n()
+const {t, locale, setLocale} = useI18n()
 const appConfig = useAppConfig()
 const colorMode = useColorMode()
 
 const appearanceItems = computed(() => [
-  { value: 'system', icon: 'i-lucide-monitor', label: t('settings.appearanceSystem') },
-  { value: 'light', icon: 'i-lucide-sun', label: t('settings.appearanceLight') },
-  { value: 'dark', icon: 'i-lucide-moon', label: t('settings.appearanceDark') }
+  {value: 'system', icon: 'i-lucide-monitor', label: t('settings.appearanceSystem')},
+  {value: 'light', icon: 'i-lucide-sun', label: t('settings.appearanceLight')},
+  {value: 'dark', icon: 'i-lucide-moon', label: t('settings.appearanceDark')}
 ])
 
 const localeItems = [
-  { label: '简体中文', value: 'zh-CN' },
-  { label: 'English (US)', value: 'en-US' }
+  {label: '简体中文', value: 'zh-CN'},
+  {label: 'English (US)', value: 'en-US'}
 ]
 
 const localeModel = computed({
@@ -51,7 +51,7 @@ const neutralModel = computed({
 
 <template>
   <div class="flex min-h-full flex-col gap-6">
-    <AppPageHeader :title="t('settings.title')" />
+    <AppPageHeader :title="t('settings.title')"/>
 
     <UCard class="max-w-xl">
       <div class="flex flex-col divide-y divide-default">
@@ -60,7 +60,7 @@ const neutralModel = computed({
             <p class="text-sm font-medium text-highlighted">{{ t('settings.language') }}</p>
             <p class="mt-0.5 text-xs text-dimmed">{{ t('settings.languageDesc') }}</p>
           </div>
-          <USelect v-model="localeModel" :items="localeItems" class="w-40" />
+          <USelect v-model="localeModel" :items="localeItems" class="w-40"/>
         </div>
 
         <div class="flex items-center justify-between gap-4 py-3.5 first:pt-0 last:pb-0">
@@ -68,7 +68,8 @@ const neutralModel = computed({
             <p class="text-sm font-medium text-highlighted">{{ t('settings.appearance') }}</p>
             <p class="mt-0.5 text-xs text-dimmed">{{ t('settings.appearanceDesc') }}</p>
           </div>
-          <div class="inline-flex w-40 items-center gap-0.5 rounded-md bg-elevated/50 p-0.5 ring ring-inset ring-accented">
+          <div
+            class="inline-flex w-40 items-center gap-0.5 rounded-md bg-elevated/50 p-0.5 ring ring-inset ring-accented">
             <button
               v-for="item in appearanceItems"
               :key="item.value"
@@ -78,7 +79,7 @@ const neutralModel = computed({
               :class="colorMode.preference === item.value ? 'bg-primary/10 text-primary' : 'text-dimmed hover:text-default'"
               @click="colorMode.preference = item.value"
             >
-              <UIcon :name="item.icon" class="size-4" />
+              <UIcon :name="item.icon" class="size-4"/>
             </button>
           </div>
         </div>
@@ -88,7 +89,7 @@ const neutralModel = computed({
             <p class="text-sm font-medium text-highlighted">{{ t('settings.theme') }}</p>
             <p class="mt-0.5 text-xs text-dimmed">{{ t('settings.themeDesc') }}</p>
           </div>
-          <AppColorSelect v-model="primaryModel" :items="primaryItems" />
+          <AppColorSelect v-model="primaryModel" :items="primaryItems"/>
         </div>
 
         <div class="flex items-center justify-between gap-4 py-3.5 first:pt-0 last:pb-0">
@@ -96,7 +97,7 @@ const neutralModel = computed({
             <p class="text-sm font-medium text-highlighted">{{ t('settings.neutral') }}</p>
             <p class="mt-0.5 text-xs text-dimmed">{{ t('settings.neutralDesc') }}</p>
           </div>
-          <AppColorSelect v-model="neutralModel" :items="neutralItems" />
+          <AppColorSelect v-model="neutralModel" :items="neutralItems"/>
         </div>
       </div>
     </UCard>

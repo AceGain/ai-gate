@@ -6,7 +6,6 @@ export default defineNuxtConfig({
 
   modules: [
     '@nuxt/ui',
-    '@nuxt/fonts',
     '@nuxtjs/i18n'
   ],
 
