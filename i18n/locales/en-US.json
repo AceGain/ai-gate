@@ -4,7 +4,8 @@
     "endpoints": "Endpoint",
     "providers": "Provider",
     "virtualModels": "Virtual Model",
-    "settings": "Settings"
+    "settings": "Settings",
+    "goTo": "Go to"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -20,7 +21,7 @@
   },
   "providers": {
     "title": "Provider",
-    "add": "Add Provider",
+    "add": "New Provider",
     "empty": "No providers configured"
   },
   "virtualModels": {
@@ -32,7 +33,42 @@
     "title": "Settings",
     "appearance": "Appearance",
     "appearanceDesc": "Customize the light or dark theme",
+    "appearanceLight": "Light",
+    "appearanceDark": "Dark",
+    "appearanceSystem": "System",
+    "theme": "Primary Color",
+    "themeDesc": "Customize the primary color of the app",
+    "neutral": "Neutral Color",
+    "neutralDesc": "Customize the neutral color of the app",
     "language": "Language",
-    "languageDesc": "Customize the display language"
+    "languageDesc": "Customize the display language",
+    "colors": {
+      "red": "Red",
+      "orange": "Orange",
+      "amber": "Amber",
+      "yellow": "Yellow",
+      "lime": "Lime",
+      "green": "Green",
+      "emerald": "Emerald",
+      "teal": "Teal",
+      "cyan": "Cyan",
+      "sky": "Sky",
+      "blue": "Blue",
+      "indigo": "Indigo",
+      "violet": "Violet",
+      "purple": "Purple",
+      "fuchsia": "Fuchsia",
+      "pink": "Pink",
+      "rose": "Rose",
+      "slate": "Slate",
+      "gray": "Gray",
+      "zinc": "Zinc",
+      "neutral": "Neutral",
+      "stone": "Stone",
+      "taupe": "Taupe",
+      "mauve": "Mauve",
+      "mist": "Mist",
+      "olive": "Olive"
+    }
   }
 }

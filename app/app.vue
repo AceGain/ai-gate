@@ -15,7 +15,9 @@ useSeoMeta({
 
 <template>
   <UApp>
-    <NuxtLayout>
+    <NuxtLoadingIndicator />
+
+    <NuxtLayout name="custom">
       <NuxtPage />
     </NuxtLayout>
   </UApp>

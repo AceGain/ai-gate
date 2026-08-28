@@ -4,7 +4,8 @@
     "endpoints": "端点",
     "providers": "供应商",
     "virtualModels": "虚拟模型",
-    "settings": "设置"
+    "settings": "设置",
+    "goTo": "跳转"
   },
   "dashboard": {
     "title": "仪表盘",
@@ -20,7 +21,7 @@
   },
   "providers": {
     "title": "供应商",
-    "add": "添加供应商",
+    "add": "新建供应商",
     "empty": "尚未配置供应商"
   },
   "virtualModels": {
@@ -32,7 +33,42 @@
     "title": "设置",
     "appearance": "外观主题",
     "appearanceDesc": "自定义应用的明暗外观",
+    "appearanceLight": "浅色",
+    "appearanceDark": "深色",
+    "appearanceSystem": "跟随系统",
+    "theme": "主题色",
+    "themeDesc": "自定义应用的主题色",
+    "neutral": "中性色",
+    "neutralDesc": "自定义应用的中性色",
     "language": "界面语言",
-    "languageDesc": "自定义界面显示语言"
+    "languageDesc": "自定义界面显示语言",
+    "colors": {
+      "red": "红色",
+      "orange": "橙色",
+      "amber": "琥珀色",
+      "yellow": "黄色",
+      "lime": "柠檬绿",
+      "green": "绿色",
+      "emerald": "翡翠绿",
+      "teal": "青绿色",
+      "cyan": "蓝绿色",
+      "sky": "天蓝色",
+      "blue": "蓝色",
+      "indigo": "靛蓝色",
+      "violet": "紫罗兰色",
+      "purple": "紫色",
+      "fuchsia": "品红色",
+      "pink": "粉红色",
+      "rose": "玫红色",
+      "slate": "石板灰",
+      "gray": "灰色",
+      "zinc": "锌灰色",
+      "neutral": "中性色",
+      "stone": "石灰褐色",
+      "taupe": "灰褐色",
+      "mauve": "淡紫色",
+      "mist": "雾灰色",
+      "olive": "橄榄色"
+    }
   }
 }
