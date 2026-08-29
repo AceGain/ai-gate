@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const open = defineModel<boolean>('open', {default: false})
+
 const {t, locale, setLocale} = useI18n()
 const appConfig = useAppConfig()
 const colorMode = useColorMode()
@@ -50,10 +52,12 @@ const neutralModel = computed({
 </script>
 
 <template>
-  <div class="flex min-h-full flex-col gap-6">
-    <AppPageHeader :title="t('settings.title')"/>
-
-    <UCard class="max-w-xl">
+  <UModal
+    v-model:open="open"
+    :title="t('settings.title')"
+    :ui="{content: 'max-w-xl'}"
+  >
+    <template #body>
       <div class="flex flex-col divide-y divide-default">
         <div class="flex items-center justify-between gap-4 py-3.5 first:pt-0 last:pb-0">
           <div>
@@ -100,6 +104,6 @@ const neutralModel = computed({
           <AppColorSelect v-model="neutralModel" :items="neutralItems"/>
         </div>
       </div>
-    </UCard>
-  </div>
+    </template>
+  </UModal>
 </template>

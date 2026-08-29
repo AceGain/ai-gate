@@ -3,6 +3,9 @@ import type {NavigationMenuItem} from '@nuxt/ui'
 
 const {t} = useI18n()
 
+// 设置弹窗开关（侧边栏"设置"项触发）
+const settingsOpen = ref(false)
+
 // 标准 Nuxt UI 二维导航分组（主要路由分组 + 底部设置分组）
 const navGroups = computed<NavigationMenuItem[][]>(() => [
   [
@@ -31,70 +34,91 @@ const navGroups = computed<NavigationMenuItem[][]>(() => [
     {
       label: t('nav.settings'),
       icon: 'i-lucide-settings',
-      to: '/settings'
+      onSelect: () => {
+        settingsOpen.value = true
+      }
     }
   ]
 ])
+
+// 窄窗口（< lg 1024px，与 Tailwind lg 断点对齐）侧栏自动切换为纯图标模式
+// 初值与 SSR 保持一致（false），mounted 后再修正，避免 hydration 不一致
+const isCompact = ref(false)
+
+function syncCompact() {
+  isCompact.value = window.innerWidth < 1024
+}
+
+onMounted(() => {
+  syncCompact()
+  window.addEventListener('resize', syncCompact)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', syncCompact)
+})
 </script>
 
 <template>
-  <div class="flex h-dvh flex-col overflow-hidden bg-default">
-    <!-- 顶部窗口标题栏 / 拖拽区域 (h-10) -->
+  <!-- Nuxt UI Dashboard 布局根容器：默认 fixed inset-0 全屏，flex-col 使标题栏横跨顶部 -->
+  <UDashboardGroup
+    unit="rem"
+    storage-key="ai-gate"
+    class="flex-col"
+  >
+    <!-- 顶部窗口标题栏 / 拖拽区域 (h-10)，置于 Group 内以访问侧边栏上下文 -->
     <AppTitlebar/>
 
-    <!-- 下方主工作区：自适应占据视口剩余高度 -->
-    <div class="flex min-h-0 flex-1 overflow-hidden">
-      <!-- Nuxt UI 标准侧边栏组件 USidebar -->
-      <USidebar
-        collapsible="none"
-        class="w-56 shrink-0 bg-elevated/25"
-        :ui="{
-          root: 'h-full border-e border-default flex flex-col',
-          gap: 'hidden',
-          container: 'static inset-auto z-auto flex h-full w-full border-0',
-          inner: 'size-full divide-y-0',
-          header: 'hidden',
-          body: 'flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-3',
-          footer: 'p-3 shrink-0'
-        }"
+    <!-- 主工作区：占据标题栏以下的剩余高度 -->
+    <div class="flex min-h-0 flex-1">
+      <!-- Nuxt UI 标准侧边栏：常驻 / 可拖宽，宽度由 Group 持久化 -->
+      <!-- ui.root 覆盖默认 hidden lg:flex（<lg 隐藏并转抽屉）：禁用抽屉模式，全宽度常驻显示 -->
+      <!-- max-lg:w-16：窄窗口固定为 4rem 图标栏（与 min-w-16 一致），拖宽把手随之隐藏 -->
+      <!-- id 由 main 改为 nav：更换 storage key，丢弃旧缓存中残留的 collapsed 状态（collapsible 已移除，残留会导致侧栏锁死在图标栏） -->
+      <UDashboardSidebar
+        id="nav"
+        resizable
+        :min-size="12"
+        :default-size="14"
+        :max-size="20"
+        :toggle="false"
+        :ui="{ root: 'flex max-lg:w-16', handle: 'max-lg:hidden' }"
+        class="min-h-0 bg-elevated/25"
       >
-        <!-- 主导航菜单项 -->
+        <!-- 主导航菜单项（窄窗口 collapsed：仅图标 + 悬停 tooltip） -->
         <template #default>
           <UNavigationMenu
+            :collapsed="isCompact"
+            :tooltip="isCompact"
             :items="navGroups[0]"
             orientation="vertical"
-            class="w-full flex-1"
-            :ui="{
-              link: 'py-2 px-2.5 rounded-md font-medium text-sm',
-              linkLeadingIcon: 'size-4.5 shrink-0'
-            }"
+            class="flex-1"
           />
         </template>
 
         <!-- 底部设置项 -->
         <template #footer>
           <UNavigationMenu
+            :collapsed="isCompact"
+            :tooltip="isCompact"
             :items="navGroups[1]"
             orientation="vertical"
-            class="w-full"
-            :ui="{
-              link: 'py-2 px-2.5 rounded-md font-medium text-sm',
-              linkLeadingIcon: 'size-4.5 shrink-0'
-            }"
+            class="flex-1"
           />
         </template>
-      </USidebar>
+      </UDashboardSidebar>
 
-      <!-- Nuxt UI 标准主内容区组件 UMain -->
-      <UMain
-        class="flex min-w-0 flex-1 flex-col overflow-y-auto"
-        :ui="{ base: 'min-h-0' }"
-      >
-        <!-- Nuxt UI 标准容器组件 UContainer -->
-        <UContainer class="mx-auto flex min-h-full w-full max-w-6xl flex-col px-4 sm:px-6 lg:px-8 py-6">
-          <slot/>
-        </UContainer>
-      </UMain>
+      <!-- 主内容区：Panel body 提供纵向滚动，内边距交由 UContainer 统一控制 -->
+      <UDashboardPanel class="min-h-0" :ui="{ body: 'p-0' }">
+        <template #body>
+          <UContainer class="flex min-h-full max-w-6xl flex-col py-6">
+            <slot/>
+          </UContainer>
+        </template>
+      </UDashboardPanel>
     </div>
-  </div>
+
+    <!-- 设置弹窗（侧边栏底部"设置"项触发） -->
+    <AppSettingsModal v-model:open="settingsOpen"/>
+  </UDashboardGroup>
 </template>

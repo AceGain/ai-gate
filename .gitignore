@@ -40,3 +40,6 @@ lerna-debug.log*
 # Temp
 mine/
 
+# WorkBuddy workspace data
+.workbuddy/
+
