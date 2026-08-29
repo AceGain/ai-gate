@@ -45,17 +45,17 @@ const navGroups = computed<NavigationMenuItem[][]>(() => [
 // 初值与 SSR 保持一致（false），mounted 后再修正，避免 hydration 不一致
 const isCompact = ref(false)
 
-function syncCompact() {
-  isCompact.value = window.innerWidth < 1024
-}
-
 onMounted(() => {
-  syncCompact()
-  window.addEventListener('resize', syncCompact)
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', syncCompact)
+  // matchMedia 断点监听：仅在跨越 1024px 时触发一次，而非 resize 的逐像素回调
+  // 与侧栏 max-lg:w-16 / 把手 max-lg:hidden 使用同一断点，保证视觉状态同步
+  const mq = window.matchMedia('(max-width: 1023px)')
+  const update = () => {
+    isCompact.value = mq.matches
+  }
+  update()
+  mq.addEventListener('change', update)
+  // onMounted 内注册的清理函数由 Nuxt 自动收集，无需外层 onBeforeUnmount
+  onBeforeUnmount(() => mq.removeEventListener('change', update))
 })
 </script>
 
