@@ -21,30 +21,34 @@ const {isDesktop, maximized, minimize, toggleMaximize, close} = useWindowControl
     </div>
 
     <div v-if="isDesktop" class="flex h-full items-stretch">
-      <button
-        type="button"
+      <!-- 窗口控制按钮：UButton 提供统一的 focus-visible 键盘可达性，ui.base 覆盖为标题栏全高无圆角样式 -->
+      <UButton
+        icon="i-lucide-minus"
         :aria-label="t('titlebar.minimize')"
-        class="flex w-11 items-center justify-center text-muted transition-colors hover:bg-elevated hover:text-default"
+        color="neutral"
+        variant="ghost"
+        size="xs"
+        :ui="{ base: 'h-full w-11 justify-center rounded-none text-muted' }"
         @click="minimize"
-      >
-        <UIcon name="i-lucide-minus" class="size-4"/>
-      </button>
-      <button
-        type="button"
+      />
+      <UButton
+        :icon="maximized ? 'i-lucide-copy' : 'i-lucide-square'"
         :aria-label="t('titlebar.maximize')"
-        class="flex w-11 items-center justify-center text-muted transition-colors hover:bg-elevated hover:text-default"
+        color="neutral"
+        variant="ghost"
+        size="xs"
+        :ui="{ base: 'h-full w-11 justify-center rounded-none text-muted', leadingIcon: 'size-3.5' }"
         @click="toggleMaximize"
-      >
-        <UIcon :name="maximized ? 'i-lucide-copy' : 'i-lucide-square'" class="size-3.5"/>
-      </button>
-      <button
-        type="button"
+      />
+      <UButton
+        icon="i-lucide-x"
         :aria-label="t('titlebar.close')"
-        class="flex w-11 items-center justify-center text-muted transition-colors hover:bg-error hover:text-inverted"
+        color="error"
+        variant="ghost"
+        size="xs"
+        :ui="{ base: 'h-full w-11 justify-center rounded-none text-muted hover:bg-error hover:text-inverted' }"
         @click="close"
-      >
-        <UIcon name="i-lucide-x" class="size-4"/>
-      </button>
+      />
     </div>
   </header>
 </template>

@@ -72,20 +72,15 @@ const neutralModel = computed({
             <p class="text-sm font-medium text-highlighted">{{ t('settings.appearance') }}</p>
             <p class="mt-0.5 text-xs text-dimmed">{{ t('settings.appearanceDesc') }}</p>
           </div>
-          <div
-            class="inline-flex w-40 items-center gap-0.5 rounded-md bg-elevated/50 p-0.5 ring ring-inset ring-accented">
-            <button
-              v-for="item in appearanceItems"
-              :key="item.value"
-              type="button"
-              :aria-label="item.label"
-              class="flex flex-1 items-center justify-center rounded-[calc(var(--ui-radius)-0.125rem)] py-1 transition-colors"
-              :class="colorMode.preference === item.value ? 'bg-primary/10 text-primary' : 'text-dimmed hover:text-default'"
-              @click="colorMode.preference = item.value"
-            >
-              <UIcon :name="item.icon" class="size-4"/>
-            </button>
-          </div>
+          <!-- 外观三态切换：UTabs pill 变体自带指示器动画与键盘导航，label 以 sr-only 保留可访问名称 -->
+          <UTabs
+            :items="appearanceItems"
+            :model-value="colorMode.preference"
+            :content="false"
+            size="sm"
+            :ui="{ list: 'w-40', label: 'sr-only' }"
+            @update:model-value="(value: string | number) => colorMode.preference = String(value)"
+          />
         </div>
 
         <div class="flex items-center justify-between gap-4 py-3.5 first:pt-0 last:pb-0">
