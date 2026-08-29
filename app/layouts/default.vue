@@ -55,7 +55,7 @@ const navGroups = computed<NavigationMenuItem[][]>(() => [
           inner: 'size-full divide-y-0',
           header: 'hidden',
           body: 'flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-3',
-          footer: 'p-3 border-t border-default/50 shrink-0'
+          footer: 'p-3 shrink-0'
         }"
       >
         <!-- 主导航菜单项 -->
