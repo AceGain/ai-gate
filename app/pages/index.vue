@@ -4,8 +4,6 @@ const {t} = useI18n()
 
 <template>
   <div class="flex min-h-full flex-col gap-6">
-    <AppPageHeader :title="t('dashboard.title')"/>
-
     <div class="grid grid-cols-4 gap-4">
       <AppStatCard :label="t('dashboard.statProviders')" value="—" icon="i-lucide-server"/>
       <AppStatCard :label="t('dashboard.statVirtualModels')" value="—" icon="i-lucide-layers"/>

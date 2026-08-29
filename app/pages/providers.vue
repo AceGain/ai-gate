@@ -4,9 +4,10 @@ const {t} = useI18n()
 
 <template>
   <div class="flex min-h-full flex-col gap-6">
-    <AppPageHeader :title="t('providers.title')">
+    <!-- 页面操作 Teleport 至内容区头部 Navbar 右侧，与标题同一行 -->
+    <Teleport to="#navbar-actions">
       <UButton icon="i-lucide-plus" size="sm">{{ t('providers.add') }}</UButton>
-    </AppPageHeader>
+    </Teleport>
     <UEmpty
       icon="i-lucide-server"
       :title="t('providers.empty')"

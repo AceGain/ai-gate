@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import type {NavigationMenuItem} from '@nuxt/ui'
+import type {CommandPaletteGroup, CommandPaletteItem, NavigationMenuItem} from '@nuxt/ui'
 
 const {t} = useI18n()
+const route = useRoute()
 
-// 设置弹窗开关（侧边栏"设置"项触发）
 const settingsOpen = ref(false)
 
-// 标准 Nuxt UI 二维导航分组（主要路由分组 + 底部设置分组）
 const navGroups = computed<NavigationMenuItem[][]>(() => [
   [
     {
@@ -41,84 +40,137 @@ const navGroups = computed<NavigationMenuItem[][]>(() => [
   ]
 ])
 
-// 窄窗口（< lg 1024px，与 Tailwind lg 断点对齐）侧栏自动切换为纯图标模式
-// 初值与 SSR 保持一致（false），mounted 后再修正，避免 hydration 不一致
-const isCompact = ref(false)
+const searchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() => [
+  {
+    id: 'links',
+    label: t('nav.goTo'),
+    items: navGroups.value[0]?.map(item => ({
+      label: item.label,
+      icon: item.icon,
+      to: item.to
+    }))
+  }
+])
+
+const pageTitle = computed(() => {
+  switch (route.name) {
+    case 'endpoints':
+      return t('endpoints.title')
+    case 'providers':
+      return t('providers.title')
+    case 'models':
+      return t('virtualModels.title')
+    case 'index':
+      return t('dashboard.title')
+    default:
+      return ''
+  }
+})
+
+const collapsed = ref(false)
+
+// 侧栏折叠快捷键：Cmd/Ctrl + B（与主流编辑器切换侧栏的惯例一致，meta 在非 macOS 自动映射为 Ctrl）
+defineShortcuts({
+  meta_b: () => {
+    collapsed.value = !collapsed.value
+  }
+})
 
 onMounted(() => {
-  // matchMedia 断点监听：仅在跨越 1024px 时触发一次，而非 resize 的逐像素回调
-  // 与侧栏 max-lg:w-16 / 把手 max-lg:hidden 使用同一断点，保证视觉状态同步
   const mq = window.matchMedia('(max-width: 1023px)')
   const update = () => {
-    isCompact.value = mq.matches
+    collapsed.value = mq.matches
   }
   update()
   mq.addEventListener('change', update)
-  // onMounted 内注册的清理函数由 Nuxt 自动收集，无需外层 onBeforeUnmount
   onBeforeUnmount(() => mq.removeEventListener('change', update))
 })
 </script>
 
 <template>
-  <!-- Nuxt UI Dashboard 布局根容器：默认 fixed inset-0 全屏，flex-col 使标题栏横跨顶部 -->
+  <!-- Nuxt UI Dashboard 布局根容器：flex-col 使标题栏横跨窗口顶部，标题栏以下左=侧边导航栏、右=内容区域 -->
   <UDashboardGroup
     unit="rem"
     storage-key="ai-gate"
     class="flex-col"
   >
-    <!-- 顶部窗口标题栏 / 拖拽区域 (h-10)，置于 Group 内以访问侧边栏上下文 -->
+    <!-- 顶部窗口标题栏（代替系统标题栏）：品牌 + 颜色模式 + 窗口控制 -->
     <AppTitlebar/>
 
-    <!-- 主工作区：占据标题栏以下的剩余高度 -->
+    <!-- 主工作区：占据标题栏以下的剩余高度，左=侧边导航栏，右=内容区域 -->
     <div class="flex min-h-0 flex-1">
-      <!-- Nuxt UI 标准侧边栏：常驻 / 可拖宽，宽度由 Group 持久化 -->
-      <!-- ui.root 覆盖默认 hidden lg:flex（<lg 隐藏并转抽屉）：禁用抽屉模式，全宽度常驻显示 -->
-      <!-- max-lg:w-16：窄窗口固定为 4rem 图标栏（与 min-w-16 一致），拖宽把手随之隐藏 -->
-      <!-- id 由 main 改为 nav：更换 storage key，丢弃旧缓存中残留的 collapsed 状态（collapsible 已移除，残留会导致侧栏锁死在图标栏） -->
-      <UDashboardSidebar
-        id="nav"
-        resizable
-        :min-size="12"
-        :default-size="14"
-        :max-size="20"
-        :toggle="false"
-        :ui="{ root: 'flex max-lg:w-16', handle: 'max-lg:hidden' }"
-        class="min-h-0 bg-elevated/25"
-      >
-        <!-- 主导航菜单项（窄窗口 collapsed：仅图标 + 悬停 tooltip） -->
-        <template #default>
-          <UNavigationMenu
-            :collapsed="isCompact"
-            :tooltip="isCompact"
-            :items="navGroups[0]"
-            orientation="vertical"
-            class="flex-1"
-          />
-        </template>
 
-        <!-- 底部设置项 -->
-        <template #footer>
-          <UNavigationMenu
-            :collapsed="isCompact"
-            :tooltip="isCompact"
-            :items="navGroups[1]"
-            orientation="vertical"
-            class="flex-1"
-          />
-        </template>
-      </UDashboardSidebar>
+    <UDashboardSidebar
+      id="nav"
+      v-model:collapsed="collapsed"
+      resizable
+      collapsible
+      :min-size="12"
+      :default-size="14"
+      :max-size="20"
+      :collapsed-size="4"
+      :toggle="false"
+      :ui="{ root: 'flex' }"
+      class="min-h-0 bg-elevated/25"
+    >
+      <!-- 侧栏顶部：全局搜索入口（折叠态：仅图标 + 悬停 tooltip） -->
+      <template #header="{ collapsed: isCollapsed }">
+        <UDashboardSearchButton
+          :collapsed="isCollapsed"
+          :tooltip="isCollapsed"
+          :label="t('search.label')"
+        />
+      </template>
 
-      <!-- 主内容区：Panel body 提供纵向滚动，内边距交由 UContainer 统一控制 -->
-      <UDashboardPanel class="min-h-0" :ui="{ body: 'p-0' }">
-        <template #body>
-          <UContainer class="flex min-h-full max-w-6xl flex-col py-6">
-            <slot/>
-          </UContainer>
-        </template>
-      </UDashboardPanel>
+      <template #default="{ collapsed: isCollapsed }">
+        <UNavigationMenu
+          :collapsed="isCollapsed"
+          :tooltip="isCollapsed"
+          :items="navGroups[0]"
+          orientation="vertical"
+          class="flex-1"
+        />
+      </template>
+
+      <template #footer="{ collapsed: isCollapsed }">
+        <UNavigationMenu
+          :collapsed="isCollapsed"
+          :tooltip="isCollapsed"
+          :items="navGroups[1]"
+          orientation="vertical"
+          class="flex-1"
+        />
+      </template>
+    </UDashboardSidebar>
+
+    <UDashboardPanel class="min-h-0" :ui="{ body: 'p-0' }">
+      <!-- 内容区头部：侧栏折叠按钮 + 页面标题 + 页面操作（"新建xxx"按钮 Teleport 至此，同一行展示） -->
+      <template #header>
+        <UDashboardNavbar :title="pageTitle" :toggle="false">
+          <template #leading>
+            <UDashboardSidebarCollapse/>
+          </template>
+
+          <template #right>
+            <div id="navbar-actions" class="flex items-center gap-2"/>
+          </template>
+        </UDashboardNavbar>
+      </template>
+
+      <template #body>
+        <UContainer class="flex min-h-full max-w-6xl flex-col py-6">
+          <slot/>
+        </UContainer>
+      </template>
+    </UDashboardPanel>
     </div>
 
-    <!-- 设置弹窗（侧边栏底部"设置"项触发） -->
+    <UDashboardSearch
+      :groups="searchGroups"
+      :color-mode="false"
+      :placeholder="t('search.placeholder')"
+    />
+
     <AppSettingsModal v-model:open="settingsOpen"/>
   </UDashboardGroup>
 </template>

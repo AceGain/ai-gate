@@ -12,6 +12,10 @@
     "settings": "设置",
     "goTo": "跳转"
   },
+  "search": {
+    "label": "搜索",
+    "placeholder": "搜索..."
+  },
   "dashboard": {
     "title": "仪表盘",
     "statProviders": "供应商",

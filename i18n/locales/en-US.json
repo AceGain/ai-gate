@@ -12,6 +12,10 @@
     "settings": "Settings",
     "goTo": "Go to"
   },
+  "search": {
+    "label": "Search",
+    "placeholder": "Search..."
+  },
   "dashboard": {
     "title": "Dashboard",
     "statProviders": "Providers",
