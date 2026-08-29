@@ -37,7 +37,6 @@ lerna-debug.log*
 .env.*
 !.env.example
 
-# Docs
-docs/
-doc/
+# Temp
+mine/
 

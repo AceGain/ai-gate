@@ -30,4 +30,4 @@ pnpm typecheck          # 唯一验证手段（无 lint / test），提交前必
 - `nuxt.config.ts` 中 `telemetry: false` 和 `TAURI_DEV_HOST` 相关配置是为 Tauri dev 流程服务的，勿删
 - Tauri dev 在无 TTY 环境运行 `pnpm dev`，避免在 dev 流程中引入交互式提示
 - i18n 文案：用户可见文本必须走 i18n（两个 locale 文件同步更新），不要硬编码中文或英文
-- 不要查阅 `doc/temp.md` 中的内容，更不可作为设计依据；
+- 不要查阅目录 `mine` 中的内容，更不可作为设计依据；
