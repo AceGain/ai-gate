@@ -2,7 +2,6 @@
 import type {CommandPaletteGroup, CommandPaletteItem, NavigationMenuItem} from '@nuxt/ui'
 
 const {t} = useI18n()
-const route = useRoute()
 
 const settingsOpen = ref(false)
 
@@ -51,21 +50,6 @@ const searchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() => [
     }))
   }
 ])
-
-const pageTitle = computed(() => {
-  switch (route.name) {
-    case 'endpoints':
-      return t('endpoints.title')
-    case 'providers':
-      return t('providers.title')
-    case 'models':
-      return t('virtualModels.title')
-    case 'index':
-      return t('dashboard.title')
-    default:
-      return ''
-  }
-})
 
 const collapsed = ref(false)
 
@@ -138,27 +122,8 @@ onMounted(() => {
       </template>
     </UDashboardSidebar>
 
-    <UDashboardPanel class="min-h-0" :ui="{ body: 'p-0' }">
-      <!-- 内容区头部：侧栏折叠按钮 + 页面标题 + 页面操作（"新建xxx"按钮 Teleport 至此，同一行展示） -->
-      <template #header>
-        <UDashboardNavbar :title="pageTitle" :toggle="false">
-          <template #leading>
-            <!-- 覆盖默认 hidden lg:flex：侧边栏已强制全宽度可见（:ui root 'flex'），折叠按钮作为配套控制应随之始终显示 -->
-            <UDashboardSidebarCollapse :ui="{ base: 'flex' }"/>
-          </template>
-
-          <template #right>
-            <div id="navbar-actions" class="flex items-center gap-2"/>
-          </template>
-        </UDashboardNavbar>
-      </template>
-
-      <template #body>
-        <UContainer class="flex min-h-full max-w-6xl flex-col py-6">
-          <slot/>
-        </UContainer>
-      </template>
-    </UDashboardPanel>
+    <!-- 内容区：各页面自带 UDashboardPanel（header = AppNavbar，body = 页面内容） -->
+    <slot/>
 
     <UDashboardSearch :groups="searchGroups" :placeholder="t('search.placeholder')"/>
 

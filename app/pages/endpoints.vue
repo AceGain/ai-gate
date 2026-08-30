@@ -3,16 +3,24 @@ const {t} = useI18n()
 </script>
 
 <template>
-  <div class="flex min-h-full flex-col gap-6">
-    <!-- 页面操作 Teleport 至内容区头部 Navbar 右侧，与标题同一行 -->
-    <Teleport to="#navbar-actions">
-      <UButton icon="i-lucide-plus" size="sm">{{ t('endpoints.add') }}</UButton>
-    </Teleport>
-    <UEmpty
-      icon="i-lucide-network"
-      :title="t('endpoints.empty')"
-      variant="naked"
-      class="flex-1"
-    />
-  </div>
+  <UDashboardPanel class="min-h-0" :ui="{ body: 'p-0' }">
+    <template #header>
+      <AppNavbar>
+        <template #right>
+          <UButton icon="i-lucide-plus" size="sm">{{ t('endpoints.add') }}</UButton>
+        </template>
+      </AppNavbar>
+    </template>
+
+    <template #body>
+      <UContainer class="flex min-h-full max-w-6xl flex-col py-6">
+        <UEmpty
+          icon="i-lucide-network"
+          :title="t('endpoints.empty')"
+          variant="naked"
+          class="flex-1"
+        />
+      </UContainer>
+    </template>
+  </UDashboardPanel>
 </template>
