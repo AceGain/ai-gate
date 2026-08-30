@@ -7,4 +7,6 @@
 
 :root {
   --ui-radius: 0.375rem;
+  /* 窗口标题栏高度（UHeader 高度与 UMain 视口高度偏移共用此变量） */
+  --ui-header-height: 2.5rem;
 }

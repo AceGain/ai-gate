@@ -88,18 +88,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- Nuxt UI Dashboard 布局根容器：flex-col 使标题栏横跨窗口顶部，标题栏以下左=侧边导航栏、右=内容区域 -->
+  <!-- Nuxt UI Dashboard 布局根容器：填充 UMain（标题栏以下）的剩余高度，左=侧边导航栏，右=内容区域 -->
+  <!-- 覆盖默认 fixed inset-0：标题栏已上移至 app.vue 的 UHeader，不再占据视口 -->
   <UDashboardGroup
     unit="rem"
     storage-key="ai-gate"
-    class="flex-col"
+    class="relative size-full overflow-hidden"
   >
-    <!-- 顶部窗口标题栏（代替系统标题栏）：品牌 + 颜色模式 + 窗口控制 -->
-    <AppTitlebar/>
-
-    <!-- 主工作区：占据标题栏以下的剩余高度，左=侧边导航栏，右=内容区域 -->
-    <div class="flex min-h-0 flex-1">
-
     <UDashboardSidebar
       id="nav"
       v-model:collapsed="collapsed"
@@ -163,13 +158,8 @@ onMounted(() => {
         </UContainer>
       </template>
     </UDashboardPanel>
-    </div>
 
-    <UDashboardSearch
-      :groups="searchGroups"
-      :color-mode="false"
-      :placeholder="t('search.placeholder')"
-    />
+    <UDashboardSearch :groups="searchGroups" :placeholder="t('search.placeholder')"/>
 
     <AppSettingsModal v-model:open="settingsOpen"/>
   </UDashboardGroup>
