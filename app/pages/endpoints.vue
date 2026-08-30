@@ -14,7 +14,7 @@ const {t} = useI18n()
 
     <template #body>
       <div class="flex min-h-full items-center justify-center">
-        <UEmpty icon="i-lucide-network" :title="t('endpoints.empty')" variant="naked"/>
+        <UEmpty :title="t('common.empty')" variant="naked"/>
       </div>
     </template>
   </UDashboardPanel>

@@ -10,7 +10,7 @@ const {t} = useI18n()
 
     <template #body>
       <div class="flex min-h-full items-center justify-center">
-        <UEmpty icon="i-lucide-layout-dashboard" :title="t('dashboard.empty')" variant="naked"/>
+        <UEmpty :title="t('common.empty')" variant="naked"/>
       </div>
     </template>
   </UDashboardPanel>

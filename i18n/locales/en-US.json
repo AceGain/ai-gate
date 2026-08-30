@@ -16,24 +16,23 @@
     "label": "Search",
     "placeholder": "Search..."
   },
-  "dashboard": {
-    "title": "Dashboard",
+  "common": {
     "empty": "No data"
+  },
+  "dashboard": {
+    "title": "Dashboard"
   },
   "endpoints": {
     "title": "Endpoint",
-    "add": "New",
-    "empty": "No endpoints yet"
+    "add": "New"
   },
   "providers": {
     "title": "Provider",
-    "add": "New",
-    "empty": "No providers configured"
+    "add": "New"
   },
   "virtualModels": {
     "title": "Virtual Model",
-    "add": "New",
-    "empty": "No virtual models"
+    "add": "New"
   },
   "settings": {
     "title": "Settings",

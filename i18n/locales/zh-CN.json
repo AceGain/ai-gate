@@ -16,24 +16,23 @@
     "label": "搜索",
     "placeholder": "搜索..."
   },
-  "dashboard": {
-    "title": "仪表盘",
+  "common": {
     "empty": "暂无数据"
+  },
+  "dashboard": {
+    "title": "仪表盘"
   },
   "endpoints": {
     "title": "端点",
-    "add": "新增",
-    "empty": "暂无端点"
+    "add": "新增"
   },
   "providers": {
     "title": "供应商",
-    "add": "新增",
-    "empty": "尚未配置供应商"
+    "add": "新增"
   },
   "virtualModels": {
     "title": "虚拟模型",
-    "add": "新增",
-    "empty": "暂无虚拟模型"
+    "add": "新增"
   },
   "settings": {
     "title": "设置",
