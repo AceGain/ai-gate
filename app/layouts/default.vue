@@ -89,7 +89,7 @@ onMounted(() => {
       :max-size="20"
       :collapsed-size="4"
       :toggle="false"
-      :ui="{ root: 'flex' }"
+      :ui="{ root: 'flex', header: 'h-auto pt-3 pb-1', body: 'py-2', footer: 'py-3' }"
       class="min-h-0 bg-elevated/25"
     >
       <!-- 侧栏顶部：全局搜索入口（折叠态：仅图标 + 悬停 tooltip） -->

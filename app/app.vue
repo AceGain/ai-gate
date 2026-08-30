@@ -35,7 +35,7 @@ useSeoMeta({
       :ui="{
         container: 'max-w-none mx-0 px-2 sm:px-2 lg:px-2',
         left: 'hidden',
-        center: 'flex flex-1',
+        center: 'flex flex-1 h-full',
         right: 'hidden'
       }"
     >

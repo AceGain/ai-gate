@@ -14,36 +14,34 @@ const {isDesktop, maximized, minimize, toggleMaximize, close} = useWindowControl
       <span data-tauri-drag-region class="text-[10px] text-dimmed">v0.1.0</span>
     </div>
 
-    <!-- 窗口控制按钮：UButton 提供统一的 focus-visible 键盘可达性，ui.base 覆盖为标题栏全高无圆角样式 -->
+    <!-- 窗口控制按钮：还原系统标题栏控件观感——贴住窗口右缘、占满标题栏高度、无圆角 -->
+    <!-- 配色对齐 Windows 11 原生标题栏：hover 为半透明黑白罩层（亮色 5% 黑 / 暗色 10% 白），关闭键为系统深红 #C42B1C -->
     <!-- -me-2 抵消 UHeader 容器的 px-2 内边距，使按钮贴住窗口右缘 -->
     <div v-if="isDesktop" class="-me-2 flex h-full items-stretch">
-      <UButton
-        icon="i-lucide-minus"
+      <button
+        type="button"
         :aria-label="t('titlebar.minimize')"
-        color="neutral"
-        variant="ghost"
-        size="xs"
-        :ui="{ base: 'h-full w-11 justify-center rounded-none text-muted' }"
+        class="flex h-full w-11 items-center justify-center rounded-none text-highlighted transition-colors hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
         @click="minimize"
-      />
-      <UButton
-        :icon="maximized ? 'i-lucide-copy' : 'i-lucide-square'"
+      >
+        <UIcon name="i-lucide-minus" class="size-3.5"/>
+      </button>
+      <button
+        type="button"
         :aria-label="t('titlebar.maximize')"
-        color="neutral"
-        variant="ghost"
-        size="xs"
-        :ui="{ base: 'h-full w-11 justify-center rounded-none text-muted', leadingIcon: 'size-3.5' }"
+        class="flex h-full w-11 items-center justify-center rounded-none text-highlighted transition-colors hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
         @click="toggleMaximize"
-      />
-      <UButton
-        icon="i-lucide-x"
+      >
+        <UIcon :name="maximized ? 'i-lucide-copy' : 'i-lucide-square'" class="size-3"/>
+      </button>
+      <button
+        type="button"
         :aria-label="t('titlebar.close')"
-        color="error"
-        variant="ghost"
-        size="xs"
-        :ui="{ base: 'h-full w-11 justify-center rounded-none text-muted hover:bg-error hover:text-inverted' }"
+        class="flex h-full w-11 items-center justify-center rounded-none text-highlighted transition-colors hover:bg-[#c42b1c] hover:text-white active:bg-[#b3271b] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-inverted"
         @click="close"
-      />
+      >
+        <UIcon name="i-lucide-x" class="size-4"/>
+      </button>
     </div>
   </div>
 </template>
