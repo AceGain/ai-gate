@@ -18,10 +18,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "statProviders": "Providers",
-    "statVirtualModels": "Virtual Models",
-    "statTodayRequests": "Requests Today",
-    "statTodayTokens": "Tokens Today"
+    "empty": "No data"
   },
   "endpoints": {
     "title": "Endpoint",

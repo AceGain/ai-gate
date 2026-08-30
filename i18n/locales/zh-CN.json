@@ -18,10 +18,7 @@
   },
   "dashboard": {
     "title": "仪表盘",
-    "statProviders": "供应商",
-    "statVirtualModels": "虚拟模型",
-    "statTodayRequests": "今日请求",
-    "statTodayTokens": "今日 Token"
+    "empty": "暂无数据"
   },
   "endpoints": {
     "title": "端点",
