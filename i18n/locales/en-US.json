@@ -25,17 +25,17 @@
   },
   "endpoints": {
     "title": "Endpoint",
-    "add": "New Endpoint",
+    "add": "New",
     "empty": "No endpoints yet"
   },
   "providers": {
     "title": "Provider",
-    "add": "New Provider",
+    "add": "New",
     "empty": "No providers configured"
   },
   "virtualModels": {
     "title": "Virtual Model",
-    "add": "New Virtual Model",
+    "add": "New",
     "empty": "No virtual models"
   },
   "settings": {

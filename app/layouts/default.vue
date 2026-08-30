@@ -89,15 +89,19 @@ onMounted(() => {
       :max-size="20"
       :collapsed-size="4"
       :toggle="false"
-      :ui="{ root: 'flex', header: 'h-auto pt-3 pb-1', body: 'py-2', footer: 'py-3' }"
+      :ui="{ root: 'flex', header: 'h-auto pt-2 pb-1.5', body: 'py-1.5', footer: 'pt-1.5 pb-3' }"
       class="min-h-0 bg-elevated/25"
     >
       <!-- 侧栏顶部：全局搜索入口（折叠态：仅图标 + 悬停 tooltip） -->
+      <!-- trailing 覆盖默认 hidden lg:flex：展示"图标+文字"时 kbd 常驻（不随窗口宽度消失），仅图标折叠态隐藏 -->
       <template #header="{ collapsed: isCollapsed }">
         <UDashboardSearchButton
           :collapsed="isCollapsed"
           :tooltip="isCollapsed"
           :label="t('search.label')"
+          variant="ghost"
+          class="w-full"
+          :ui="{ base: 'py-2', trailing: isCollapsed ? 'hidden' : 'flex' }"
         />
       </template>
 
@@ -108,6 +112,7 @@ onMounted(() => {
           :items="navGroups[0]"
           orientation="vertical"
           class="flex-1"
+          :ui="{ link: 'px-2 py-2' }"
         />
       </template>
 
@@ -118,6 +123,7 @@ onMounted(() => {
           :items="navGroups[1]"
           orientation="vertical"
           class="flex-1"
+          :ui="{ link: 'px-2 py-2' }"
         />
       </template>
     </UDashboardSidebar>

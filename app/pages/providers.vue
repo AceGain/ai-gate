@@ -7,7 +7,7 @@ const {t} = useI18n()
     <template #header>
       <AppNavbar>
         <template #right>
-          <UButton icon="i-lucide-plus" size="sm">{{ t('providers.add') }}</UButton>
+          <UButton icon="i-lucide-plus" size="xs">{{ t('providers.add') }}</UButton>
         </template>
       </AppNavbar>
     </template>
