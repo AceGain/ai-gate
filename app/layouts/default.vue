@@ -143,7 +143,8 @@ onMounted(() => {
       <template #header>
         <UDashboardNavbar :title="pageTitle" :toggle="false">
           <template #leading>
-            <UDashboardSidebarCollapse/>
+            <!-- 覆盖默认 hidden lg:flex：侧边栏已强制全宽度可见（:ui root 'flex'），折叠按钮作为配套控制应随之始终显示 -->
+            <UDashboardSidebarCollapse :ui="{ base: 'flex' }"/>
           </template>
 
           <template #right>
