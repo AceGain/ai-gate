@@ -49,7 +49,7 @@ onMounted(() => {
     :max-size="20"
     :collapsed-size="4"
     :toggle="false"
-    :ui="{ root: 'flex', header: 'h-auto px-2 pt-2 pb-1', body: 'px-2 py-1', footer: 'px-2 pt-1 pb-2' }"
+    :ui="{ root: 'flex', header: 'h-auto px-2.5 pt-2 pb-1', body: 'px-2.5 py-1', footer: 'px-2.5 pt-1 pb-2' }"
     class="min-h-0 bg-elevated/25"
   >
     <!-- 侧栏顶部：全局搜索入口（折叠态：仅图标 + 悬停 tooltip） -->

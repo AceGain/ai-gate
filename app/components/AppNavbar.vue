@@ -21,12 +21,12 @@ const pageTitle = computed(() => {
 
 <template>
   <!-- 内容区头部：侧栏折叠按钮 + 页面标题 + 页面操作（"新建xxx"按钮经由 #right 插槽注入，同一行展示） -->
-  <!-- 独立高度 3.5rem：与窗口标题栏（2rem）解耦；px-4 + text-sm 标题，紧凑桌面工具栏观感 -->
+  <!-- 独立高度 4rem：与窗口标题栏（2rem）解耦；更高的工具栏，内容区呼吸感更好 -->
   <UDashboardNavbar
     :title="pageTitle"
     :toggle="false"
     :ui="{
-      root: 'h-12 px-4 sm:px-4',
+      root: 'h-16 px-4 sm:px-4',
       title: 'text-base font-semibold text-highlighted'
     }"
   >
