@@ -10,9 +10,9 @@ AI 网关：聚合多供应商/多密钥，对外提供 OpenAI 兼容入口。
 
 - 前端：Nuxt 4 + Nuxt UI v4 + Tailwind CSS 4 + `@nuxtjs/i18n`（默认 zh-CN）
 
-- 后端：Hono（`server/`，前后端分离，`pnpm dev:api` 独立进程，默认端口 9256），承载网关数据面（`/v1/*`，OpenAI 兼容入口）+ 管理 API（`/api/*`）+ 生产形态下服务 Nuxt 静态资源（`dist/`）；供应商配置持久化到 `server/data/providers.json`
+- 后端：Hono
 
-- 桌面：Tauri 2（`src-tauri/`，Rust 壳，目前仅 opener 插件）
+- 桌面：Tauri 2（Rust）
 
 ## 常用命令
 
@@ -31,7 +31,7 @@ pnpm typecheck          # 唯一验证手段（无 lint / test），前端 vue-t
 
 - `shared/` — 前后端共用的纯 TS 模块（供应商类型/协议元数据/预置供应商），不得引入 Nuxt 或浏览器特有 API
 
-- `server/` — Hono 后端（src/routes 管理 API 与网关数据面、src/store.ts JSON 持久化）；生产形态直接服务 `dist/`
+- `server/` — Hono 后端（src/routes 管理 API、src/store.ts JSON 持久化）；生产形态直接服务 `dist/`
 
 - `src-tauri/` — Rust 侧；lib 名为 `ai_gate_lib`（Windows 下 lib/bin 命名冲突问题，勿改名）
 
