@@ -29,5 +29,5 @@ export function useNavigation() {
     }
   ])
 
-  return { mainNav, searchGroups }
+  return {mainNav, searchGroups}
 }

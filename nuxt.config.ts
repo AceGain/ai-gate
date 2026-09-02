@@ -33,8 +33,20 @@ export default defineNuxtConfig({
   // Tauri 的 beforeDevCommand 运行时没有 TTY，禁用 telemetry 同意提示
   telemetry: false,
 
+  // 前后端分离：开发期将 /api 代理到独立 Hono 后端（pnpm dev:api，默认端口 9256）
+  // 注意：devProxy 匹配 /api 前缀后会把前缀从转发路径中剥掉，因此 target 需带 /api 补回
+  nitro: {
+    devProxy: {
+      '/api': {
+        target: 'http://localhost:9256/api',
+        changeOrigin: true
+      }
+    }
+  },
+
   devServer: {
-    port: 1420,
+    // 固定端口：Tauri devUrl 依赖；极少数情况下端口处于 TIME_WAIT 时 Nuxt 可能回退到其他端口
+    port: 9255,
     // 使开发服务器能够被其他设备发现，以便在 iOS 物理机运行。
     host:
       process.env.TAURI_DEV_HOST || 'localhost'

@@ -77,7 +77,6 @@ const neutralModel = computed({
             :items="appearanceItems"
             :model-value="colorMode.preference"
             :content="false"
-            size="sm"
             :ui="{ list: 'w-40', label: 'sr-only' }"
             @update:model-value="(value: string | number) => colorMode.preference = String(value)"
           />

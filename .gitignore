@@ -37,8 +37,16 @@ lerna-debug.log*
 .env.*
 !.env.example
 
+# SQLite 数据库（服务端本地数据）
+data/
+
 # Temp
 mine/
+
+# Hono server runtime data & local pnpm cache
+server/data/
+.pnpm-cache/
+.pnpm-store/
 
 # WorkBuddy workspace data
 .workbuddy/

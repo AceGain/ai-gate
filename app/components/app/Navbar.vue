@@ -9,6 +9,9 @@ const pageTitle = computed(() => {
       return t('endpoints.title')
     case 'providers':
       return t('providers.title')
+    case 'providers-id':
+      // 详情页标题用通用文案：供应商名称由页面内概要区展示，避免重复
+      return t('providers.detail')
     case 'models':
       return t('virtualModels.title')
     case 'index':
@@ -26,7 +29,7 @@ const pageTitle = computed(() => {
     :title="pageTitle"
     :toggle="false"
     :ui="{
-      root: 'h-16 px-4 sm:px-4',
+      root: 'h-14 px-4 sm:px-4',
       title: 'text-base font-semibold text-highlighted'
     }"
   >

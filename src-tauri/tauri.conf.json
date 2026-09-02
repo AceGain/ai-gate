@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "identifier": "cn.acegain.aigate",
   "build": {
-    "beforeDevCommand": "pnpm dev",
+    "beforeDevCommand": "pnpm dev:all",
     "beforeBuildCommand": "pnpm generate",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://localhost:9255",
     "frontendDist": "../dist"
   },
   "app": {
