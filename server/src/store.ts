@@ -31,7 +31,7 @@ export async function loadProviders(): Promise<ProviderConfig[]> {
   if (cache) return cache
   try {
     const raw = await readFile(DATA_FILE, 'utf-8')
-    const json = JSON.parse(raw) as {providers?: Partial<ProviderConfig>[]}
+    const json = JSON.parse(raw) as { providers?: Partial<ProviderConfig>[] }
     cache = (json.providers ?? []).map(normalizeProvider)
   } catch {
     // 文件不存在或损坏时视为空配置

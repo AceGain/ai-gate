@@ -4,16 +4,16 @@
  * - POST /v1/chat/completions  按模型路由转发：
  *   openai 上游原样透传（含 SSE 流式）；anthropic / gemini 上游做非流式协议转换
  */
-import {Hono} from 'hono'
 import type {Context} from 'hono'
+import {Hono} from 'hono'
 import {loadProviders} from '../store'
 import {collectEnabledModels, resolveModel} from '../router'
 import {
   fromAnthropicResponse,
   fromGeminiResponse,
+  type OpenAIChatRequest,
   toAnthropicRequest,
-  toGeminiRequest,
-  type OpenAIChatRequest
+  toGeminiRequest
 } from '../translate'
 import {upstreamErrorMessage} from '../upstream'
 

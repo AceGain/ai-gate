@@ -6,7 +6,7 @@
 
 export interface OpenAIChatMessage {
   role: string
-  content: string | Array<{type?: string; text?: string}> | null
+  content: string | Array<{ type?: string; text?: string }> | null
 }
 
 export interface OpenAIChatRequest {
@@ -29,10 +29,10 @@ function textOf(content: OpenAIChatMessage['content']): string {
 /** 拆分 system 消息与对话消息 */
 function splitMessages(body: OpenAIChatRequest): {
   system: string
-  messages: {role: 'user' | 'assistant'; content: string}[]
+  messages: { role: 'user' | 'assistant'; content: string }[]
 } {
   const systemParts: string[] = []
-  const messages: {role: 'user' | 'assistant'; content: string}[] = []
+  const messages: { role: 'user' | 'assistant'; content: string }[] = []
   for (const m of body.messages ?? []) {
     const text = textOf(m.content)
     if (m.role === 'system') {
@@ -61,9 +61,9 @@ export function toAnthropicRequest(body: OpenAIChatRequest): Record<string, unkn
 export function fromAnthropicResponse(
   resp: {
     id?: string
-    content?: {type?: string; text?: string}[]
+    content?: { type?: string; text?: string }[]
     stop_reason?: string
-    usage?: {input_tokens?: number; output_tokens?: number}
+    usage?: { input_tokens?: number; output_tokens?: number }
   },
   model: string
 ): Record<string, unknown> {
@@ -95,8 +95,8 @@ export function fromAnthropicResponse(
 export function toGeminiRequest(body: OpenAIChatRequest): Record<string, unknown> {
   const {system, messages} = splitMessages(body)
   const contents = (messages.length > 0
-    ? messages
-    : [{role: 'user' as const, content: ''}]
+      ? messages
+      : [{role: 'user' as const, content: ''}]
   ).map(m => ({role: m.role === 'assistant' ? 'model' : 'user', parts: [{text: m.content}]}))
 
   const generationConfig: Record<string, number> = {}
@@ -113,8 +113,8 @@ export function toGeminiRequest(body: OpenAIChatRequest): Record<string, unknown
 
 export function fromGeminiResponse(
   resp: {
-    candidates?: {content?: {parts?: {text?: string}[]}; finishReason?: string}[]
-    usageMetadata?: {promptTokenCount?: number; candidatesTokenCount?: number}
+    candidates?: { content?: { parts?: { text?: string }[] }; finishReason?: string }[]
+    usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number }
   },
   model: string
 ): Record<string, unknown> {

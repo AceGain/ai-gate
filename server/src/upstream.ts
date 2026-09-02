@@ -5,7 +5,7 @@
 /** 从上游错误响应文本中提取可读信息 */
 export function upstreamErrorMessage(text: string): string {
   try {
-    const json = JSON.parse(text) as {error?: {message?: string}, message?: string}
+    const json = JSON.parse(text) as { error?: { message?: string }, message?: string }
     return json.error?.message || json.message || text.slice(0, 200)
   } catch {
     return text.slice(0, 200) || 'Upstream error'

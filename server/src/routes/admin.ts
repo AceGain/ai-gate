@@ -2,8 +2,8 @@
  * 管理 API（/api/*）：供应商配置 CRUD 与模型列表拉取转发
  * 前端 useProviders / fetchProviderModels 的唯一后端入口
  */
-import {Hono} from 'hono'
 import type {Context} from 'hono'
+import {Hono} from 'hono'
 import type {ProviderConfig, ProviderProtocolId} from '../../../shared/providers'
 import {joinUrl} from '../../../shared/providers'
 import {loadProviders, saveProviders} from '../store'
@@ -99,14 +99,14 @@ admin.post('/fetch-models', async (c) => {
 
   // Gemini: {models: [{name: 'models/xxx'}]}；OpenAI/Anthropic: {data: [{id: 'xxx'}]}
   if (protocol === 'gemini') {
-    const models = Array.isArray((json as {models?: unknown}).models)
-      ? (json as {models: {name?: string}[]}).models
+    const models = Array.isArray((json as { models?: unknown }).models)
+      ? (json as { models: { name?: string }[] }).models
       : []
     return c.json({models: models.map(m => String(m.name ?? '').replace(/^models\//, '')).filter(Boolean)})
   }
 
-  const data = Array.isArray((json as {data?: unknown}).data)
-    ? (json as {data: {id?: string}[]}).data
+  const data = Array.isArray((json as { data?: unknown }).data)
+    ? (json as { data: { id?: string }[] }).data
     : []
   return c.json({models: data.map(m => String(m.id ?? '')).filter(Boolean)})
 })

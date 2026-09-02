@@ -38,9 +38,9 @@ export function resolveModel(providers: ProviderConfig[], model: string): RouteT
 }
 
 /** 汇总网关对外可用的模型（用于 /v1/models 列表；同 id 多供应商时去重） */
-export function collectEnabledModels(providers: ProviderConfig[]): {model: string; providerId: string}[] {
+export function collectEnabledModels(providers: ProviderConfig[]): { model: string; providerId: string }[] {
   const seen = new Set<string>()
-  const result: {model: string; providerId: string}[] = []
+  const result: { model: string; providerId: string }[] = []
   for (const provider of providers) {
     if (!provider.enabled) continue
     for (const [model, config] of Object.entries(provider.models)) {
