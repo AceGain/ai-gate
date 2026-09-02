@@ -167,7 +167,7 @@ async function fetchModels(key: ProviderKeyConfig) {
     toast.add({color: 'success', title: t('providers.modelsFetched', {count: models.length})})
   } catch (err) {
     // 优先展示后端/上游返回的结构化错误信息（{error: string}），否则回退到异常 message
-    const data = (err as {data?: {error?: string}}).data
+    const data = (err as { data?: { error?: string } }).data
     toast.add({
       color: 'error',
       title: t('providers.fetchModelsFailed'),

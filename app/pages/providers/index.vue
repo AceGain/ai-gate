@@ -106,7 +106,6 @@ function enabledModelCount(p: { models: Record<string, { enabled: boolean }> }) 
           icon="i-lucide-server"
           variant="naked"
         />
-        <UButton icon="i-lucide-plus" @click="openCreate">{{ t('providers.newTitle') }}</UButton>
       </div>
     </template>
   </UDashboardPanel>
