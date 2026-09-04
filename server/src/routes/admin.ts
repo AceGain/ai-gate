@@ -67,13 +67,11 @@ admin.post('/fetch-models', async (c) => {
   }
 
   const headers: Record<string, string> = {}
-  if (protocol === 'openai') {
-    headers.Authorization = `Bearer ${apiKey}`
-  } else if (protocol === 'anthropic') {
+  if (protocol === 'anthropic-messages') {
     headers['x-api-key'] = apiKey
     headers['anthropic-version'] = '2023-06-01'
   } else {
-    headers['x-goog-api-key'] = apiKey
+    headers.Authorization = `Bearer ${apiKey}`
   }
 
   const url = joinUrl(baseUrl, modelsEndpoint)
@@ -97,14 +95,7 @@ admin.post('/fetch-models', async (c) => {
     return jsonError(c, 502, 'Invalid JSON response from upstream')
   }
 
-  // Gemini: {models: [{name: 'models/xxx'}]}；OpenAI/Anthropic: {data: [{id: 'xxx'}]}
-  if (protocol === 'gemini') {
-    const models = Array.isArray((json as { models?: unknown }).models)
-      ? (json as { models: { name?: string }[] }).models
-      : []
-    return c.json({models: models.map(m => String(m.name ?? '').replace(/^models\//, '')).filter(Boolean)})
-  }
-
+  // OpenAI/Anthropic: {data: [{id: 'xxx'}]}
   const data = Array.isArray((json as { data?: unknown }).data)
     ? (json as { data: { id?: string }[] }).data
     : []

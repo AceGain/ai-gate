@@ -9,10 +9,15 @@ const {t} = useI18n()
 const confirmDialog = useConfirmDialog()
 const search = ref('')
 
-/** 所有密钥确认可用模型的并集 */
-const availableModels = computed(() =>
-  new Set(props.provider.keys.flatMap(k => k.enabledModels))
-)
+// 从上游获取模型弹窗
+const fetchOpen = ref(false)
+
+function openFetch() {
+  fetchOpen.value = true
+}
+
+// 获取模型/新增模型按钮在父页面 Tab 栏右侧，通过此暴露打开弹窗
+defineExpose({openCreate, openFetch})
 
 /** 已配置的模型列表（支持搜索过滤） */
 const configuredModels = computed(() => {
@@ -21,8 +26,13 @@ const configuredModels = computed(() => {
   return q ? list.filter(m => m.toLowerCase().includes(q)) : list
 })
 
+/** 模型是否可用：无任何启用密钥，或限定密钥全部被删/停用时不可用 */
 function isAvailable(m: string) {
-  return availableModels.value.has(m)
+  const activeKeys = props.provider.keys.filter(k => k.enabled)
+  if (!activeKeys.length) return false
+  const cfg = props.provider.models[m]
+  if (!cfg || !cfg.allowedKeyIds.length) return true
+  return cfg.allowedKeyIds.some(id => activeKeys.some(k => k.id === id))
 }
 
 /** 新增/编辑模型弹窗 */
@@ -57,98 +67,91 @@ function typeLabel(type: string) {
 
 <template>
   <div class="space-y-4">
-    <template v-if="Object.keys(provider.models).length">
-      <!-- 头部：搜索 + 新增 -->
-      <div class="flex items-center gap-2">
-        <UInput
-          v-if="Object.keys(provider.models).length > 8"
-          v-model="search"
-          icon="i-lucide-search"
-          :placeholder="t('providers.searchModelsPlaceholder')"
-          class="min-w-0 flex-1"
-        />
-        <UButton icon="i-lucide-plus" @click="openCreate">
-          {{ t('providers.addModel') }}
-        </UButton>
-      </div>
+    <!-- 搜索：模型较多时显示（获取模型/新增模型按钮在 Tab 栏右侧） -->
+    <UInput
+      v-if="Object.keys(provider.models).length > 8"
+      v-model="search"
+      icon="i-lucide-search"
+      :placeholder="t('providers.searchModelsPlaceholder')"
+      class="w-full"
+    />
 
-      <!-- 已配置模型列表 -->
-      <div class="divide-y divide-default overflow-hidden rounded-lg border border-default">
-        <div
-          v-for="m in configuredModels"
-          :key="m"
-          class="group flex items-center gap-3 bg-default px-4 py-3 transition-colors hover:bg-elevated/50"
-          :class="!provider.models[m]!.enabled ? 'opacity-60' : ''"
-        >
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-2">
-              <span class="min-w-0 truncate font-mono text-sm font-medium text-highlighted">{{ m }}</span>
-              <UBadge v-if="provider.models[m]!.displayName" variant="subtle" color="neutral">
-                {{ provider.models[m]!.displayName }}
-              </UBadge>
-              <UBadge v-if="!provider.models[m]!.enabled" variant="subtle" color="warning">
-                {{ t('providers.modelDisabled') }}
-              </UBadge>
-              <UBadge v-if="!isAvailable(m)" variant="subtle" color="warning">
-                {{ t('providers.modelUnavailable') }}
-              </UBadge>
-            </div>
-            <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted">
-              <span>{{ typeLabel(provider.models[m]!.type) }}</span>
-              <span v-if="provider.models[m]!.group">{{ provider.models[m]!.group }}</span>
-              <span v-if="provider.models[m]!.reasoning">
-                {{
-                  t('providers.reasoning')
-                }} · {{
-                  provider.models[m]!.reasoningEfforts.map(e => t(`providers.reasoningEffortLevel.${e}`)).join(' / ')
-                }}
-              </span>
-              <span v-if="provider.models[m]!.maxContext">
-                {{ t('providers.maxContext') }} {{ provider.models[m]!.maxContext.toLocaleString() }}
-              </span>
-            </div>
+    <!-- 已配置模型列表 -->
+    <div v-if="configuredModels.length" class="divide-y divide-default overflow-hidden rounded-lg border border-default">
+      <div
+        v-for="m in configuredModels"
+        :key="m"
+        class="flex items-center gap-3 bg-default px-4 py-3 transition-colors hover:bg-elevated/50"
+        :class="!provider.models[m]!.enabled ? 'opacity-60' : ''"
+      >
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2">
+            <span class="min-w-0 truncate font-mono text-sm font-medium text-highlighted">{{ m }}</span>
+            <UBadge v-if="provider.models[m]!.displayName" variant="subtle" color="neutral">
+              {{ provider.models[m]!.displayName }}
+            </UBadge>
+            <UBadge v-if="!isAvailable(m)" variant="subtle" color="warning">
+              {{ t('providers.modelUnavailable') }}
+            </UBadge>
           </div>
-
-          <!-- 启用开关 -->
-          <USwitch
-            v-model="provider.models[m]!.enabled"
-            :disabled="!isAvailable(m)"
-            :aria-label="t('providers.enableModel')"
-            class="shrink-0"
-          />
-
-          <UButton
-            icon="i-lucide-pencil"
-            variant="ghost"
-            color="neutral"
-            class="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-            :aria-label="t('providers.editModel')"
-            @click="openEdit(m)"
-          />
-          <UButton
-            icon="i-lucide-trash-2"
-            variant="ghost"
-            color="error"
-            class="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-            :aria-label="t('providers.removeModel')"
-            @click="removeModel(m)"
-          />
+          <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted">
+            <span>{{ typeLabel(provider.models[m]!.type) }}</span>
+            <span v-if="provider.models[m]!.group">{{ provider.models[m]!.group }}</span>
+            <span v-if="provider.models[m]!.reasoning">
+              {{
+                t('providers.reasoning')
+              }} · {{
+                provider.models[m]!.reasoningEfforts.map(e => t(`providers.reasoningEffortLevel.${e}`)).join(' / ')
+              }}
+            </span>
+            <span v-if="provider.models[m]!.maxContext">
+              {{ t('providers.maxContext') }} {{ provider.models[m]!.maxContext.toLocaleString() }}
+            </span>
+          </div>
         </div>
+
+        <!-- 启用开关 -->
+        <USwitch
+          v-model="provider.models[m]!.enabled"
+          :disabled="!isAvailable(m)"
+          :aria-label="t('providers.enableModel')"
+          class="shrink-0"
+        />
+
+        <UButton
+          icon="i-lucide-pencil"
+          variant="ghost"
+          color="neutral"
+          class="shrink-0 text-dimmed hover:text-default"
+          :aria-label="t('providers.editModel')"
+          @click="openEdit(m)"
+        />
+        <UButton
+          icon="i-lucide-trash-2"
+          variant="ghost"
+          color="error"
+          class="shrink-0"
+          :aria-label="t('providers.removeModel')"
+          @click="removeModel(m)"
+        />
       </div>
-    </template>
+    </div>
 
     <!-- 空态：与其他页面统一 UEmpty -->
-    <div v-else class="flex flex-col items-center justify-center gap-4 py-16">
+    <div v-if="!configuredModels.length" class="py-16">
       <UEmpty
         :title="t('providers.modelsEmpty')"
         :description="t('providers.modelsHint')"
         icon="i-lucide-boxes"
         variant="naked"
       />
-      <UButton icon="i-lucide-plus" @click="openCreate">
-        {{ t('providers.addModel') }}
-      </UButton>
     </div>
+
+    <!-- 从上游获取模型弹窗 -->
+    <ProviderModelsFetchModal
+      v-model:open="fetchOpen"
+      :provider="provider"
+    />
 
     <!-- 新增/编辑模型弹窗 -->
     <ProviderModelEditModal

@@ -6,10 +6,11 @@ import type {
   ProviderProtocolId,
   ProviderReasoningEffort
 } from '~/utils/providers'
+import {maskKey} from '~/utils/providers'
 
 /**
  * 新增/编辑模型弹窗：
- * 新增时从密钥启用的模型中选择；配置显示名称、分组、类型、协议、模态、推理、上下文上限等
+ * 新增时手动输入模型 ID；配置显示名称、分组、类型、协议、模态、推理、上下文上限、限定密钥等
  */
 const props = defineProps<{
   provider: ProviderConfig
@@ -23,16 +24,6 @@ const toast = useToast()
 const open = defineModel<boolean>('open', {default: false})
 
 const isEdit = computed(() => !!props.modelId)
-
-/** 所有密钥启用模型的并集 */
-const availableModels = computed(() =>
-  [...new Set(props.provider.keys.flatMap(k => k.enabledModels))].sort()
-)
-
-/** 新增时可选的模型（排除已配置） */
-const selectableModels = computed(() =>
-  availableModels.value.filter(m => !(m in props.provider.models)).map(m => ({label: m, value: m}))
-)
 
 const selectedModel = ref('')
 
@@ -48,7 +39,8 @@ const form = reactive({
   reasoningEfforts: [] as ProviderReasoningEffort[],
   maxContext: 0,
   maxInput: 0,
-  maxOutput: 0
+  maxOutput: 0,
+  allowedKeyIds: [] as string[]
 })
 
 /** 打开时按模式初始化表单 */
@@ -69,6 +61,7 @@ watch(open, (v) => {
     form.maxContext = existing.maxContext
     form.maxInput = existing.maxInput
     form.maxOutput = existing.maxOutput
+    form.allowedKeyIds = [...existing.allowedKeyIds]
   } else {
     form.enabled = true
     form.displayName = ''
@@ -83,6 +76,7 @@ watch(open, (v) => {
     form.maxContext = 0
     form.maxInput = 0
     form.maxOutput = 0
+    form.allowedKeyIds = []
   }
 })
 
@@ -102,6 +96,14 @@ const protocolItems = computed(() =>
   props.provider.protocols.map(p => ({label: t('providers.protocol.' + p), value: p}))
 )
 
+/** 限定密钥选项：全部密钥（不选 = 全部可用） */
+const keyItems = computed(() =>
+  props.provider.keys.map(k => ({
+    label: k.name || maskKey(k.value) || t('providers.keyEmptyMask'),
+    value: k.id
+  }))
+)
+
 const effortItems = computed(() =>
   (['low', 'medium', 'high'] as ProviderReasoningEffort[]).map(e => ({
     label: t(`providers.reasoningEffortLevel.${e}`),
@@ -113,6 +115,10 @@ function save() {
   const model = isEdit.value ? props.modelId! : selectedModel.value.trim()
   if (!model) {
     toast.add({color: 'error', title: t('providers.modelRequired')})
+    return
+  }
+  if (!isEdit.value && model in props.provider.models) {
+    toast.add({color: 'error', title: t('providers.modelIdExists')})
     return
   }
   props.provider.models[model] = {
@@ -127,7 +133,8 @@ function save() {
     maxContext: form.maxContext,
     maxInput: form.maxInput,
     maxOutput: form.maxOutput,
-    protocols: [...form.protocols] as ProviderProtocolId[]
+    protocols: [...form.protocols] as ProviderProtocolId[],
+    allowedKeyIds: [...form.allowedKeyIds]
   }
   open.value = false
 }
@@ -141,14 +148,12 @@ function save() {
   >
     <template #body>
       <div class="space-y-4">
-        <!-- 模型：新增时从密钥启用的模型中选择，编辑时只读 -->
+        <!-- 模型：新增时手动输入 ID，编辑时只读 -->
         <UFormField :label="t('providers.modelId')">
-          <USelectMenu
+          <UInput
             v-if="!isEdit"
             v-model="selectedModel"
-            :items="selectableModels"
-            value-key="value"
-            :placeholder="selectableModels.length ? t('providers.modelSelectPlaceholder') : t('providers.noAvailableModels')"
+            :placeholder="t('providers.modelIdPlaceholder')"
             class="w-full"
           />
           <div
@@ -183,6 +188,18 @@ function save() {
             multiple
             :items="protocolItems"
             value-key="value"
+            class="w-full"
+          />
+        </UFormField>
+
+        <!-- 限定密钥：不选 = 全部密钥可用 -->
+        <UFormField :label="t('providers.allowedKeys')" :hint="t('providers.allowedKeysHint')">
+          <USelectMenu
+            v-model="form.allowedKeyIds"
+            multiple
+            :items="keyItems"
+            value-key="value"
+            :placeholder="t('providers.allowedKeysPlaceholder')"
             class="w-full"
           />
         </UFormField>

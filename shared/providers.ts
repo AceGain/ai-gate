@@ -5,7 +5,7 @@
  */
 
 /** 网关支持的请求协议 */
-export type ProviderProtocolId = 'openai' | 'anthropic' | 'gemini'
+export type ProviderProtocolId = 'openai-chat' | 'openai-responses' | 'anthropic-messages'
 
 /** 模型输入/输出模态 */
 export type ProviderModality = 'text' | 'image' | 'audio' | 'video'
@@ -16,13 +16,16 @@ export type ProviderModelType = 'textToText' | 'textToImage' | 'textToVideo' | '
 /** 推理强度 */
 export type ProviderReasoningEffort = 'low' | 'medium' | 'high'
 
+/** 多密钥选择策略（网关转发功能实现后生效） */
+export type KeySelectionStrategy = 'failover' | 'round-robin' | 'random'
+
 /** 单个协议的端点配置（相对基础 URL 的路径） */
 export interface ProviderProtocolConfig {
   /** 对话请求端点路径 */
   chatEndpoint: string
 }
 
-/** 供应商密钥：拉取到的模型与用户确认可用的模型 */
+/** 供应商密钥：仅作为调用凭证，模型可用性统一在模型配置中管理 */
 export interface ProviderKeyConfig {
   id: string
   /** 密钥名称（如"主力密钥"，用于展示区分） */
@@ -30,10 +33,8 @@ export interface ProviderKeyConfig {
   value: string
   /** 有效日期（yyyy-MM-dd；空串表示永久有效） */
   expiresAt: string
-  /** 通过该密钥拉取到的模型 */
-  fetchedModels: string[]
-  /** 用户确认该密钥可用的模型（fetchedModels 的子集） */
-  enabledModels: string[]
+  /** 是否启用：停用后网关不使用该密钥 */
+  enabled: boolean
 }
 
 /** 模型配置：只有 enabled 的模型才会在网关中使用 */
@@ -59,6 +60,8 @@ export interface ProviderModelConfig {
   maxOutput: number
   /** 模型支持的协议（决定请求走哪个端点） */
   protocols: ProviderProtocolId[]
+  /** 限定可用的密钥 id（空 = 该供应商全部密钥可用） */
+  allowedKeyIds: string[]
 }
 
 /** 供应商完整配置 */
@@ -79,9 +82,13 @@ export interface ProviderConfig {
   /** 备注 */
   remark: string
   protocols: ProviderProtocolId[]
+  /** 默认协议（多协议时网关请求优先使用；始终为 protocols 中的有效值，无协议时为 null） */
+  defaultProtocol: ProviderProtocolId | null
   endpoints: Partial<Record<ProviderProtocolId, ProviderProtocolConfig>>
   /** 模型列表端点（供应商级：多协议共用一个模型获取接口） */
   modelsEndpoint: string
+  /** 多密钥选择策略：顺序容错（默认）/ 轮询 / 随机；网关转发功能实现后生效 */
+  keyStrategy: KeySelectionStrategy
   keys: ProviderKeyConfig[]
   models: Record<string, ProviderModelConfig>
 }
@@ -116,33 +123,33 @@ export interface ProviderModelTypeMeta {
 /** 协议元数据：默认端点路径（未显式配置时使用） */
 export const providerProtocols: ProviderProtocolMeta[] = [
   {
-    id: 'openai',
-    labelKey: 'providers.protocol.openai',
+    id: 'openai-chat',
+    labelKey: 'providers.protocol.openai-chat',
     defaults: {
       chatEndpoint: '/v1/chat/completions'
     }
   },
   {
-    id: 'anthropic',
-    labelKey: 'providers.protocol.anthropic',
+    id: 'openai-responses',
+    labelKey: 'providers.protocol.openai-responses',
     defaults: {
-      chatEndpoint: '/v1/messages'
+      chatEndpoint: '/v1/responses'
     }
   },
   {
-    id: 'gemini',
-    labelKey: 'providers.protocol.gemini',
+    id: 'anthropic-messages',
+    labelKey: 'providers.protocol.anthropic-messages',
     defaults: {
-      chatEndpoint: '/v1beta/models/{model}:generateContent'
+      chatEndpoint: '/v1/messages'
     }
   }
 ]
 
 /** 各协议的模型列表端点默认值（用于供应商级 modelsEndpoint 的初始填充） */
 export const protocolModelsEndpointDefaults: Record<ProviderProtocolId, string> = {
-  openai: '/v1/models',
-  anthropic: '/v1/models',
-  gemini: '/v1beta/models'
+  'openai-chat': '/v1/models',
+  'openai-responses': '/v1/models',
+  'anthropic-messages': '/v1/models'
 }
 
 export const protocolDefaults: Record<ProviderProtocolId, ProviderProtocolConfig> = Object.fromEntries(
@@ -158,6 +165,19 @@ export const providerModelTypes: ProviderModelTypeMeta[] = [
   {id: 'rerank', labelKey: 'providers.modelTypes.rerank'}
 ]
 
+export interface KeyStrategyMeta {
+  id: KeySelectionStrategy
+  /** i18n 文案 key（providers.keyStrategy.*） */
+  labelKey: string
+}
+
+/** 多密钥选择策略元数据 */
+export const keyStrategies: KeyStrategyMeta[] = [
+  {id: 'failover', labelKey: 'providers.keyStrategy.failover'},
+  {id: 'round-robin', labelKey: 'providers.keyStrategy.round-robin'},
+  {id: 'random', labelKey: 'providers.keyStrategy.random'}
+]
+
 /** 预置供应商列表：选中后自动填充基本信息 */
 export const providerPresets: ProviderPreset[] = [
   {
@@ -166,7 +186,7 @@ export const providerPresets: ProviderPreset[] = [
     name: 'OpenAI',
     baseUrl: 'https://api.openai.com',
     icon: 'openai',
-    protocols: ['openai'],
+    protocols: ['openai-chat', 'openai-responses'],
     endpoints: {},
     modelsEndpoint: '/v1/models'
   },
@@ -176,19 +196,9 @@ export const providerPresets: ProviderPreset[] = [
     name: 'Anthropic',
     baseUrl: 'https://api.anthropic.com',
     icon: 'anthropic',
-    protocols: ['anthropic'],
+    protocols: ['anthropic-messages'],
     endpoints: {},
     modelsEndpoint: '/v1/models'
-  },
-  {
-    id: 'gemini',
-    providerId: 'gemini',
-    name: 'Google Gemini',
-    baseUrl: 'https://generativelanguage.googleapis.com',
-    icon: 'gemini',
-    protocols: ['gemini'],
-    endpoints: {},
-    modelsEndpoint: '/v1beta/models'
   },
   {
     id: 'deepseek',
@@ -196,7 +206,7 @@ export const providerPresets: ProviderPreset[] = [
     name: 'DeepSeek',
     baseUrl: 'https://api.deepseek.com',
     icon: 'deepseek',
-    protocols: ['openai'],
+    protocols: ['openai-chat'],
     endpoints: {},
     modelsEndpoint: '/models'
   },
@@ -206,7 +216,7 @@ export const providerPresets: ProviderPreset[] = [
     name: 'Moonshot Kimi',
     baseUrl: 'https://api.moonshot.cn',
     icon: 'kimi',
-    protocols: ['openai'],
+    protocols: ['openai-chat'],
     endpoints: {},
     modelsEndpoint: '/v1/models'
   },
@@ -216,9 +226,9 @@ export const providerPresets: ProviderPreset[] = [
     name: 'Qwen (DashScope)',
     baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     icon: 'qwen',
-    protocols: ['openai'],
+    protocols: ['openai-chat'],
     endpoints: {
-      openai: {
+      'openai-chat': {
         chatEndpoint: '/chat/completions'
       }
     },
@@ -230,9 +240,9 @@ export const providerPresets: ProviderPreset[] = [
     name: 'Zhipu GLM',
     baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
     icon: 'zhipu',
-    protocols: ['openai'],
+    protocols: ['openai-chat'],
     endpoints: {
-      openai: {
+      'openai-chat': {
         chatEndpoint: '/chat/completions'
       }
     },
@@ -244,7 +254,7 @@ export const providerPresets: ProviderPreset[] = [
     name: 'OpenRouter',
     baseUrl: 'https://openrouter.ai/api',
     icon: 'openrouter',
-    protocols: ['openai'],
+    protocols: ['openai-chat'],
     endpoints: {},
     modelsEndpoint: '/v1/models'
   },
@@ -254,7 +264,7 @@ export const providerPresets: ProviderPreset[] = [
     name: 'SiliconFlow',
     baseUrl: 'https://api.siliconflow.cn',
     icon: 'siliconcloud',
-    protocols: ['openai'],
+    protocols: ['openai-chat'],
     endpoints: {},
     modelsEndpoint: '/v1/models'
   },
@@ -264,7 +274,7 @@ export const providerPresets: ProviderPreset[] = [
     name: 'xAI Grok',
     baseUrl: 'https://api.x.ai',
     icon: 'xai',
-    protocols: ['openai'],
+    protocols: ['openai-chat'],
     endpoints: {},
     modelsEndpoint: '/v1/models'
   },
@@ -274,7 +284,7 @@ export const providerPresets: ProviderPreset[] = [
     name: 'Groq',
     baseUrl: 'https://api.groq.com/openai',
     icon: 'groq',
-    protocols: ['openai'],
+    protocols: ['openai-chat'],
     endpoints: {},
     modelsEndpoint: '/v1/models'
   },
@@ -284,7 +294,7 @@ export const providerPresets: ProviderPreset[] = [
     name: 'Volcengine Ark',
     baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
     icon: 'volcengine',
-    protocols: ['openai'],
+    protocols: ['openai-chat'],
     endpoints: {},
     modelsEndpoint: '/models'
   }
@@ -350,7 +360,15 @@ export function joinUrl(base: string, path: string): string {
   return `${trimmedBase}${normalizedPath}`
 }
 
-/** 生成默认模型配置（默认文生文、纯文本模态、零上限占位） */
+/** 密钥掩码：仅显示前 4 位与后 4 位（空值返回空串，由调用方处理展示） */
+export function maskKey(value: string): string {
+  const v = value.trim()
+  if (!v) return ''
+  if (v.length <= 8) return `${v.slice(0, 2)}****`
+  return `${v.slice(0, 4)} ···· ${v.slice(-4)}`
+}
+
+/** 生成默认模型配置（默认文生文、纯文本模态、零上限占位、全部密钥可用） */
 export function defaultModelConfig(): ProviderModelConfig {
   return {
     enabled: false,
@@ -364,6 +382,7 @@ export function defaultModelConfig(): ProviderModelConfig {
     maxContext: 0,
     maxInput: 0,
     maxOutput: 0,
-    protocols: []
+    protocols: [],
+    allowedKeyIds: []
   }
 }

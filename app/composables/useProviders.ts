@@ -54,6 +54,7 @@ function normalizeLegacyList(list: Array<Partial<ProviderConfig>>): ProviderConf
       remark: p.remark ?? '',
       endpoints,
       modelsEndpoint,
+      defaultProtocol: null,
       // 兼容旧数据：密钥缺 name/expiresAt 时补默认值
       keys: (p.keys ?? []).map((k: Partial<ProviderKeyConfig>) => ({
         name: '',

@@ -39,7 +39,7 @@ async function onPresetChange(value: string) {
   applyPreset(p, value)
 }
 
-/** 新增后的配置引导模式：setup=1 进入，四个步骤全部完成后退出并清理 query */
+/** 新增后的配置引导模式：setup=1 进入，三个步骤全部完成后退出并清理 query */
 const setupMode = computed(() => route.query.setup === '1')
 
 const setupSteps = computed(() => {
@@ -48,7 +48,6 @@ const setupSteps = computed(() => {
   return [
     {tab: 'protocols', label: t('providers.setupStepProtocols'), done: p.protocols.length > 0},
     {tab: 'keys', label: t('providers.setupStepKeys'), done: p.keys.length > 0},
-    {tab: 'keys', label: t('providers.setupStepFetch'), done: p.keys.some(k => k.fetchedModels.length > 0)},
     {tab: 'models', label: t('providers.setupStepModels'), done: Object.values(p.models).some(m => m.enabled)}
   ]
 })
@@ -73,6 +72,11 @@ watch(() => provider.value ? [...provider.value.protocols] : [], (list) => {
 
 const tab = ref(route.query.setup === '1' ? 'protocols' : 'basic')
 
+// Tab 栏右侧操作按钮：通过子组件暴露的方法打开对应弹窗（弹窗本身仍在子组件内）
+const protocolsRef = ref<{openAdd: () => void} | null>(null)
+const keysRef = ref<{openCreate: () => void} | null>(null)
+const modelsRef = ref<{openCreate: () => void, openFetch: () => void} | null>(null)
+
 const tabs = computed(() => [
   {label: t('providers.basicInfo'), value: 'basic'},
   {
@@ -88,7 +92,7 @@ const tabs = computed(() => [
   {
     label: t('providers.models'),
     value: 'models',
-    badge: Object.values(provider.value?.models ?? {}).filter(m => m.enabled).length || undefined
+    badge: Object.keys(provider.value?.models ?? {}).length || undefined
   }
 ])
 </script>
@@ -111,7 +115,7 @@ const tabs = computed(() => [
     <template #body>
       <div v-if="provider" class="flex h-full min-h-0 flex-col">
         <!-- 供应商概要 -->
-        <div class="shrink-0 px-4 pb-3 pt-4">
+        <div class="shrink-0 px-4 py-2.5">
           <div class="flex items-center gap-3">
             <ProviderIcon :icon="provider.icon" :name="provider.name || provider.providerId" size="lg"/>
             <div class="min-w-0 flex-1">
@@ -164,6 +168,52 @@ const tabs = computed(() => [
           class="min-h-0 w-full flex-1"
           :ui="{ content: 'min-h-0 flex-1' }"
         >
+          <!-- Tab 栏右侧操作区：随当前 Tab 切换，替代各 Tab 内容里的独立操作栏 -->
+          <template #list-trailing>
+            <div class="ms-auto flex items-center gap-1.5">
+              <div v-if="tab === 'basic'" class="flex items-center gap-1 pe-1 text-xs text-muted">
+                <UIcon name="i-lucide-cloud-check" class="size-3.5"/>
+                <span>{{ t('providers.autosaveHint') }}</span>
+              </div>
+              <UButton
+                v-else-if="tab === 'protocols'"
+                icon="i-lucide-plus"
+                variant="outline"
+                color="neutral"
+                @click="protocolsRef?.openAdd()"
+              >
+                {{ t('providers.addEndpoint') }}
+              </UButton>
+              <UButton
+                v-else-if="tab === 'keys'"
+                icon="i-lucide-plus"
+                variant="outline"
+                color="neutral"
+                @click="keysRef?.openCreate()"
+              >
+                {{ t('providers.addKey') }}
+              </UButton>
+              <template v-else>
+                <UButton
+                  icon="i-lucide-cloud-download"
+                  variant="outline"
+                  color="neutral"
+                  @click="modelsRef?.openFetch()"
+                >
+                  {{ t('providers.fetchModels') }}
+                </UButton>
+                <UButton
+                  icon="i-lucide-plus"
+                  variant="outline"
+                  color="neutral"
+                  @click="modelsRef?.openCreate()"
+                >
+                  {{ t('providers.addModel') }}
+                </UButton>
+              </template>
+            </div>
+          </template>
+
           <template #content>
             <!-- 基本信息：与新增/编辑弹窗布局一致（图标→供应商→ID→名称→URL→备注） -->
             <div v-if="tab === 'basic'" class="h-full overflow-y-auto p-4">
@@ -215,7 +265,9 @@ const tabs = computed(() => [
             <div v-else-if="tab === 'protocols'" class="h-full overflow-y-auto p-4">
               <div class="max-w-3xl">
                 <ProviderProtocolsForm
+                  ref="protocolsRef"
                   v-model:protocols="provider.protocols"
+                  v-model:default-protocol="provider.defaultProtocol"
                   v-model:model-endpoint="provider.modelsEndpoint"
                   :base-url="provider.baseUrl"
                   :endpoints="provider.endpoints"
@@ -226,14 +278,14 @@ const tabs = computed(() => [
             <!-- 密钥 -->
             <div v-else-if="tab === 'keys'" class="h-full overflow-y-auto p-4">
               <div class="max-w-3xl">
-                <ProviderKeys :provider="provider"/>
+                <ProviderKeys ref="keysRef" :provider="provider"/>
               </div>
             </div>
 
             <!-- 模型 -->
             <div v-else-if="tab === 'models'" class="h-full overflow-y-auto p-4">
               <div class="max-w-3xl">
-                <ProviderModels :provider="provider"/>
+                <ProviderModels ref="modelsRef" :provider="provider"/>
               </div>
             </div>
           </template>

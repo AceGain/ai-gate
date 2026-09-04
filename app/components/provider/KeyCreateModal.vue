@@ -60,8 +60,7 @@ function save() {
     name: form.name.trim(),
     value: form.value.trim(),
     expiresAt: form.expiresAt,
-    fetchedModels: [],
-    enabledModels: []
+    enabled: true
   }
   emits('close', key)
 }

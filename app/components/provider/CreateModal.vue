@@ -108,8 +108,10 @@ function save() {
     baseUrl: form.baseUrl.trim(),
     remark: form.remark.trim(),
     protocols: [...form.protocols],
+    defaultProtocol: form.protocols[0] ?? null,
     endpoints: structuredClone(toRaw(form.endpoints)),
     modelsEndpoint: form.modelsEndpoint,
+    keyStrategy: 'failover',
     keys: [],
     models: {}
   }
