@@ -1,0 +1,105 @@
+/**
+ * 供应商 API（/api/providers）：sys_provider 表的逐条 CRUD
+ * id 与时间戳由服务端/数据库维护；code 冲突返回 409，记录不存在返回 404
+ */
+import type {Context} from 'hono'
+import {Hono} from 'hono'
+import {newId} from '../../../shared/sys-provider'
+import type {SysProviderInput} from '../../../shared/sys-provider'
+import {getProvider, insertProvider, listProviders, removeProvider, reorderProviders, updateProvider} from '../store'
+
+export const providers = new Hono()
+
+/** JSON 错误响应（与 v1 admin 路由保持一致的响应形态） */
+function jsonError(_c: Context, status: number, error: string): Response {
+  return new Response(JSON.stringify({error}), {
+    status,
+    headers: {'Content-Type': 'application/json; charset=UTF-8'}
+  })
+}
+
+/** 请求体解析与校验：code/name 必填，sort 为非负整数 */
+function parseProviderBody(raw: unknown): {data?: SysProviderInput; error?: string} {
+  const p = (raw ?? {}) as Partial<SysProviderInput>
+  if (typeof p.code !== 'string' || !p.code.trim()) {
+    return {error: 'Invalid provider entry: missing code'}
+  }
+  if (typeof p.name !== 'string' || !p.name.trim()) {
+    return {error: 'Invalid provider entry: missing name'}
+  }
+  if (p.sort !== undefined && (!Number.isSafeInteger(p.sort) || p.sort < 0)) {
+    return {error: 'Invalid provider entry: sort must be a non-negative integer'}
+  }
+  return {data: {code: p.code.trim(), name: p.name.trim(), icon: p.icon, enabled: p.enabled, description: p.description, sort: p.sort}}
+}
+
+/** code 唯一约束冲突 → 409 */
+function isUniqueViolation(err: unknown): boolean {
+  return err instanceof Error && err.message.includes('UNIQUE constraint failed')
+}
+
+/** 排序项校验 */
+function isReorderItem(v: unknown): v is {id: string, sort: number} {
+  const it = v as {id?: unknown, sort?: unknown} | null
+  return !!it && typeof it.id === 'string' && !!it.id
+    && typeof it.sort === 'number' && Number.isSafeInteger(it.sort) && it.sort >= 0
+}
+
+/** 列表 */
+providers.get('/providers', (c) => {
+  return c.json(listProviders())
+})
+
+/** 批量排序（列表拖拽后的持久化）；须注册在 PUT /:id 之前，避免 "reorder" 被当作 :id */
+providers.put('/providers/reorder', async (c) => {
+  const body = await c.req.json<unknown>().catch(() => null)
+  if (!Array.isArray(body) || !body.every(isReorderItem)) {
+    return jsonError(c, 400, 'Body must be an array of {id, sort}')
+  }
+  reorderProviders(body)
+  return c.json({ok: true})
+})
+
+/** 详情 */
+providers.get('/providers/:id', (c) => {
+  const provider = getProvider(c.req.param('id'))
+  if (!provider) return jsonError(c, 404, 'Provider not found')
+  return c.json(provider)
+})
+
+/** 新增 */
+providers.post('/providers', async (c) => {
+  const body = await c.req.json<unknown>().catch(() => null)
+  const {data, error} = parseProviderBody(body)
+  if (!data) return jsonError(c, 400, error!)
+
+  try {
+    return c.json(insertProvider(newId(), data), 201)
+  } catch (err) {
+    if (isUniqueViolation(err)) return jsonError(c, 409, `Duplicate provider code: ${data.code}`)
+    throw err
+  }
+})
+
+/** 全量更新单条 */
+providers.put('/providers/:id', async (c) => {
+  const id = c.req.param('id')
+  const body = await c.req.json<unknown>().catch(() => null)
+  const {data, error} = parseProviderBody(body)
+  if (!data) return jsonError(c, 400, error!)
+
+  try {
+    const updated = updateProvider(id, data)
+    if (!updated) return jsonError(c, 404, 'Provider not found')
+    return c.json(updated)
+  } catch (err) {
+    if (isUniqueViolation(err)) return jsonError(c, 409, `Duplicate provider code: ${data.code}`)
+    throw err
+  }
+})
+
+/** 删除 */
+providers.delete('/providers/:id', (c) => {
+  if (!removeProvider(c.req.param('id'))) return jsonError(c, 404, 'Provider not found')
+  return c.json({ok: true})
+})

@@ -24,7 +24,7 @@ export const navRoutes: NavRoute[] = [
   },
   {
     labelKey: 'nav.providers',
-    icon: 'i-lucide-server',
+    icon: 'i-lucide-server-cog',
     to: '/providers'
   },
   {

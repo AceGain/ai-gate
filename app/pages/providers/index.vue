@@ -1,35 +1,63 @@
 <script setup lang="ts">
-import type {ProviderConfig} from '~/utils/providers'
+import {useSortable} from '@vueuse/integrations/useSortable'
+import type {SysProvider} from '~/utils/providers'
 
 const {t} = useI18n()
-const {providers, removeProvider, persist} = useProviders()
+const {providers, removeProvider, toggleProvider, saveOrder} = useProviders()
 const confirmDialog = useConfirmDialog()
 
-/** 新增供应商弹窗（编辑一律在详情页进行） */
-const createOpen = ref(false)
+/** 新增/编辑弹窗状态（editing 为 null = 新增） */
+const modalOpen = ref(false)
+const editing = ref<SysProvider | null>(null)
 
 function openCreate() {
-  createOpen.value = true
+  editing.value = null
+  modalOpen.value = true
 }
 
-/** 切换启用/停用（持久化） */
-function toggleProvider(p: ProviderConfig, value: boolean) {
-  p.enabled = value
-  persist()
+function openEdit(p: SysProvider) {
+  editing.value = p
+  modalOpen.value = true
 }
 
-/** 删除供应商：二次确认 */
-async function confirmRemove(p: ProviderConfig) {
+/** 配置入口：配置页待设计，先占位 */
+function openConfig(_p: SysProvider) {
+  // TODO: 供应商配置页（协议端点 / 密钥 / 模型），按后续安排实现
+}
+
+/** 删除：二次确认 */
+async function confirmRemove(p: SysProvider) {
   const confirmed = await confirmDialog({
-    title: t('providers.removeProviderConfirmTitle'),
-    description: t('providers.removeProviderConfirmDesc', {name: p.name})
+    title: t('providers.removeConfirmTitle'),
+    description: t('providers.removeConfirmDesc', {name: p.name || p.code})
   })
-  if (confirmed) removeProvider(p.id)
+  if (confirmed) await removeProvider(p.id)
 }
 
-function enabledModelCount(p: { models: Record<string, { enabled: boolean }> }) {
-  return Object.values(p.models).filter(m => m.enabled).length
-}
+/** 拖拽排序：useSortable 直接绑定 providers 数组（自动同步顺序与 DOM）；拖拽结束持久化 */
+const listEl = ref<HTMLElement | null>(null)
+
+useSortable(listEl, providers, {
+  handle: '.drag-handle',
+  animation: 150,
+  // Tauri WebView2 的原生 file-drop 处理会拦截 HTML5 drag 事件，导致拖拽完全无效；
+  // forceFallback 改用纯鼠标事件模拟拖拽，Web 与桌面端行为一致
+  forceFallback: true,
+  // 拖拽跟随元素挂到 body：避免被列表的 overflow-y-auto 滚动容器裁剪
+  fallbackOnBody: true,
+  // 列表容器在 v-if 内（空态切换），需监听元素变化自动重建实例
+  watchElement: true,
+  onStart: () => {
+    // fallback 模式浏览器不接管光标，会随指针下方元素来回切换（手↔箭头闪烁）；拖拽期间全局锁定
+    document.body.classList.add('provider-sortable-dragging')
+  },
+  onEnd: (evt) => {
+    document.body.classList.remove('provider-sortable-dragging')
+    if (evt.oldIndex == null || evt.newIndex == null || evt.oldIndex === evt.newIndex) return
+    // 数组同步在 nextTick 中执行，持久化需排在其后读取新顺序
+    void nextTick(() => saveOrder())
+  }
+})
 </script>
 
 <template>
@@ -43,39 +71,51 @@ function enabledModelCount(p: { models: Record<string, { enabled: boolean }> }) 
     </template>
 
     <template #body>
+      <!-- 有数据：一行一条独立卡片，卡片间留间距；拖拽手柄排序 -->
       <div v-if="providers.length" class="h-full overflow-y-auto p-4">
-        <!-- 一行一条数据的独立卡片，卡片间留间距 -->
-        <div class="flex flex-col gap-3">
+        <div ref="listEl" class="flex flex-col gap-3">
           <div
             v-for="p in providers"
             :key="p.id"
-            class="group flex cursor-pointer items-center gap-3 rounded-lg border border-default border-l-2 bg-default px-4 py-3 transition-colors hover:border-primary/40 hover:bg-elevated/50"
-            :class="p.enabled ? 'border-l-primary' : 'border-l-default'"
-            @click="navigateTo(`/providers/${p.id}`)"
+            class="flex select-none items-center gap-2.5 rounded-lg border border-default bg-default px-3 py-2.5 transition-colors hover:border-primary/40 hover:bg-elevated/50"
           >
-            <ProviderIcon :icon="p.icon" :name="p.name || p.providerId"/>
-
-            <!-- 名称 + URL -->
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-2">
-                <span class="truncate text-sm font-medium text-highlighted">{{ p.name }}</span>
-              </div>
-              <p class="truncate text-xs text-muted">{{ p.baseUrl }}</p>
+            <!-- 拖拽手柄（扩大命中区，hover 高亮） -->
+            <div
+              class="drag-handle -ml-1 flex size-7 shrink-0 cursor-grab items-center justify-center rounded-md text-dimmed transition-colors hover:bg-elevated hover:text-default active:cursor-grabbing"
+              role="button"
+              :aria-label="t('providers.dragToSort')"
+            >
+              <UIcon name="i-lucide-grip-vertical" class="size-4"/>
             </div>
 
-            <!-- 密钥 / 模型计数 -->
-            <div class="hidden shrink-0 gap-3 text-xs text-muted md:flex">
-              <span>{{ t('providers.keyCount', {count: p.keys.length}) }}</span>
-              <span>{{ t('providers.modelCount', {count: enabledModelCount(p)}) }}</span>
-            </div>
+            <ProviderIcon :icon="p.icon" :name="p.name || p.code"/>
 
-            <!-- 启用开关 + 修改 + 删除 -->
+            <!-- 名称 + 编码（对外模型标识前缀） -->
+            <span
+              class="shrink-0 text-sm font-medium"
+              :class="p.enabled ? 'text-highlighted' : 'text-dimmed'"
+            >{{ p.name || p.code }}</span>
+            <UBadge color="neutral" variant="subtle" class="shrink-0 font-mono">{{ p.code }}</UBadge>
+
+            <!-- 描述 -->
+            <p class="min-w-0 flex-1 truncate text-xs text-muted">{{ p.description }}</p>
+
+            <!-- 启用开关 -->
             <USwitch
               :model-value="p.enabled"
               :aria-label="t('providers.toggleEnabled')"
               class="shrink-0"
               @update:model-value="v => toggleProvider(p, !!v)"
-              @click.stop
+            />
+
+            <!-- 配置 / 修改 / 删除 -->
+            <UButton
+              icon="i-lucide-settings-2"
+              variant="ghost"
+              color="neutral"
+              class="shrink-0 text-muted hover:text-default"
+              :aria-label="t('providers.config')"
+              @click="openConfig(p)"
             />
             <UButton
               icon="i-lucide-pencil"
@@ -83,33 +123,46 @@ function enabledModelCount(p: { models: Record<string, { enabled: boolean }> }) 
               color="neutral"
               class="shrink-0 text-muted hover:text-default"
               :aria-label="t('providers.edit')"
-              :to="`/providers/${p.id}`"
-              @click.stop
+              @click="openEdit(p)"
             />
             <UButton
               icon="i-lucide-trash-2"
               variant="ghost"
               color="error"
               class="shrink-0 text-muted hover:text-error"
-              :aria-label="t('providers.removeProvider')"
-              @click.stop="confirmRemove(p)"
+              :aria-label="t('providers.remove')"
+              @click="confirmRemove(p)"
             />
           </div>
         </div>
       </div>
 
-      <!-- 空态：专属文案 + 新增 CTA -->
+      <!-- 空态 -->
       <div v-else class="flex min-h-full flex-col items-center justify-center gap-4">
         <UEmpty
-          :title="t('providers.listEmpty')"
-          :description="t('providers.listEmptyHint')"
-          icon="i-lucide-server"
+          :title="t('common.empty')"
+          icon="i-lucide-server-cog"
           variant="naked"
         />
       </div>
     </template>
   </UDashboardPanel>
 
-  <!-- 新增供应商弹窗 -->
-  <ProviderCreateModal v-model:open="createOpen"/>
+  <!-- 新增/编辑弹窗 -->
+  <ProviderModal v-model:open="modalOpen" :provider="editing"/>
 </template>
+
+<style scoped>
+/* 拖拽落点占位提示 */
+:deep(.sortable-ghost) {
+  opacity: 0.35;
+}
+</style>
+
+<style>
+/* 拖拽期间全局锁定抓取光标（body 类由 onStart/onEnd 切换），避免光标随指针下方元素来回变化 */
+body.provider-sortable-dragging,
+body.provider-sortable-dragging * {
+  cursor: grabbing !important;
+}
+</style>

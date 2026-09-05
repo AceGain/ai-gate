@@ -1,95 +1,98 @@
 /**
- * 供应商配置持久化：JSON 文件存储（server/data/providers.json）
- * 读写均为全量列表；写入使用临时文件 + rename 保证原子性
+ * 供应商持久化：SQLite（sys_provider 表）
+ * 时间戳由数据库维护（DEFAULT CURRENT_TIMESTAMP / UPDATE 时显式刷新）；列表按 sort 升序
  */
-import {mkdir, readFile, rename, writeFile} from 'node:fs/promises'
-import path from 'node:path'
-import type {KeySelectionStrategy, ProviderConfig, ProviderKeyConfig, ProviderProtocolConfig, ProviderProtocolId} from '../../shared/providers'
+import type {SysProvider, SysProviderInput} from '../../shared/sys-provider'
+import {db} from './db'
 
-const DATA_DIR = process.env.AI_GATE_DATA_DIR ?? path.resolve(process.cwd(), 'server', 'data')
-const DATA_FILE = path.join(DATA_DIR, 'providers.json')
-
-let cache: ProviderConfig[] | null = null
-
-/** 旧协议 id 迁移：openai → openai-chat、anthropic → anthropic-messages、gemini 移除 */
-function migrateProtocol(id: string): ProviderProtocolId | null {
-  if (id === 'openai') return 'openai-chat'
-  if (id === 'anthropic') return 'anthropic-messages'
-  if (id === 'gemini') return null
-  return id as ProviderProtocolId
+/** 表行结构（snake_case；enabled 为 0/1） */
+interface SysProviderRow {
+  id: string
+  code: string
+  name: string
+  icon: string
+  enabled: number
+  description: string
+  sort: number
+  create_time: string
+  update_time: string
 }
 
-/** 协议列表迁移（去重、丢弃无效项） */
-function migrateProtocolList(list: string[] | undefined): ProviderProtocolId[] {
-  const mapped = (list ?? [])
-    .map(id => migrateProtocol(String(id)))
-    .filter((id): id is ProviderProtocolId => id !== null)
-  return [...new Set(mapped)]
-}
-
-const KEY_STRATEGIES: KeySelectionStrategy[] = ['failover', 'round-robin', 'random']
-
-/** 读取兜底：字段缺失时补默认值，避免旧数据结构导致运行时崩溃 */
-function normalizeProvider(p: Partial<ProviderConfig>): ProviderConfig {
-  const endpoints: Partial<Record<ProviderProtocolId, ProviderProtocolConfig>> = {}
-  for (const [key, cfg] of Object.entries(p.endpoints ?? {})) {
-    const proto = migrateProtocol(key)
-    if (proto && cfg) endpoints[proto] = {chatEndpoint: cfg.chatEndpoint}
-  }
-  const models = Object.fromEntries(
-    Object.entries(p.models ?? {}).map(([id, m]) => [
-      id,
-      {...m, protocols: migrateProtocolList(m?.protocols), allowedKeyIds: m?.allowedKeyIds ?? []}
-    ])
-  )
-  const protocols = migrateProtocolList(p.protocols)
-  // 默认协议归一化：缺失或不在协议列表时回退到首个协议
-  const defaultProtocol = protocols.includes(p.defaultProtocol as ProviderProtocolId)
-    ? p.defaultProtocol as ProviderProtocolId
-    : protocols[0] ?? null
+/** 行 → camelCase 载荷 */
+function toProvider(row: SysProviderRow): SysProvider {
   return {
-    ...p,
-    enabled: p.enabled !== false,
-    remark: p.remark ?? '',
-    icon: p.icon ?? '',
-    protocols,
-    defaultProtocol,
-    endpoints,
-    modelsEndpoint: p.modelsEndpoint ?? '',
-    keyStrategy: KEY_STRATEGIES.includes(p.keyStrategy as KeySelectionStrategy)
-      ? p.keyStrategy as KeySelectionStrategy
-      : 'failover',
-    // 密钥仅保留凭证字段（剥离历史遗留的模型字段）
-    keys: (p.keys ?? []).map(k => ({
-      id: k.id,
-      name: k.name ?? '',
-      value: k.value ?? '',
-      expiresAt: k.expiresAt ?? '',
-      enabled: k.enabled !== false
-    })) satisfies ProviderKeyConfig[],
-    models
-  } as ProviderConfig
-}
-
-/** 加载全部供应商配置（进程内缓存） */
-export async function loadProviders(): Promise<ProviderConfig[]> {
-  if (cache) return cache
-  try {
-    const raw = await readFile(DATA_FILE, 'utf-8')
-    const json = JSON.parse(raw) as { providers?: Partial<ProviderConfig>[] }
-    cache = (json.providers ?? []).map(normalizeProvider)
-  } catch {
-    // 文件不存在或损坏时视为空配置
-    cache = []
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    icon: row.icon,
+    enabled: row.enabled !== 0,
+    description: row.description,
+    sort: row.sort,
+    createTime: row.create_time,
+    updateTime: row.update_time
   }
-  return cache
 }
 
-/** 全量保存供应商配置（原子写入；归一化兜底，保证缓存与落盘数据一致） */
-export async function saveProviders(list: ProviderConfig[]): Promise<void> {
-  cache = list.map(p => normalizeProvider(p))
-  await mkdir(DATA_DIR, {recursive: true})
-  const tmp = `${DATA_FILE}.tmp`
-  await writeFile(tmp, `${JSON.stringify({version: 2, providers: cache}, null, 2)}\n`, 'utf-8')
-  await rename(tmp, DATA_FILE)
+/** 可写字段的入库参数（缺省值与表默认值一致） */
+function toParams(input: SysProviderInput) {
+  return {
+    code: input.code,
+    name: input.name,
+    icon: input.icon ?? '',
+    enabled: input.enabled === true ? 1 : 0,
+    description: input.description ?? '',
+    sort: input.sort ?? 0
+  }
+}
+
+/** 查询全部供应商（sort 升序，同序按创建时间正序） */
+export function listProviders(): SysProvider[] {
+  const rows = db.prepare('SELECT * FROM sys_provider ORDER BY sort ASC, create_time ASC').all() as unknown as SysProviderRow[]
+  return rows.map(toProvider)
+}
+
+/** 按 id 查询单个供应商 */
+export function getProvider(id: string): SysProvider | null {
+  const row = db.prepare('SELECT * FROM sys_provider WHERE id = ?').get(id) as unknown as SysProviderRow | undefined
+  return row ? toProvider(row) : null
+}
+
+/** 新增供应商：时间戳由数据库默认值生成；code 重复时抛出约束错误（由路由层转 409）。返回完整记录 */
+export function insertProvider(id: string, input: SysProviderInput): SysProvider {
+  const v = toParams(input)
+  db.prepare(`
+    INSERT INTO sys_provider (id, code, name, icon, enabled, description, sort)
+    VALUES (@id, @code, @name, @icon, @enabled, @description, @sort)
+  `).run({...v, id})
+  return getProvider(id)!
+}
+
+/** 按 id 全量更新可写字段（不存在时不生效）。返回更新后的完整记录 */
+export function updateProvider(id: string, input: SysProviderInput): SysProvider | null {
+  const v = toParams(input)
+  const result = db.prepare(`
+    UPDATE sys_provider SET
+      code = @code, name = @name, icon = @icon, enabled = @enabled,
+      description = @description, sort = @sort, update_time = CURRENT_TIMESTAMP
+    WHERE id = @id
+  `).run({...v, id})
+  return result.changes > 0 ? getProvider(id) : null
+}
+
+/** 按 id 删除供应商 */
+export function removeProvider(id: string): boolean {
+  return db.prepare('DELETE FROM sys_provider WHERE id = ?').run(id).changes > 0
+}
+
+/** 批量更新排序（列表拖拽后的持久化）：单事务，逐条刷新 sort 与 update_time */
+export function reorderProviders(items: {id: string, sort: number}[]): void {
+  const stmt = db.prepare('UPDATE sys_provider SET sort = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?')
+  try {
+    db.exec('BEGIN')
+    for (const {id, sort} of items) stmt.run(sort, id)
+    db.exec('COMMIT')
+  } catch (err) {
+    db.exec('ROLLBACK')
+    throw err
+  }
 }
