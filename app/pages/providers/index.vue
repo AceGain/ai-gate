@@ -81,7 +81,7 @@ useSortable(listEl, providers, {
           >
             <!-- 拖拽手柄（扩大命中区，hover 高亮） -->
             <div
-              class="drag-handle -ml-1 flex size-7 shrink-0 cursor-grab items-center justify-center rounded-md text-dimmed transition-colors hover:bg-elevated hover:text-default active:cursor-grabbing"
+              class="drag-handle -ml-1 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-dimmed transition-colors hover:bg-elevated hover:text-default"
               role="button"
               :aria-label="t('providers.dragToSort')"
             >
@@ -160,9 +160,9 @@ useSortable(listEl, providers, {
 </style>
 
 <style>
-/* 拖拽期间全局锁定抓取光标（body 类由 onStart/onEnd 切换），避免光标随指针下方元素来回变化 */
+/* 拖拽期间全局隐藏鼠标光标：视线零遮挡，纯靠半透明卡片与落点虚影提供反馈 */
 body.provider-sortable-dragging,
 body.provider-sortable-dragging * {
-  cursor: grabbing !important;
+  cursor: none !important;
 }
 </style>
