@@ -77,7 +77,7 @@ useSortable(listEl, providers, {
           <div
             v-for="p in providers"
             :key="p.id"
-            class="flex select-none items-center gap-2.5 rounded-lg border border-default bg-default px-3 py-2.5 transition-colors hover:border-primary/40 hover:bg-elevated/50"
+            class="flex min-h-[58px] select-none items-center gap-2.5 rounded-lg border border-default bg-default px-3 py-2.5 transition-colors hover:border-primary/40 hover:bg-elevated/50"
           >
             <!-- 拖拽手柄（扩大命中区，hover 高亮） -->
             <div
@@ -90,15 +90,22 @@ useSortable(listEl, providers, {
 
             <ProviderIcon :icon="p.icon" :name="p.name || p.code"/>
 
-            <!-- 名称 + 编码（对外模型标识前缀） -->
-            <span
-              class="shrink-0 text-sm font-medium"
-              :class="p.enabled ? 'text-highlighted' : 'text-dimmed'"
-            >{{ p.name || p.code }}</span>
-            <UBadge color="neutral" variant="subtle" class="shrink-0 font-mono">{{ p.code }}</UBadge>
-
-            <!-- 描述 -->
-            <p class="min-w-0 flex-1 truncate text-xs text-muted">{{ p.description }}</p>
+            <!-- 图标右侧信息区（两行：第一行名称+编码，第二行备注，超长省略） -->
+            <div class="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
+              <div class="flex min-w-0 items-center gap-2">
+                <span
+                  class="truncate text-sm font-medium"
+                  :class="p.enabled ? 'text-highlighted' : 'text-dimmed'"
+                  :title="p.name || p.code"
+                >{{ p.name || p.code }}</span>
+                <UBadge color="neutral" variant="subtle" size="sm" class="shrink-0 font-mono">{{ p.code }}</UBadge>
+              </div>
+              <p
+                v-if="p.description"
+                class="truncate text-xs text-muted"
+                :title="p.description"
+              >{{ p.description }}</p>
+            </div>
 
             <!-- 启用开关 -->
             <USwitch

@@ -111,13 +111,14 @@ async function save() {
   <UModal
     v-model:open="open"
     :title="props.provider ? t('providers.editTitle') : t('providers.newTitle')"
+    :ui="{ content: 'max-w-md', footer: 'justify-end' }"
   >
     <template #body>
       <div class="space-y-4">
-        <!-- 显示图标：上传图片 / 内置品牌图标 -->
-        <UFormField :label="t('providers.icon')">
+        <!-- 显示图标：居中展示，点击选择/上传 -->
+        <div class="flex justify-center pb-1">
           <ProviderIconPicker v-model="form.icon" :name="form.name"/>
-        </UFormField>
+        </div>
 
         <UFormField :label="t('providers.code')" :error="codeError">
           <UInput
@@ -143,10 +144,6 @@ async function save() {
             :placeholder="t('providers.descriptionPlaceholder')"
             class="w-full"
           />
-        </UFormField>
-
-        <UFormField :label="t('providers.enable')">
-          <USwitch v-model="form.enabled"/>
         </UFormField>
       </div>
     </template>
