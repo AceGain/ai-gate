@@ -4,12 +4,18 @@ import {serveStatic} from '@hono/node-server/serve-static'
 import {Hono} from 'hono'
 import {cors} from 'hono/cors'
 import {providers} from './routes/providers'
+import {endpoints} from './routes/endpoints'
+import {keys} from './routes/keys'
+import {models} from './routes/models'
 
 const app = new Hono()
 
 app.use('*', cors())
 
 app.route('/api', providers)
+app.route('/api', endpoints)
+app.route('/api', keys)
+app.route('/api', models)
 
 if (existsSync('dist/index.html')) {
   app.use('*', serveStatic({root: 'dist'}))

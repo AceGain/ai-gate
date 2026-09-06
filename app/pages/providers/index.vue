@@ -20,9 +20,9 @@ function openEdit(p: SysProvider) {
   modalOpen.value = true
 }
 
-/** 配置入口：配置页待设计，先占位 */
-function openConfig(_p: SysProvider) {
-  // TODO: 供应商配置页（协议端点 / 密钥 / 模型），按后续安排实现
+/** 配置入口：进入供应商配置详情页 */
+function openConfig(p: SysProvider) {
+  navigateTo(`/providers/${p.id}`)
 }
 
 /** 删除：二次确认 */
@@ -125,7 +125,7 @@ useSortable(listEl, providers, {
               @click="openConfig(p)"
             />
             <UButton
-              icon="i-lucide-pencil"
+              icon="i-lucide-square-pen"
               variant="ghost"
               color="neutral"
               class="shrink-0 text-muted hover:text-default"

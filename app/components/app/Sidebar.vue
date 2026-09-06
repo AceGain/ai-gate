@@ -59,9 +59,14 @@ onMounted(() => {
         :collapsed="isCollapsed"
         :tooltip="isCollapsed"
         :label="t('search.label')"
+        size="md"
         variant="ghost"
         class="w-full"
-        :ui="{ base: 'py-2', trailing: isCollapsed ? 'hidden' : 'flex' }"
+        :ui="{
+          base: 'px-2 py-2',
+          leadingIcon: 'size-5',
+          trailing: isCollapsed ? 'hidden' : 'flex'
+        }"
       />
     </template>
 

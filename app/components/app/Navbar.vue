@@ -1,9 +1,14 @@
 <script setup lang="ts">
+const props = defineProps<{
+  title?: string
+}>()
+
 const {t} = useI18n()
 const route = useRoute()
 
-// 页面标题：按路由名映射 i18n 文案（从 layouts/default.vue 迁移至此）
+// 页面标题：优先使用传入的 title，否则按路由名映射 i18n 文案
 const pageTitle = computed(() => {
+  if (props.title) return props.title
   switch (route.name) {
     case 'endpoints':
       return t('endpoints.title')
@@ -33,6 +38,13 @@ const pageTitle = computed(() => {
     <template #leading>
       <!-- 覆盖默认 hidden lg:flex：侧边栏已强制全宽度可见（:ui root 'flex'），折叠按钮作为配套控制应随之始终显示 -->
       <UDashboardSidebarCollapse :ui="{ base: 'flex' }"/>
+      <slot name="leading"/>
+    </template>
+
+    <template #title>
+      <slot name="title">
+        {{ pageTitle }}
+      </slot>
     </template>
 
     <template #right>

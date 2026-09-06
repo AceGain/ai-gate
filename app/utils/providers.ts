@@ -4,6 +4,16 @@
  */
 
 export type {SysProvider, SysProviderInput} from '../../shared/sys-provider'
+export type {SysEndpoint, SysEndpointInput, SysEndpointType} from '../../shared/sys-endpoint'
+export type {SysKey, SysKeyInput, SysKeyStatus} from '../../shared/sys-key'
+export type {
+  SysModel,
+  SysModelInput,
+  SysModelReasoning,
+  SysModelStatus,
+  SysModelType
+} from '../../shared/sys-model'
+export type {SysKeyModel} from '../../shared/sys-key-model'
 
 /**
  * 后端 API 基地址：默认同源（dev 经 Nuxt devProxy 代理，生产由 Hono 直接服务静态资源与 API）
