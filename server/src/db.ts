@@ -20,9 +20,6 @@ db.exec('PRAGMA journal_mode = WAL')
 db.exec('PRAGMA busy_timeout = 5000')
 db.exec('PRAGMA foreign_keys = ON')
 
-// 清理开发阶段旧设计的遗留表（正式表结构以 docs/database-design.md 为准）
-db.exec('DROP TABLE IF EXISTS providers_v2')
-
 // 供应商
 db.exec(`
   CREATE TABLE IF NOT EXISTS sys_provider (
