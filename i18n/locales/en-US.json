@@ -26,14 +26,17 @@
     "copy": "Copy"
   },
   "dashboard": {
-    "title": "Dashboard"
+    "title": "Dashboard",
+    "emptyDesc": "No metrics or request logs available yet"
   },
   "endpoints": {
     "title": "Endpoint",
-    "add": "New"
+    "add": "New",
+    "emptyDesc": "No network endpoints configured yet"
   },
   "providers": {
     "title": "Provider",
+    "emptyDesc": "No providers configured yet. Add a provider to get started.",
     "configTitle": "Provider Configuration",
     "enabled": "Enabled",
     "disabled": "Disabled",
@@ -188,7 +191,8 @@
   },
   "virtualModels": {
     "title": "Virtual Model",
-    "add": "New"
+    "add": "New",
+    "emptyDesc": "No virtual models configured yet. Aggregate models for a unified entrypoint."
   },
   "settings": {
     "title": "Settings",

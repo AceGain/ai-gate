@@ -145,10 +145,10 @@ useSortable(listEl, providers, {
       </div>
 
       <!-- 空态 -->
-      <div v-else class="flex min-h-full flex-col items-center justify-center gap-4">
+      <div v-else class="flex min-h-full items-center justify-center p-4">
         <UEmpty
           :title="t('common.empty')"
-          icon="i-lucide-server-cog"
+          :description="t('providers.emptyDesc')"
           variant="naked"
         />
       </div>
