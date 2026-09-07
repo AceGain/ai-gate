@@ -58,6 +58,10 @@ useSortable(listEl, providers, {
     void nextTick(() => saveOrder())
   }
 })
+
+onBeforeUnmount(() => {
+  document.body.classList.remove('provider-sortable-dragging')
+})
 </script>
 
 <template>
@@ -167,9 +171,9 @@ useSortable(listEl, providers, {
 </style>
 
 <style>
-/* 拖拽期间全局隐藏鼠标光标：视线零遮挡，纯靠半透明卡片与落点虚影提供反馈 */
+/* 拖拽期间全局光标锁定为抓取状态 */
 body.provider-sortable-dragging,
 body.provider-sortable-dragging * {
-  cursor: none !important;
+  cursor: grabbing !important;
 }
 </style>

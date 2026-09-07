@@ -21,6 +21,13 @@ export function useProviderConfig() {
     toast.add({color: 'error', title: t('providers.backendUnavailable')})
   }
 
+  function reset() {
+    endpoints.value = []
+    keys.value = []
+    models.value = []
+    loading.value = false
+  }
+
   async function loadAll(providerId: string): Promise<void> {
     if (!providerId) return
     loading.value = true
@@ -117,6 +124,15 @@ export function useProviderConfig() {
     }
   }
 
+  async function loadKeys(providerId: string): Promise<void> {
+    try {
+      keys.value = await $fetch<SysKey[]>(`${apiBase()}/api/providers/${providerId}/keys`)
+    } catch (err) {
+      console.warn('[ai-gate] 加载密钥失败', err)
+      notifyError()
+    }
+  }
+
   async function saveKeyOrder(providerId: string): Promise<void> {
     try {
       await $fetch(`${apiBase()}/api/providers/${providerId}/keys/reorder`, {
@@ -126,7 +142,7 @@ export function useProviderConfig() {
     } catch (err) {
       console.warn('[ai-gate] 保存密钥排序失败', err)
       notifyError()
-      await loadAll(providerId)
+      await loadKeys(providerId)
     }
   }
 
@@ -166,6 +182,15 @@ export function useProviderConfig() {
     }
   }
 
+  async function loadModels(providerId: string): Promise<void> {
+    try {
+      models.value = await $fetch<SysModel[]>(`${apiBase()}/api/providers/${providerId}/models`)
+    } catch (err) {
+      console.warn('[ai-gate] 加载模型失败', err)
+      notifyError()
+    }
+  }
+
   async function saveModelOrder(providerId: string): Promise<void> {
     try {
       await $fetch(`${apiBase()}/api/providers/${providerId}/models/reorder`, {
@@ -175,7 +200,7 @@ export function useProviderConfig() {
     } catch (err) {
       console.warn('[ai-gate] 保存模型排序失败', err)
       notifyError()
-      await loadAll(providerId)
+      await loadModels(providerId)
     }
   }
 
@@ -184,15 +209,18 @@ export function useProviderConfig() {
     keys,
     models,
     loading,
+    reset,
     loadAll,
     loadEndpoints,
     createEndpoint,
     updateEndpoint,
     removeEndpoint,
+    loadKeys,
     createKey,
     updateKey,
     removeKey,
     saveKeyOrder,
+    loadModels,
     createModel,
     updateModel,
     removeModel,

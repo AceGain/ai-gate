@@ -106,5 +106,23 @@ export function useProviders() {
     }
   }
 
-  return {providers, load, createProvider, updateProvider, removeProvider, toggleProvider, saveOrder}
+  /** 按 id 拉取单条供应商（用于直接访问详情页时的兜底） */
+  async function fetchProvider(id: string): Promise<SysProvider | null> {
+    try {
+      const p = await $fetch<SysProvider>(`${apiBase()}/api/providers/${id}`)
+      const index = providers.value.findIndex(it => it.id === id)
+      if (index !== -1) {
+        const list = [...providers.value]
+        list[index] = p
+        providers.value = list
+      } else {
+        providers.value = [...providers.value, p]
+      }
+      return p
+    } catch {
+      return null
+    }
+  }
+
+  return {providers, load, fetchProvider, createProvider, updateProvider, removeProvider, toggleProvider, saveOrder}
 }

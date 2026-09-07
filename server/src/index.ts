@@ -17,9 +17,16 @@ app.route('/api', endpoints)
 app.route('/api', keys)
 app.route('/api', models)
 
+app.onError((err, c) => {
+  console.error('[ai-gate] uncaught error:', err)
+  return c.json({error: err.message || 'Internal Server Error'}, 500)
+})
+
 if (existsSync('dist/index.html')) {
   app.use('*', serveStatic({root: 'dist'}))
   app.get('*', serveStatic({root: 'dist', path: 'index.html'}))
+} else {
+  app.notFound((c) => c.json({error: 'Not Found'}, 404))
 }
 
 const port = Number(process.env.AI_GATE_PORT ?? 9256)

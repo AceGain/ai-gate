@@ -2,21 +2,12 @@
  * 供应商 API（/api/providers）：sys_provider 表的逐条 CRUD
  * id 与时间戳由服务端/数据库维护；code 冲突返回 409，记录不存在返回 404
  */
-import type {Context} from 'hono'
 import {Hono} from 'hono'
 import {newId} from '../../../shared/sys-provider'
 import type {SysProviderInput} from '../../../shared/sys-provider'
 import {getProvider, insertProvider, listProviders, removeProvider, reorderProviders, updateProvider} from '../store'
 
 export const providers = new Hono()
-
-/** JSON 错误响应（与 v1 admin 路由保持一致的响应形态） */
-function jsonError(_c: Context, status: number, error: string): Response {
-  return new Response(JSON.stringify({error}), {
-    status,
-    headers: {'Content-Type': 'application/json; charset=UTF-8'}
-  })
-}
 
 /** 请求体解析与校验：code/name 必填，sort 为非负整数 */
 function parseProviderBody(raw: unknown): {data?: SysProviderInput; error?: string} {
@@ -63,7 +54,7 @@ providers.get('/providers', async (c) => {
 providers.put('/providers/reorder', async (c) => {
   const body = await c.req.json<unknown>().catch(() => null)
   if (!Array.isArray(body) || !body.every(isReorderItem)) {
-    return jsonError(c, 400, 'Body must be an array of {id, sort}')
+    return c.json({error: 'Body must be an array of {id, sort}'}, 400)
   }
   await reorderProviders(body)
   return c.json({ok: true})
@@ -72,7 +63,7 @@ providers.put('/providers/reorder', async (c) => {
 /** 详情 */
 providers.get('/providers/:id', async (c) => {
   const provider = await getProvider(c.req.param('id'))
-  if (!provider) return jsonError(c, 404, 'Provider not found')
+  if (!provider) return c.json({error: 'Provider not found'}, 404)
   return c.json(provider)
 })
 
@@ -80,13 +71,13 @@ providers.get('/providers/:id', async (c) => {
 providers.post('/providers', async (c) => {
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseProviderBody(body)
-  if (!data) return jsonError(c, 400, error!)
+  if (!data) return c.json({error: error!}, 400)
 
   try {
     const created = await insertProvider(newId(), data)
     return c.json(created, 201)
   } catch (err) {
-    if (isUniqueViolation(err)) return jsonError(c, 409, `Duplicate provider code: ${data.code}`)
+    if (isUniqueViolation(err)) return c.json({error: `Duplicate provider code: ${data.code}`}, 409)
     throw err
   }
 })
@@ -96,20 +87,20 @@ providers.put('/providers/:id', async (c) => {
   const id = c.req.param('id')
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseProviderBody(body)
-  if (!data) return jsonError(c, 400, error!)
+  if (!data) return c.json({error: error!}, 400)
 
   try {
     const updated = await updateProvider(id, data)
-    if (!updated) return jsonError(c, 404, 'Provider not found')
+    if (!updated) return c.json({error: 'Provider not found'}, 404)
     return c.json(updated)
   } catch (err) {
-    if (isUniqueViolation(err)) return jsonError(c, 409, `Duplicate provider code: ${data.code}`)
+    if (isUniqueViolation(err)) return c.json({error: `Duplicate provider code: ${data.code}`}, 409)
     throw err
   }
 })
 
 /** 删除 */
 providers.delete('/providers/:id', async (c) => {
-  if (!(await removeProvider(c.req.param('id')))) return jsonError(c, 404, 'Provider not found')
+  if (!(await removeProvider(c.req.param('id')))) return c.json({error: 'Provider not found'}, 404)
   return c.json({ok: true})
 })

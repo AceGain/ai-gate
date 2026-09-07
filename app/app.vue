@@ -9,6 +9,26 @@ const uiLocales = {
   'en-US': en
 }
 
+const appConfig = useAppConfig()
+if (import.meta.client) {
+  const savedPrimary = localStorage.getItem('ai-gate-primary-color')
+  if (savedPrimary) {
+    try {
+      appConfig.ui.colors.primary = JSON.parse(savedPrimary)
+    } catch {
+      appConfig.ui.colors.primary = savedPrimary
+    }
+  }
+  const savedNeutral = localStorage.getItem('ai-gate-neutral-color')
+  if (savedNeutral) {
+    try {
+      appConfig.ui.colors.neutral = JSON.parse(savedNeutral)
+    } catch {
+      appConfig.ui.colors.neutral = savedNeutral
+    }
+  }
+}
+
 useHead({
   meta: [
     {name: 'viewport', content: 'width=device-width, initial-scale=1'}
@@ -24,7 +44,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <UApp :locale="uiLocales[locale]">
+  <UApp :locale="uiLocales[locale as keyof typeof uiLocales] ?? zh_cn">
     <NuxtLoadingIndicator/>
 
     <!-- 顶部窗口标题栏（代替系统标题栏）：品牌 + 颜色模式 + 窗口控制 -->

@@ -14,17 +14,20 @@ const toast = useToast()
 const confirmDialog = useConfirmDialog()
 const {copy, copied} = useClipboard()
 
-const {providers, toggleProvider} = useProviders()
+const {providers, fetchProvider, toggleProvider} = useProviders()
 const {
   endpoints,
   keys,
   models,
+  reset,
   loadAll,
   loadEndpoints,
   removeEndpoint,
+  loadKeys,
   updateKey,
   removeKey,
   saveKeyOrder,
+  loadModels,
   updateModel,
   removeModel,
   saveModelOrder
@@ -34,12 +37,18 @@ const id = computed(() => route.params.id as string)
 const provider = computed<SysProvider | undefined>(() => providers.value.find(p => p.id === id.value))
 const title = computed(() => provider.value ? (provider.value.name || provider.value.code) : t('providers.configTitle'))
 
-onMounted(() => {
-  if (id.value) void loadAll(id.value)
-})
-
 watch(id, (newId) => {
-  if (newId) void loadAll(newId)
+  reset()
+  if (newId) {
+    if (!providers.value.some(p => p.id === newId)) {
+      void fetchProvider(newId)
+    }
+    void loadAll(newId)
+  }
+}, { immediate: true })
+
+onBeforeUnmount(() => {
+  reset()
 })
 
 /* ---------------- 1. 供应商基础信息编辑弹窗 ---------------- */
@@ -246,7 +255,15 @@ const activeTab = ref<TabKey>(
 )
 
 watch(activeTab, (tab) => {
-  void navigateTo({query: {...route.query, tab}}, {replace: true})
+  if (route.query.tab !== tab) {
+    void navigateTo({query: {...route.query, tab}}, {replace: true})
+  }
+})
+
+watch(() => route.query.tab, (tab) => {
+  if (tab && validTabs.includes(tab as TabKey) && activeTab.value !== tab) {
+    activeTab.value = tab as TabKey
+  }
 })
 
 const tabs = computed(() => [
@@ -662,11 +679,11 @@ const tabs = computed(() => [
                     </span>
 
                     <span v-if="m.inputModal?.length" class="text-dimmed text-[10px]">
-                      In: [{{ m.inputModal.join(', ') }}]
+                      {{ t('providerModels.inputModalPrefix') }}: [{{ m.inputModal.join(', ') }}]
                     </span>
 
                     <span v-if="m.outputModal?.length" class="text-dimmed text-[10px]">
-                      Out: [{{ m.outputModal.join(', ') }}]
+                      {{ t('providerModels.outputModalPrefix') }}: [{{ m.outputModal.join(', ') }}]
                     </span>
                   </div>
                 </div>
@@ -750,7 +767,7 @@ const tabs = computed(() => [
     v-model:open="keyModalOpen"
     :provider-id="provider.id"
     :key-item="editingKey"
-    @saved="() => loadAll(provider!.id)"
+    @saved="() => loadKeys(provider!.id)"
   />
 
   <ProviderModelModal
@@ -758,6 +775,6 @@ const tabs = computed(() => [
     v-model:open="modelModalOpen"
     :provider-id="provider.id"
     :model-item="editingModel"
-    @saved="() => loadAll(provider!.id)"
+    @saved="() => loadModels(provider!.id)"
   />
 </template>

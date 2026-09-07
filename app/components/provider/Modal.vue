@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type {SysProvider, SysProviderInput} from '~/utils/providers'
+import {defaultProviderIcon} from '~/utils/brandIcons'
 
 /**
  * 供应商新增/编辑弹窗：基本信息（图标、编码、名称、描述、启用）
@@ -152,7 +153,7 @@ async function save() {
       <UButton variant="solid" color="neutral" :disabled="saving" @click="open = false">
         {{ t('common.cancel') }}
       </UButton>
-      <UButton icon="i-lucide-save" :loading="saving" :disabled="!canSave" @click="save">
+      <UButton icon="i-lucide-save" :loading="saving" @click="save">
         {{ t('providers.save') }}
       </UButton>
     </template>

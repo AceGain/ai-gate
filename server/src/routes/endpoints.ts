@@ -1,20 +1,12 @@
 /**
  * 供应商端点 API（/api/providers/:providerId/endpoints）：sys_endpoint 表的 CRUD
  */
-import type {Context} from 'hono'
 import {Hono} from 'hono'
 import {newId} from '../../../shared/sys-provider'
 import type {SysEndpointInput, SysEndpointType} from '../../../shared/sys-endpoint'
 import {insertEndpoint, listEndpoints, removeEndpoint, updateEndpoint} from '../store'
 
 export const endpoints = new Hono()
-
-function jsonError(_c: Context, status: number, error: string): Response {
-  return new Response(JSON.stringify({error}), {
-    status,
-    headers: {'Content-Type': 'application/json; charset=UTF-8'}
-  })
-}
 
 function parseEndpointBody(raw: unknown): {data?: SysEndpointInput; error?: string} {
   const p = (raw ?? {}) as Partial<SysEndpointInput>
@@ -27,7 +19,7 @@ function parseEndpointBody(raw: unknown): {data?: SysEndpointInput; error?: stri
   return {
     data: {
       type: p.type as SysEndpointType,
-      protocol: typeof p.protocol === 'string' ? p.protocol.trim() : '',
+      protocol: p.type === 'protocol' && typeof p.protocol === 'string' ? p.protocol.trim() : '',
       path: p.path.trim(),
       isDefault: !!p.isDefault
     }
@@ -45,7 +37,7 @@ endpoints.post('/providers/:providerId/endpoints', async (c) => {
   const providerId = c.req.param('providerId')
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseEndpointBody(body)
-  if (!data) return jsonError(c, 400, error!)
+  if (!data) return c.json({error: error!}, 400)
 
   const created = await insertEndpoint(newId(), providerId, data)
   return c.json(created, 201)
@@ -56,16 +48,16 @@ endpoints.put('/providers/:providerId/endpoints/:id', async (c) => {
   const id = c.req.param('id')
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseEndpointBody(body)
-  if (!data) return jsonError(c, 400, error!)
+  if (!data) return c.json({error: error!}, 400)
 
   const updated = await updateEndpoint(id, data)
-  if (!updated) return jsonError(c, 404, 'Endpoint not found')
+  if (!updated) return c.json({error: 'Endpoint not found'}, 404)
   return c.json(updated)
 })
 
 /** 删除 */
 endpoints.delete('/providers/:providerId/endpoints/:id', async (c) => {
   const id = c.req.param('id')
-  if (!(await removeEndpoint(id))) return jsonError(c, 404, 'Endpoint not found')
+  if (!(await removeEndpoint(id))) return c.json({error: 'Endpoint not found'}, 404)
   return c.json({ok: true})
 })

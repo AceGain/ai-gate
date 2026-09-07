@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type {NavigationMenuItem} from '@nuxt/ui'
+import {useMediaQuery} from '@vueuse/core'
 
 const emit = defineEmits<{ openSettings: [] }>()
 
@@ -19,21 +20,17 @@ const footerNav = computed<NavigationMenuItem[]>(() => [
 
 const collapsed = ref(false)
 
+// 响应式屏幕适配
+const isSmallScreen = useMediaQuery('(max-width: 1023px)')
+watch(isSmallScreen, (matches) => {
+  collapsed.value = matches
+}, { immediate: true })
+
 // 侧栏折叠快捷键：Cmd/Ctrl + B（与主流编辑器切换侧栏的惯例一致，meta 在非 macOS 自动映射为 Ctrl）
 defineShortcuts({
   meta_b: () => {
     collapsed.value = !collapsed.value
   }
-})
-
-onMounted(() => {
-  const mq = window.matchMedia('(max-width: 1023px)')
-  const update = () => {
-    collapsed.value = mq.matches
-  }
-  update()
-  mq.addEventListener('change', update)
-  onBeforeUnmount(() => mq.removeEventListener('change', update))
 })
 </script>
 

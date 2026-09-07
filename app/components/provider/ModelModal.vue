@@ -41,14 +41,14 @@ const form = reactive({
 const showErrors = ref(false)
 const saving = ref(false)
 
-const typeOptions: {label: string, value: SysModelType}[] = [
-  {label: 'GenText (文本)', value: 'GenText'},
-  {label: 'GenImage (图像)', value: 'GenImage'},
-  {label: 'GenAudio (音频)', value: 'GenAudio'},
-  {label: 'GenVideo (视频)', value: 'GenVideo'},
-  {label: 'Embedding (向量)', value: 'Embedding'},
-  {label: 'Rerank (重排)', value: 'Rerank'}
-]
+const typeOptions = computed<{label: string, value: SysModelType}[]>(() => [
+  {label: t('providerModels.typeGenText'), value: 'GenText'},
+  {label: t('providerModels.typeGenImage'), value: 'GenImage'},
+  {label: t('providerModels.typeGenAudio'), value: 'GenAudio'},
+  {label: t('providerModels.typeGenVideo'), value: 'GenVideo'},
+  {label: t('providerModels.typeEmbedding'), value: 'Embedding'},
+  {label: t('providerModels.typeRerank'), value: 'Rerank'}
+])
 
 const statusOptions = computed(() => [
   {label: t('providerModels.statusActive'), value: 'ACTIVE'},
@@ -197,7 +197,7 @@ async function save() {
           <UFormField :label="t('providerModels.inputModal')">
             <UInput
               v-model="form.inputModalText"
-              placeholder="text, image"
+              :placeholder="t('providerModels.inputModalPlaceholder')"
               class="w-full"
             />
           </UFormField>
@@ -205,7 +205,7 @@ async function save() {
           <UFormField :label="t('providerModels.outputModal')">
             <UInput
               v-model="form.outputModalText"
-              placeholder="text"
+              :placeholder="t('providerModels.outputModalPlaceholder')"
               class="w-full"
             />
           </UFormField>
@@ -257,7 +257,7 @@ async function save() {
           <UFormField :label="t('providerModels.effortLevel')">
             <UInput
               v-model="form.effortLevelText"
-              placeholder="low, medium, high"
+              :placeholder="t('providerModels.effortLevelPlaceholder')"
               class="w-full"
             />
           </UFormField>
@@ -284,7 +284,7 @@ async function save() {
       <UButton variant="solid" color="neutral" :disabled="saving" @click="open = false">
         {{ t('common.cancel') }}
       </UButton>
-      <UButton icon="i-lucide-save" :loading="saving" :disabled="!canSave" @click="save">
+      <UButton icon="i-lucide-save" :loading="saving" @click="save">
         {{ t('providers.save') }}
       </UButton>
     </template>

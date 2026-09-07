@@ -147,7 +147,7 @@ async function save() {
       <UButton variant="solid" color="neutral" :disabled="saving" @click="open = false">
         {{ t('common.cancel') }}
       </UButton>
-      <UButton icon="i-lucide-save" :loading="saving" :disabled="!canSave" @click="save">
+      <UButton icon="i-lucide-save" :loading="saving" @click="save">
         {{ t('providers.save') }}
       </UButton>
     </template>

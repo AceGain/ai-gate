@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import {version} from '~~/package.json'
+
 const {t} = useI18n()
 const {isDesktop, maximized, minimize, toggleMaximize, close} = useWindowControls()
 </script>
@@ -11,7 +13,7 @@ const {isDesktop, maximized, minimize, toggleMaximize, close} = useWindowControl
     <div data-tauri-drag-region class="flex items-center gap-2">
       <img data-tauri-drag-region src="/ai-gate-symbol.png" alt="AI Gate" class="size-5 shrink-0">
       <span data-tauri-drag-region class="text-sm font-semibold text-highlighted">AI Gate</span>
-      <span data-tauri-drag-region class="text-[10px] text-dimmed">v0.1.0</span>
+      <span data-tauri-drag-region class="text-[10px] text-dimmed">v{{ version }}</span>
     </div>
 
     <!-- 窗口控制按钮：还原系统标题栏控件观感——贴住窗口右缘、占满标题栏高度、无圆角 -->

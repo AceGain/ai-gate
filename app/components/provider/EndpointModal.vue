@@ -54,7 +54,7 @@ async function save() {
   saving.value = true
   const input: SysEndpointInput = {
     type: form.type,
-    protocol: form.protocol.trim(),
+    protocol: form.type === 'protocol' ? form.protocol.trim() : '',
     path: form.path.trim(),
     isDefault: form.isDefault
   }
@@ -120,7 +120,7 @@ async function save() {
       <UButton variant="solid" color="neutral" :disabled="saving" @click="open = false">
         {{ t('common.cancel') }}
       </UButton>
-      <UButton icon="i-lucide-save" :loading="saving" :disabled="!canSave" @click="save">
+      <UButton icon="i-lucide-save" :loading="saving" @click="save">
         {{ t('providers.save') }}
       </UButton>
     </template>

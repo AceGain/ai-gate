@@ -47,16 +47,19 @@ export async function insertProvider(id: string, input: SysProviderInput): Promi
 
 /** 按 id 全量更新可写字段（不存在时不生效） */
 export async function updateProvider(id: string, input: SysProviderInput): Promise<SysProvider | null> {
+  const values: Record<string, unknown> = {
+    code: input.code,
+    name: input.name,
+    icon: input.icon ?? '',
+    enabled: input.enabled === true,
+    description: input.description ?? '',
+    updateTime: sql`CURRENT_TIMESTAMP`
+  }
+  if (input.sort !== undefined) {
+    values.sort = input.sort
+  }
   const res = await db.update(sysProvider)
-    .set({
-      code: input.code,
-      name: input.name,
-      icon: input.icon ?? '',
-      enabled: input.enabled === true,
-      description: input.description ?? '',
-      sort: input.sort ?? 0,
-      updateTime: sql`CURRENT_TIMESTAMP`
-    })
+    .set(values)
     .where(eq(sysProvider.id, id))
   return res.rowsAffected > 0 ? await getProvider(id) : null
 }
@@ -220,17 +223,20 @@ export async function insertKey(id: string, providerId: string, input: SysKeyInp
 
 /** 更新密钥 */
 export async function updateKey(id: string, input: SysKeyInput): Promise<SysKey | null> {
+  const values: Record<string, unknown> = {
+    name: input.name,
+    secret: input.secret,
+    enabled: input.enabled !== false,
+    status: input.status ?? 'ACTIVE',
+    expiresTime: input.expiresTime ?? null,
+    description: input.description ?? '',
+    updateTime: sql`CURRENT_TIMESTAMP`
+  }
+  if (input.sort !== undefined) {
+    values.sort = input.sort
+  }
   const res = await db.update(sysKey)
-    .set({
-      name: input.name,
-      secret: input.secret,
-      enabled: input.enabled !== false,
-      status: input.status ?? 'ACTIVE',
-      expiresTime: input.expiresTime ?? null,
-      sort: input.sort ?? 0,
-      description: input.description ?? '',
-      updateTime: sql`CURRENT_TIMESTAMP`
-    })
+    .set(values)
     .where(eq(sysKey.id, id))
   return res.rowsAffected > 0 ? await getKey(id) : null
 }
@@ -301,26 +307,29 @@ export async function insertModel(id: string, providerId: string, input: SysMode
 
 /** 更新模型 */
 export async function updateModel(id: string, input: SysModelInput): Promise<SysModel | null> {
+  const values: Record<string, unknown> = {
+    code: input.code,
+    name: input.name ?? '',
+    category: input.category ?? '',
+    enabled: input.enabled !== false,
+    status: input.status ?? 'ACTIVE',
+    type: input.type,
+    inputModal: input.inputModal ?? ['text'],
+    outputModal: input.outputModal ?? ['text'],
+    protocols: input.protocols ?? [],
+    maxContext: input.maxContext ?? 0,
+    maxInput: input.maxInput ?? 0,
+    maxOutput: input.maxOutput ?? 0,
+    reasoning: input.reasoning ?? 'TOGGLE',
+    effortLevel: input.effortLevel ?? [],
+    description: input.description ?? '',
+    updateTime: sql`CURRENT_TIMESTAMP`
+  }
+  if (input.sort !== undefined) {
+    values.sort = input.sort
+  }
   const res = await db.update(sysModel)
-    .set({
-      code: input.code,
-      name: input.name ?? '',
-      category: input.category ?? '',
-      enabled: input.enabled !== false,
-      status: input.status ?? 'ACTIVE',
-      type: input.type,
-      inputModal: input.inputModal ?? ['text'],
-      outputModal: input.outputModal ?? ['text'],
-      protocols: input.protocols ?? [],
-      maxContext: input.maxContext ?? 0,
-      maxInput: input.maxInput ?? 0,
-      maxOutput: input.maxOutput ?? 0,
-      reasoning: input.reasoning ?? 'TOGGLE',
-      effortLevel: input.effortLevel ?? [],
-      sort: input.sort ?? 0,
-      description: input.description ?? '',
-      updateTime: sql`CURRENT_TIMESTAMP`
-    })
+    .set(values)
     .where(eq(sysModel.id, id))
   return res.rowsAffected > 0 ? await getModel(id) : null
 }

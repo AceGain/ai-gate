@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import {
   providerIconOptions,
-  brandIconUrl,
-  isCustomIcon
+  brandIconUrl
 } from '~/utils/brandIcons'
 
 /**

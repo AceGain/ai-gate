@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import {useLocalStorage} from '@vueuse/core'
+
 const open = defineModel<boolean>('open', {default: false})
 
 const {t, locale, setLocale} = useI18n()
@@ -36,10 +38,17 @@ const neutralItems = computed(() => neutralValues.map(value => ({
   swatch: value
 })))
 
+const savedPrimary = useLocalStorage('ai-gate-primary-color', appConfig.ui.colors.primary)
+const savedNeutral = useLocalStorage('ai-gate-neutral-color', appConfig.ui.colors.neutral)
+
+if (savedPrimary.value) appConfig.ui.colors.primary = savedPrimary.value
+if (savedNeutral.value) appConfig.ui.colors.neutral = savedNeutral.value
+
 const primaryModel = computed({
   get: () => appConfig.ui.colors.primary,
   set: (value: string) => {
     appConfig.ui.colors.primary = value
+    savedPrimary.value = value
   }
 })
 
@@ -47,6 +56,7 @@ const neutralModel = computed({
   get: () => appConfig.ui.colors.neutral,
   set: (value: string) => {
     appConfig.ui.colors.neutral = value
+    savedNeutral.value = value
   }
 })
 </script>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import {navRoutes} from '~/utils/navigation'
+
 const props = defineProps<{
   title?: string
 }>()
@@ -6,21 +8,15 @@ const props = defineProps<{
 const {t} = useI18n()
 const route = useRoute()
 
-// 页面标题：优先使用传入的 title，否则按路由名映射 i18n 文案
+// 页面标题：优先使用传入的 title，否则从导航配置单一数据源中获取
 const pageTitle = computed(() => {
   if (props.title) return props.title
-  switch (route.name) {
-    case 'endpoints':
-      return t('endpoints.title')
-    case 'providers':
-      return t('providers.title')
-    case 'models':
-      return t('virtualModels.title')
-    case 'index':
-      return t('dashboard.title')
-    default:
-      return ''
+  const matched = navRoutes.find(r => r.to === route.path)
+  if (matched) return t(matched.labelKey)
+  if (route.path.startsWith('/providers/')) {
+    return t('providers.configTitle')
   }
+  return ''
 })
 </script>
 

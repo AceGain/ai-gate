@@ -1,20 +1,12 @@
 /**
  * 供应商模型 API（/api/providers/:providerId/models）：sys_model 表的 CRUD
  */
-import type {Context} from 'hono'
 import {Hono} from 'hono'
 import {newId} from '../../../shared/sys-provider'
 import type {SysModelInput, SysModelReasoning, SysModelStatus, SysModelType} from '../../../shared/sys-model'
 import {insertModel, listModels, removeModel, reorderModels, updateModel} from '../store'
 
 export const models = new Hono()
-
-function jsonError(_c: Context, status: number, error: string): Response {
-  return new Response(JSON.stringify({error}), {
-    status,
-    headers: {'Content-Type': 'application/json; charset=UTF-8'}
-  })
-}
 
 function isUniqueViolation(err: unknown): boolean {
   if (!(err instanceof Error)) return false
@@ -78,7 +70,7 @@ models.get('/providers/:providerId/models', async (c) => {
 models.put('/providers/:providerId/models/reorder', async (c) => {
   const body = await c.req.json<unknown>().catch(() => null)
   if (!Array.isArray(body) || !body.every(isReorderItem)) {
-    return jsonError(c, 400, 'Body must be an array of {id, sort}')
+    return c.json({error: 'Body must be an array of {id, sort}'}, 400)
   }
   await reorderModels(body)
   return c.json({ok: true})
@@ -89,13 +81,13 @@ models.post('/providers/:providerId/models', async (c) => {
   const providerId = c.req.param('providerId')
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseModelBody(body)
-  if (!data) return jsonError(c, 400, error!)
+  if (!data) return c.json({error: error!}, 400)
 
   try {
     const created = await insertModel(newId(), providerId, data)
     return c.json(created, 201)
   } catch (err) {
-    if (isUniqueViolation(err)) return jsonError(c, 409, `Duplicate model code: ${data.code}`)
+    if (isUniqueViolation(err)) return c.json({error: `Duplicate model code: ${data.code}`}, 409)
     throw err
   }
 })
@@ -105,14 +97,14 @@ models.put('/providers/:providerId/models/:id', async (c) => {
   const id = c.req.param('id')
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseModelBody(body)
-  if (!data) return jsonError(c, 400, error!)
+  if (!data) return c.json({error: error!}, 400)
 
   try {
     const updated = await updateModel(id, data)
-    if (!updated) return jsonError(c, 404, 'Model not found')
+    if (!updated) return c.json({error: 'Model not found'}, 404)
     return c.json(updated)
   } catch (err) {
-    if (isUniqueViolation(err)) return jsonError(c, 409, `Duplicate model code: ${data.code}`)
+    if (isUniqueViolation(err)) return c.json({error: `Duplicate model code: ${data.code}`}, 409)
     throw err
   }
 })
@@ -120,6 +112,6 @@ models.put('/providers/:providerId/models/:id', async (c) => {
 /** 删除 */
 models.delete('/providers/:providerId/models/:id', async (c) => {
   const id = c.req.param('id')
-  if (!(await removeModel(id))) return jsonError(c, 404, 'Model not found')
+  if (!(await removeModel(id))) return c.json({error: 'Model not found'}, 404)
   return c.json({ok: true})
 })
