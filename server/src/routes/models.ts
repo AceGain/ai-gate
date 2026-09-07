@@ -5,7 +5,7 @@ import type {Context} from 'hono'
 import {Hono} from 'hono'
 import {newId} from '../../../shared/sys-provider'
 import type {SysModelInput, SysModelReasoning, SysModelStatus, SysModelType} from '../../../shared/sys-model'
-import {getModel, insertModel, listModels, removeModel, reorderModels, updateModel} from '../store'
+import {insertModel, listModels, removeModel, reorderModels, updateModel} from '../store'
 
 export const models = new Hono()
 
@@ -17,7 +17,16 @@ function jsonError(_c: Context, status: number, error: string): Response {
 }
 
 function isUniqueViolation(err: unknown): boolean {
-  return err instanceof Error && err.message.includes('UNIQUE constraint failed')
+  if (!(err instanceof Error)) return false
+  if (err.message.includes('UNIQUE constraint failed')) return true
+  const cause = (err as {cause?: unknown}).cause
+  if (cause instanceof Error && cause.message.includes('UNIQUE constraint failed')) return true
+  if (typeof cause === 'object' && cause !== null) {
+    const code = (cause as {code?: string}).code
+    const ext = (cause as {extendedCode?: string}).extendedCode
+    if (code === 'SQLITE_CONSTRAINT' || ext === 'SQLITE_CONSTRAINT_UNIQUE') return true
+  }
+  return false
 }
 
 const VALID_TYPES = new Set<string>(['GenText', 'GenImage', 'GenAudio', 'GenVideo', 'Embedding', 'Rerank'])
@@ -60,9 +69,9 @@ function isReorderItem(v: unknown): v is {id: string, sort: number} {
 }
 
 /** 列表 */
-models.get('/providers/:providerId/models', (c) => {
+models.get('/providers/:providerId/models', async (c) => {
   const providerId = c.req.param('providerId')
-  return c.json(listModels(providerId))
+  return c.json(await listModels(providerId))
 })
 
 /** 批量排序（须在 PUT /:id 之前注册） */
@@ -71,7 +80,7 @@ models.put('/providers/:providerId/models/reorder', async (c) => {
   if (!Array.isArray(body) || !body.every(isReorderItem)) {
     return jsonError(c, 400, 'Body must be an array of {id, sort}')
   }
-  reorderModels(body)
+  await reorderModels(body)
   return c.json({ok: true})
 })
 
@@ -83,7 +92,7 @@ models.post('/providers/:providerId/models', async (c) => {
   if (!data) return jsonError(c, 400, error!)
 
   try {
-    const created = insertModel(newId(), providerId, data)
+    const created = await insertModel(newId(), providerId, data)
     return c.json(created, 201)
   } catch (err) {
     if (isUniqueViolation(err)) return jsonError(c, 409, `Duplicate model code: ${data.code}`)
@@ -99,7 +108,7 @@ models.put('/providers/:providerId/models/:id', async (c) => {
   if (!data) return jsonError(c, 400, error!)
 
   try {
-    const updated = updateModel(id, data)
+    const updated = await updateModel(id, data)
     if (!updated) return jsonError(c, 404, 'Model not found')
     return c.json(updated)
   } catch (err) {
@@ -109,8 +118,8 @@ models.put('/providers/:providerId/models/:id', async (c) => {
 })
 
 /** 删除 */
-models.delete('/providers/:providerId/models/:id', (c) => {
+models.delete('/providers/:providerId/models/:id', async (c) => {
   const id = c.req.param('id')
-  if (!removeModel(id)) return jsonError(c, 404, 'Model not found')
+  if (!(await removeModel(id))) return jsonError(c, 404, 'Model not found')
   return c.json({ok: true})
 })

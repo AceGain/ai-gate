@@ -1,446 +1,344 @@
 /**
- * 供应商持久化：SQLite（sys_provider 表）
- * 时间戳由数据库维护（DEFAULT CURRENT_TIMESTAMP / UPDATE 时显式刷新）；列表按 sort 升序
+ * 供应商与配置持久化层：基于 @libsql/client + Drizzle ORM（全异步）
+ * 时间戳由数据库维护（CURRENT_TIMESTAMP / UPDATE 时显式刷新）；列表按 sort 升序
  */
+import {and, asc, desc, eq, ne, sql} from 'drizzle-orm'
 import type {SysProvider, SysProviderInput} from '../../shared/sys-provider'
 import type {SysEndpoint, SysEndpointInput} from '../../shared/sys-endpoint'
 import type {SysKey, SysKeyInput} from '../../shared/sys-key'
-import type {SysModel, SysModelInput, SysModelReasoning, SysModelType} from '../../shared/sys-model'
+import type {SysModel, SysModelInput} from '../../shared/sys-model'
 import {db} from './db'
+import {sysEndpoint, sysKey, sysModel, sysProvider} from './schema/index'
 
-/** 表行结构（snake_case；enabled 为 0/1） */
-interface SysProviderRow {
-  id: string
-  code: string
-  name: string
-  icon: string
-  enabled: number
-  description: string
-  sort: number
-  create_time: string
-  update_time: string
-}
-
-/** 行 → camelCase 载荷 */
-function toProvider(row: SysProviderRow): SysProvider {
-  return {
-    id: row.id,
-    code: row.code,
-    name: row.name,
-    icon: row.icon,
-    enabled: row.enabled !== 0,
-    description: row.description,
-    sort: row.sort,
-    createTime: row.create_time,
-    updateTime: row.update_time
-  }
-}
-
-/** 可写字段的入库参数（缺省值与表默认值一致） */
-function toParams(input: SysProviderInput) {
-  return {
-    code: input.code,
-    name: input.name,
-    icon: input.icon ?? '',
-    enabled: input.enabled === true ? 1 : 0,
-    description: input.description ?? '',
-    sort: input.sort ?? 0
-  }
-}
+/* =========================================================================
+ * 供应商（sys_provider）
+ * ========================================================================= */
 
 /** 查询全部供应商（sort 升序，同序按创建时间正序） */
-export function listProviders(): SysProvider[] {
-  const rows = db.prepare('SELECT * FROM sys_provider ORDER BY sort ASC, create_time ASC').all() as unknown as SysProviderRow[]
-  return rows.map(toProvider)
+export async function listProviders(): Promise<SysProvider[]> {
+  return await db.select()
+    .from(sysProvider)
+    .orderBy(asc(sysProvider.sort), asc(sysProvider.createTime))
 }
 
 /** 按 id 查询单个供应商 */
-export function getProvider(id: string): SysProvider | null {
-  const row = db.prepare('SELECT * FROM sys_provider WHERE id = ?').get(id) as unknown as SysProviderRow | undefined
-  return row ? toProvider(row) : null
+export async function getProvider(id: string): Promise<SysProvider | null> {
+  const row = await db.select()
+    .from(sysProvider)
+    .where(eq(sysProvider.id, id))
+    .get()
+  return row ?? null
 }
 
-/** 新增供应商：时间戳由数据库默认值生成；code 重复时抛出约束错误（由路由层转 409）。返回完整记录 */
-export function insertProvider(id: string, input: SysProviderInput): SysProvider {
-  const v = toParams(input)
-  db.prepare(`
-    INSERT INTO sys_provider (id, code, name, icon, enabled, description, sort)
-    VALUES (@id, @code, @name, @icon, @enabled, @description, @sort)
-  `).run({...v, id})
-  return getProvider(id)!
+/** 新增供应商：时间戳由数据库默认值生成；code 重复抛出约束错误（由路由层转 409） */
+export async function insertProvider(id: string, input: SysProviderInput): Promise<SysProvider> {
+  await db.insert(sysProvider)
+    .values({
+      id,
+      code: input.code,
+      name: input.name,
+      icon: input.icon ?? '',
+      enabled: input.enabled === true,
+      description: input.description ?? '',
+      sort: input.sort ?? 0
+    })
+  return (await getProvider(id))!
 }
 
-/** 按 id 全量更新可写字段（不存在时不生效）。返回更新后的完整记录 */
-export function updateProvider(id: string, input: SysProviderInput): SysProvider | null {
-  const v = toParams(input)
-  const result = db.prepare(`
-    UPDATE sys_provider SET
-      code = @code, name = @name, icon = @icon, enabled = @enabled,
-      description = @description, sort = @sort, update_time = CURRENT_TIMESTAMP
-    WHERE id = @id
-  `).run({...v, id})
-  return result.changes > 0 ? getProvider(id) : null
+/** 按 id 全量更新可写字段（不存在时不生效） */
+export async function updateProvider(id: string, input: SysProviderInput): Promise<SysProvider | null> {
+  const res = await db.update(sysProvider)
+    .set({
+      code: input.code,
+      name: input.name,
+      icon: input.icon ?? '',
+      enabled: input.enabled === true,
+      description: input.description ?? '',
+      sort: input.sort ?? 0,
+      updateTime: sql`CURRENT_TIMESTAMP`
+    })
+    .where(eq(sysProvider.id, id))
+  return res.rowsAffected > 0 ? await getProvider(id) : null
 }
 
 /** 按 id 删除供应商 */
-export function removeProvider(id: string): boolean {
-  return db.prepare('DELETE FROM sys_provider WHERE id = ?').run(id).changes > 0
+export async function removeProvider(id: string): Promise<boolean> {
+  const res = await db.delete(sysProvider).where(eq(sysProvider.id, id))
+  return res.rowsAffected > 0
 }
 
-/** 批量更新排序（列表拖拽后的持久化）：单事务，逐条刷新 sort 与 update_time */
-export function reorderProviders(items: {id: string, sort: number}[]): void {
-  const stmt = db.prepare('UPDATE sys_provider SET sort = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?')
-  try {
-    db.exec('BEGIN')
-    for (const {id, sort} of items) stmt.run(sort, id)
-    db.exec('COMMIT')
-  } catch (err) {
-    db.exec('ROLLBACK')
-    throw err
-  }
+/** 批量更新供应商排序（单事务，逐条刷新 sort 与 update_time） */
+export async function reorderProviders(items: {id: string, sort: number}[]): Promise<void> {
+  await db.transaction(async (tx) => {
+    for (const {id, sort} of items) {
+      await tx.update(sysProvider)
+        .set({sort, updateTime: sql`CURRENT_TIMESTAMP`})
+        .where(eq(sysProvider.id, id))
+    }
+  })
 }
 
 /* =========================================================================
  * 供应商端点（sys_endpoint）
  * ========================================================================= */
 
-interface SysEndpointRow {
-  id: string
-  provider_id: string
-  type: 'base' | 'models' | 'protocol'
-  protocol: string
-  path: string
-  is_default: number
-  create_time: string
-  update_time: string
-}
-
-function toEndpoint(row: SysEndpointRow): SysEndpoint {
-  return {
-    id: row.id,
-    providerId: row.provider_id,
-    type: row.type,
-    protocol: row.protocol,
-    path: row.path,
-    isDefault: row.is_default !== 0,
-    createTime: row.create_time,
-    updateTime: row.update_time
-  }
-}
-
 /** 查询某供应商的所有端点（默认端点置顶，同默认按创建时间正序） */
-export function listEndpoints(providerId: string): SysEndpoint[] {
-  const rows = db.prepare(`
-    SELECT * FROM sys_endpoint
-    WHERE provider_id = ?
-    ORDER BY is_default DESC, create_time ASC
-  `).all(providerId) as unknown as SysEndpointRow[]
-  return rows.map(toEndpoint)
+export async function listEndpoints(providerId: string): Promise<SysEndpoint[]> {
+  return await db.select()
+    .from(sysEndpoint)
+    .where(eq(sysEndpoint.providerId, providerId))
+    .orderBy(desc(sysEndpoint.isDefault), asc(sysEndpoint.createTime))
 }
 
 /** 按 id 查询单个端点 */
-export function getEndpoint(id: string): SysEndpoint | null {
-  const row = db.prepare('SELECT * FROM sys_endpoint WHERE id = ?').get(id) as unknown as SysEndpointRow | undefined
-  return row ? toEndpoint(row) : null
+export async function getEndpoint(id: string): Promise<SysEndpoint | null> {
+  const row = await db.select()
+    .from(sysEndpoint)
+    .where(eq(sysEndpoint.id, id))
+    .get()
+  return row ?? null
 }
 
-/** 新增端点（若设为默认，同 provider 同 type 的其它端点取消默认） */
-export function insertEndpoint(id: string, providerId: string, input: SysEndpointInput): SysEndpoint {
+/** 新增端点（若设为默认，原子事务内将同 provider 同 type 的其它端点取消默认） */
+export async function insertEndpoint(id: string, providerId: string, input: SysEndpointInput): Promise<SysEndpoint> {
   if (input.isDefault) {
-    db.prepare('UPDATE sys_endpoint SET is_default = 0, update_time = CURRENT_TIMESTAMP WHERE provider_id = ? AND type = ?')
-      .run(providerId, input.type)
+    await db.transaction(async (tx) => {
+      await tx.update(sysEndpoint)
+        .set({isDefault: false, updateTime: sql`CURRENT_TIMESTAMP`})
+        .where(and(eq(sysEndpoint.providerId, providerId), eq(sysEndpoint.type, input.type)))
+      await tx.insert(sysEndpoint)
+        .values({
+          id,
+          providerId,
+          type: input.type,
+          protocol: input.protocol ?? '',
+          path: input.path,
+          isDefault: true
+        })
+    })
+  } else {
+    await db.insert(sysEndpoint)
+      .values({
+        id,
+        providerId,
+        type: input.type,
+        protocol: input.protocol ?? '',
+        path: input.path,
+        isDefault: false
+      })
   }
-  db.prepare(`
-    INSERT INTO sys_endpoint (id, provider_id, type, protocol, path, is_default)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(id, providerId, input.type, input.protocol ?? '', input.path, input.isDefault ? 1 : 0)
-  return getEndpoint(id)!
+  return (await getEndpoint(id))!
 }
 
-/** 更新端点 */
-export function updateEndpoint(id: string, input: SysEndpointInput): SysEndpoint | null {
-  const existing = getEndpoint(id)
+/** 更新端点（原子事务维护同类型默认端点互斥） */
+export async function updateEndpoint(id: string, input: SysEndpointInput): Promise<SysEndpoint | null> {
+  const existing = await getEndpoint(id)
   if (!existing) return null
 
+  let rowsAffected = 0
   if (input.isDefault) {
-    db.prepare('UPDATE sys_endpoint SET is_default = 0, update_time = CURRENT_TIMESTAMP WHERE provider_id = ? AND type = ? AND id != ?')
-      .run(existing.providerId, input.type, id)
+    await db.transaction(async (tx) => {
+      await tx.update(sysEndpoint)
+        .set({isDefault: false, updateTime: sql`CURRENT_TIMESTAMP`})
+        .where(
+          and(
+            eq(sysEndpoint.providerId, existing.providerId),
+            eq(sysEndpoint.type, input.type),
+            ne(sysEndpoint.id, id)
+          )
+        )
+      const res = await tx.update(sysEndpoint)
+        .set({
+          type: input.type,
+          protocol: input.protocol ?? '',
+          path: input.path,
+          isDefault: true,
+          updateTime: sql`CURRENT_TIMESTAMP`
+        })
+        .where(eq(sysEndpoint.id, id))
+      rowsAffected = res.rowsAffected
+    })
+  } else {
+    const res = await db.update(sysEndpoint)
+      .set({
+        type: input.type,
+        protocol: input.protocol ?? '',
+        path: input.path,
+        isDefault: !!input.isDefault,
+        updateTime: sql`CURRENT_TIMESTAMP`
+      })
+      .where(eq(sysEndpoint.id, id))
+    rowsAffected = res.rowsAffected
   }
 
-  const result = db.prepare(`
-    UPDATE sys_endpoint SET
-      type = ?, protocol = ?, path = ?, is_default = ?, update_time = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `).run(input.type, input.protocol ?? '', input.path, input.isDefault ? 1 : 0, id)
-
-  return result.changes > 0 ? getEndpoint(id) : null
+  return rowsAffected > 0 ? await getEndpoint(id) : null
 }
 
 /** 删除端点 */
-export function removeEndpoint(id: string): boolean {
-  return db.prepare('DELETE FROM sys_endpoint WHERE id = ?').run(id).changes > 0
+export async function removeEndpoint(id: string): Promise<boolean> {
+  const res = await db.delete(sysEndpoint).where(eq(sysEndpoint.id, id))
+  return res.rowsAffected > 0
 }
 
 /* =========================================================================
  * 供应商密钥（sys_key）
  * ========================================================================= */
 
-interface SysKeyRow {
-  id: string
-  provider_id: string
-  name: string
-  secret: string
-  enabled: number
-  status: 'ACTIVE' | 'INVALID'
-  expires_time: string | null
-  sort: number
-  description: string
-  create_time: string
-  update_time: string
-}
-
-function toKey(row: SysKeyRow): SysKey {
-  return {
-    id: row.id,
-    providerId: row.provider_id,
-    name: row.name,
-    secret: row.secret,
-    enabled: row.enabled !== 0,
-    status: row.status,
-    expiresTime: row.expires_time,
-    sort: row.sort,
-    description: row.description,
-    createTime: row.create_time,
-    updateTime: row.update_time
-  }
-}
-
 /** 查询某供应商的所有密钥（sort 升序，创建时间升序） */
-export function listKeys(providerId: string): SysKey[] {
-  const rows = db.prepare(`
-    SELECT * FROM sys_key
-    WHERE provider_id = ?
-    ORDER BY sort ASC, create_time ASC
-  `).all(providerId) as unknown as SysKeyRow[]
-  return rows.map(toKey)
+export async function listKeys(providerId: string): Promise<SysKey[]> {
+  return await db.select()
+    .from(sysKey)
+    .where(eq(sysKey.providerId, providerId))
+    .orderBy(asc(sysKey.sort), asc(sysKey.createTime))
 }
 
 /** 按 id 查询单个密钥 */
-export function getKey(id: string): SysKey | null {
-  const row = db.prepare('SELECT * FROM sys_key WHERE id = ?').get(id) as unknown as SysKeyRow | undefined
-  return row ? toKey(row) : null
+export async function getKey(id: string): Promise<SysKey | null> {
+  const row = await db.select()
+    .from(sysKey)
+    .where(eq(sysKey.id, id))
+    .get()
+  return row ?? null
 }
 
 /** 新增密钥 */
-export function insertKey(id: string, providerId: string, input: SysKeyInput): SysKey {
-  db.prepare(`
-    INSERT INTO sys_key (id, provider_id, name, secret, enabled, status, expires_time, sort, description)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    id,
-    providerId,
-    input.name,
-    input.secret,
-    input.enabled === false ? 0 : 1,
-    input.status ?? 'ACTIVE',
-    input.expiresTime ?? null,
-    input.sort ?? 0,
-    input.description ?? ''
-  )
-  return getKey(id)!
+export async function insertKey(id: string, providerId: string, input: SysKeyInput): Promise<SysKey> {
+  await db.insert(sysKey)
+    .values({
+      id,
+      providerId,
+      name: input.name,
+      secret: input.secret,
+      enabled: input.enabled !== false,
+      status: input.status ?? 'ACTIVE',
+      expiresTime: input.expiresTime ?? null,
+      sort: input.sort ?? 0,
+      description: input.description ?? ''
+    })
+  return (await getKey(id))!
 }
 
 /** 更新密钥 */
-export function updateKey(id: string, input: SysKeyInput): SysKey | null {
-  const result = db.prepare(`
-    UPDATE sys_key SET
-      name = ?, secret = ?, enabled = ?, status = ?, expires_time = ?, sort = ?, description = ?,
-      update_time = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `).run(
-    input.name,
-    input.secret,
-    input.enabled === false ? 0 : 1,
-    input.status ?? 'ACTIVE',
-    input.expiresTime ?? null,
-    input.sort ?? 0,
-    input.description ?? '',
-    id
-  )
-  return result.changes > 0 ? getKey(id) : null
+export async function updateKey(id: string, input: SysKeyInput): Promise<SysKey | null> {
+  const res = await db.update(sysKey)
+    .set({
+      name: input.name,
+      secret: input.secret,
+      enabled: input.enabled !== false,
+      status: input.status ?? 'ACTIVE',
+      expiresTime: input.expiresTime ?? null,
+      sort: input.sort ?? 0,
+      description: input.description ?? '',
+      updateTime: sql`CURRENT_TIMESTAMP`
+    })
+    .where(eq(sysKey.id, id))
+  return res.rowsAffected > 0 ? await getKey(id) : null
 }
 
 /** 删除密钥 */
-export function removeKey(id: string): boolean {
-  return db.prepare('DELETE FROM sys_key WHERE id = ?').run(id).changes > 0
+export async function removeKey(id: string): Promise<boolean> {
+  const res = await db.delete(sysKey).where(eq(sysKey.id, id))
+  return res.rowsAffected > 0
 }
 
 /** 批量更新密钥排序 */
-export function reorderKeys(items: {id: string, sort: number}[]): void {
-  const stmt = db.prepare('UPDATE sys_key SET sort = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?')
-  try {
-    db.exec('BEGIN')
-    for (const {id, sort} of items) stmt.run(sort, id)
-    db.exec('COMMIT')
-  } catch (err) {
-    db.exec('ROLLBACK')
-    throw err
-  }
+export async function reorderKeys(items: {id: string, sort: number}[]): Promise<void> {
+  await db.transaction(async (tx) => {
+    for (const {id, sort} of items) {
+      await tx.update(sysKey)
+        .set({sort, updateTime: sql`CURRENT_TIMESTAMP`})
+        .where(eq(sysKey.id, id))
+    }
+  })
 }
 
 /* =========================================================================
  * 供应商模型（sys_model）
  * ========================================================================= */
 
-interface SysModelRow {
-  id: string
-  provider_id: string
-  code: string
-  name: string
-  category: string
-  enabled: number
-  status: 'ACTIVE' | 'INVALID'
-  type: SysModelType
-  input_modal: string
-  output_modal: string
-  protocols: string
-  max_context: number
-  max_input: number
-  max_output: number
-  reasoning: SysModelReasoning
-  effort_level: string
-  sort: number
-  description: string
-  create_time: string
-  update_time: string
-}
-
-function safeJsonParseArray(jsonStr: string, fallback: string[] = []): string[] {
-  try {
-    const val = JSON.parse(jsonStr)
-    return Array.isArray(val) ? val : fallback
-  } catch {
-    return fallback
-  }
-}
-
-function toModel(row: SysModelRow): SysModel {
-  return {
-    id: row.id,
-    providerId: row.provider_id,
-    code: row.code,
-    name: row.name,
-    category: row.category,
-    enabled: row.enabled !== 0,
-    status: row.status,
-    type: row.type,
-    inputModal: safeJsonParseArray(row.input_modal, ['text']),
-    outputModal: safeJsonParseArray(row.output_modal, ['text']),
-    protocols: safeJsonParseArray(row.protocols, []),
-    maxContext: row.max_context,
-    maxInput: row.max_input,
-    maxOutput: row.max_output,
-    reasoning: row.reasoning,
-    effortLevel: safeJsonParseArray(row.effort_level, []),
-    sort: row.sort,
-    description: row.description,
-    createTime: row.create_time,
-    updateTime: row.update_time
-  }
-}
-
 /** 查询某供应商的所有模型（sort 升序，创建时间升序） */
-export function listModels(providerId: string): SysModel[] {
-  const rows = db.prepare(`
-    SELECT * FROM sys_model
-    WHERE provider_id = ?
-    ORDER BY sort ASC, create_time ASC
-  `).all(providerId) as unknown as SysModelRow[]
-  return rows.map(toModel)
+export async function listModels(providerId: string): Promise<SysModel[]> {
+  return await db.select()
+    .from(sysModel)
+    .where(eq(sysModel.providerId, providerId))
+    .orderBy(asc(sysModel.sort), asc(sysModel.createTime))
 }
 
 /** 按 id 查询单个模型 */
-export function getModel(id: string): SysModel | null {
-  const row = db.prepare('SELECT * FROM sys_model WHERE id = ?').get(id) as unknown as SysModelRow | undefined
-  return row ? toModel(row) : null
+export async function getModel(id: string): Promise<SysModel | null> {
+  const row = await db.select()
+    .from(sysModel)
+    .where(eq(sysModel.id, id))
+    .get()
+  return row ?? null
 }
 
 /** 新增模型 */
-export function insertModel(id: string, providerId: string, input: SysModelInput): SysModel {
-  db.prepare(`
-    INSERT INTO sys_model (
-      id, provider_id, code, name, category, enabled, status, type,
-      input_modal, output_modal, protocols, max_context, max_input, max_output,
-      reasoning, effort_level, sort, description
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    id,
-    providerId,
-    input.code,
-    input.name ?? '',
-    input.category ?? '',
-    input.enabled === false ? 0 : 1,
-    input.status ?? 'ACTIVE',
-    input.type,
-    JSON.stringify(input.inputModal ?? ['text']),
-    JSON.stringify(input.outputModal ?? ['text']),
-    JSON.stringify(input.protocols ?? []),
-    input.maxContext ?? 0,
-    input.maxInput ?? 0,
-    input.maxOutput ?? 0,
-    input.reasoning ?? 'TOGGLE',
-    JSON.stringify(input.effortLevel ?? []),
-    input.sort ?? 0,
-    input.description ?? ''
-  )
-  return getModel(id)!
+export async function insertModel(id: string, providerId: string, input: SysModelInput): Promise<SysModel> {
+  await db.insert(sysModel)
+    .values({
+      id,
+      providerId,
+      code: input.code,
+      name: input.name ?? '',
+      category: input.category ?? '',
+      enabled: input.enabled !== false,
+      status: input.status ?? 'ACTIVE',
+      type: input.type,
+      inputModal: input.inputModal ?? ['text'],
+      outputModal: input.outputModal ?? ['text'],
+      protocols: input.protocols ?? [],
+      maxContext: input.maxContext ?? 0,
+      maxInput: input.maxInput ?? 0,
+      maxOutput: input.maxOutput ?? 0,
+      reasoning: input.reasoning ?? 'TOGGLE',
+      effortLevel: input.effortLevel ?? [],
+      sort: input.sort ?? 0,
+      description: input.description ?? ''
+    })
+  return (await getModel(id))!
 }
 
 /** 更新模型 */
-export function updateModel(id: string, input: SysModelInput): SysModel | null {
-  const result = db.prepare(`
-    UPDATE sys_model SET
-      code = ?, name = ?, category = ?, enabled = ?, status = ?, type = ?,
-      input_modal = ?, output_modal = ?, protocols = ?, max_context = ?, max_input = ?, max_output = ?,
-      reasoning = ?, effort_level = ?, sort = ?, description = ?, update_time = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `).run(
-    input.code,
-    input.name ?? '',
-    input.category ?? '',
-    input.enabled === false ? 0 : 1,
-    input.status ?? 'ACTIVE',
-    input.type,
-    JSON.stringify(input.inputModal ?? ['text']),
-    JSON.stringify(input.outputModal ?? ['text']),
-    JSON.stringify(input.protocols ?? []),
-    input.maxContext ?? 0,
-    input.maxInput ?? 0,
-    input.maxOutput ?? 0,
-    input.reasoning ?? 'TOGGLE',
-    JSON.stringify(input.effortLevel ?? []),
-    input.sort ?? 0,
-    input.description ?? '',
-    id
-  )
-  return result.changes > 0 ? getModel(id) : null
+export async function updateModel(id: string, input: SysModelInput): Promise<SysModel | null> {
+  const res = await db.update(sysModel)
+    .set({
+      code: input.code,
+      name: input.name ?? '',
+      category: input.category ?? '',
+      enabled: input.enabled !== false,
+      status: input.status ?? 'ACTIVE',
+      type: input.type,
+      inputModal: input.inputModal ?? ['text'],
+      outputModal: input.outputModal ?? ['text'],
+      protocols: input.protocols ?? [],
+      maxContext: input.maxContext ?? 0,
+      maxInput: input.maxInput ?? 0,
+      maxOutput: input.maxOutput ?? 0,
+      reasoning: input.reasoning ?? 'TOGGLE',
+      effortLevel: input.effortLevel ?? [],
+      sort: input.sort ?? 0,
+      description: input.description ?? '',
+      updateTime: sql`CURRENT_TIMESTAMP`
+    })
+    .where(eq(sysModel.id, id))
+  return res.rowsAffected > 0 ? await getModel(id) : null
 }
 
 /** 删除模型 */
-export function removeModel(id: string): boolean {
-  return db.prepare('DELETE FROM sys_model WHERE id = ?').run(id).changes > 0
+export async function removeModel(id: string): Promise<boolean> {
+  const res = await db.delete(sysModel).where(eq(sysModel.id, id))
+  return res.rowsAffected > 0
 }
 
 /** 批量更新模型排序 */
-export function reorderModels(items: {id: string, sort: number}[]): void {
-  const stmt = db.prepare('UPDATE sys_model SET sort = ?, update_time = CURRENT_TIMESTAMP WHERE id = ?')
-  try {
-    db.exec('BEGIN')
-    for (const {id, sort} of items) stmt.run(sort, id)
-    db.exec('COMMIT')
-  } catch (err) {
-    db.exec('ROLLBACK')
-    throw err
-  }
+export async function reorderModels(items: {id: string, sort: number}[]): Promise<void> {
+  await db.transaction(async (tx) => {
+    for (const {id, sort} of items) {
+      await tx.update(sysModel)
+        .set({sort, updateTime: sql`CURRENT_TIMESTAMP`})
+        .where(eq(sysModel.id, id))
+    }
+  })
 }
+

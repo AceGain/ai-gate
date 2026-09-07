@@ -4,11 +4,12 @@
 
 | 项 | 说明 |
 |---|---|
-| 数据库 | SQLite（`node:sqlite`，Node 24+ 内置，无第三方依赖） |
+| 数据库 | SQLite（`@libsql/client` + `Drizzle ORM`，全异步/零编译依赖） |
 | 数据库文件 | `server/data/ai-gate.db`（目录可用环境变量 `AI_GATE_DATA_DIR` 覆盖；已被 gitignore） |
 | 连接策略 | 进程级单例（`server/src/db.ts`），WAL 模式，`busy_timeout = 5000` |
-| 建表方式 | 幂等 `CREATE TABLE IF NOT EXISTS`，DDL 统一收敛在 `server/src/db.ts` |
-| 命名约定 | 表名 `sys_` 前缀 + snake_case；API 载荷统一 camelCase |
+| Schema 定义 | TypeScript 单源定义在 `server/src/schema/index.ts` |
+| 迁移方式 | `drizzle-kit` 自动化管理（`pnpm db:generate` 生成至 `server/drizzle/`），启动自动执行 |
+| 命名约定 | 表名 `sys_` 前缀 + snake_case；API 载荷统一 camelCase（Drizzle 自动映射） |
 | 时间约定 | 由数据库维护（`CURRENT_TIMESTAMP`，UTC，格式 `YYYY-MM-DD HH:MM:SS`），写入方不传 |
 
 ## 表清单

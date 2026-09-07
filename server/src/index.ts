@@ -26,7 +26,7 @@ const port = Number(process.env.AI_GATE_PORT ?? 9256)
 const hostname = process.env.AI_GATE_HOST ?? '0.0.0.0'
 serve({fetch: app.fetch, port, hostname}, (info) => {
   console.log(`[ai-gate] server listening on http://localhost:${info.port}`)
-  console.log('[ai-gate] providers api: /api/providers (sqlite)')
+  console.log('[ai-gate] providers api: /api/providers (libsql + drizzle)')
   if (existsSync('dist/index.html')) {
     console.log('[ai-gate] serving static site from dist/')
   }

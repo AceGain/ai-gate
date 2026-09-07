@@ -5,7 +5,7 @@ import type {Context} from 'hono'
 import {Hono} from 'hono'
 import {newId} from '../../../shared/sys-provider'
 import type {SysEndpointInput, SysEndpointType} from '../../../shared/sys-endpoint'
-import {getEndpoint, insertEndpoint, listEndpoints, removeEndpoint, updateEndpoint} from '../store'
+import {insertEndpoint, listEndpoints, removeEndpoint, updateEndpoint} from '../store'
 
 export const endpoints = new Hono()
 
@@ -35,9 +35,9 @@ function parseEndpointBody(raw: unknown): {data?: SysEndpointInput; error?: stri
 }
 
 /** 列表 */
-endpoints.get('/providers/:providerId/endpoints', (c) => {
+endpoints.get('/providers/:providerId/endpoints', async (c) => {
   const providerId = c.req.param('providerId')
-  return c.json(listEndpoints(providerId))
+  return c.json(await listEndpoints(providerId))
 })
 
 /** 新增 */
@@ -47,7 +47,7 @@ endpoints.post('/providers/:providerId/endpoints', async (c) => {
   const {data, error} = parseEndpointBody(body)
   if (!data) return jsonError(c, 400, error!)
 
-  const created = insertEndpoint(newId(), providerId, data)
+  const created = await insertEndpoint(newId(), providerId, data)
   return c.json(created, 201)
 })
 
@@ -58,14 +58,14 @@ endpoints.put('/providers/:providerId/endpoints/:id', async (c) => {
   const {data, error} = parseEndpointBody(body)
   if (!data) return jsonError(c, 400, error!)
 
-  const updated = updateEndpoint(id, data)
+  const updated = await updateEndpoint(id, data)
   if (!updated) return jsonError(c, 404, 'Endpoint not found')
   return c.json(updated)
 })
 
 /** 删除 */
-endpoints.delete('/providers/:providerId/endpoints/:id', (c) => {
+endpoints.delete('/providers/:providerId/endpoints/:id', async (c) => {
   const id = c.req.param('id')
-  if (!removeEndpoint(id)) return jsonError(c, 404, 'Endpoint not found')
+  if (!(await removeEndpoint(id))) return jsonError(c, 404, 'Endpoint not found')
   return c.json({ok: true})
 })

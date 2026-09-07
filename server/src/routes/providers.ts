@@ -35,7 +35,16 @@ function parseProviderBody(raw: unknown): {data?: SysProviderInput; error?: stri
 
 /** code 唯一约束冲突 → 409 */
 function isUniqueViolation(err: unknown): boolean {
-  return err instanceof Error && err.message.includes('UNIQUE constraint failed')
+  if (!(err instanceof Error)) return false
+  if (err.message.includes('UNIQUE constraint failed')) return true
+  const cause = (err as {cause?: unknown}).cause
+  if (cause instanceof Error && cause.message.includes('UNIQUE constraint failed')) return true
+  if (typeof cause === 'object' && cause !== null) {
+    const code = (cause as {code?: string}).code
+    const ext = (cause as {extendedCode?: string}).extendedCode
+    if (code === 'SQLITE_CONSTRAINT' || ext === 'SQLITE_CONSTRAINT_UNIQUE') return true
+  }
+  return false
 }
 
 /** 排序项校验 */
@@ -46,8 +55,8 @@ function isReorderItem(v: unknown): v is {id: string, sort: number} {
 }
 
 /** 列表 */
-providers.get('/providers', (c) => {
-  return c.json(listProviders())
+providers.get('/providers', async (c) => {
+  return c.json(await listProviders())
 })
 
 /** 批量排序（列表拖拽后的持久化）；须注册在 PUT /:id 之前，避免 "reorder" 被当作 :id */
@@ -56,13 +65,13 @@ providers.put('/providers/reorder', async (c) => {
   if (!Array.isArray(body) || !body.every(isReorderItem)) {
     return jsonError(c, 400, 'Body must be an array of {id, sort}')
   }
-  reorderProviders(body)
+  await reorderProviders(body)
   return c.json({ok: true})
 })
 
 /** 详情 */
-providers.get('/providers/:id', (c) => {
-  const provider = getProvider(c.req.param('id'))
+providers.get('/providers/:id', async (c) => {
+  const provider = await getProvider(c.req.param('id'))
   if (!provider) return jsonError(c, 404, 'Provider not found')
   return c.json(provider)
 })
@@ -74,7 +83,8 @@ providers.post('/providers', async (c) => {
   if (!data) return jsonError(c, 400, error!)
 
   try {
-    return c.json(insertProvider(newId(), data), 201)
+    const created = await insertProvider(newId(), data)
+    return c.json(created, 201)
   } catch (err) {
     if (isUniqueViolation(err)) return jsonError(c, 409, `Duplicate provider code: ${data.code}`)
     throw err
@@ -89,7 +99,7 @@ providers.put('/providers/:id', async (c) => {
   if (!data) return jsonError(c, 400, error!)
 
   try {
-    const updated = updateProvider(id, data)
+    const updated = await updateProvider(id, data)
     if (!updated) return jsonError(c, 404, 'Provider not found')
     return c.json(updated)
   } catch (err) {
@@ -99,7 +109,7 @@ providers.put('/providers/:id', async (c) => {
 })
 
 /** 删除 */
-providers.delete('/providers/:id', (c) => {
-  if (!removeProvider(c.req.param('id'))) return jsonError(c, 404, 'Provider not found')
+providers.delete('/providers/:id', async (c) => {
+  if (!(await removeProvider(c.req.param('id')))) return jsonError(c, 404, 'Provider not found')
   return c.json({ok: true})
 })

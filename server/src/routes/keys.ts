@@ -5,7 +5,7 @@ import type {Context} from 'hono'
 import {Hono} from 'hono'
 import {newId} from '../../../shared/sys-provider'
 import type {SysKeyInput, SysKeyStatus} from '../../../shared/sys-key'
-import {getKey, insertKey, listKeys, removeKey, reorderKeys, updateKey} from '../store'
+import {insertKey, listKeys, removeKey, reorderKeys, updateKey} from '../store'
 
 export const keys = new Hono()
 
@@ -44,9 +44,9 @@ function isReorderItem(v: unknown): v is {id: string, sort: number} {
 }
 
 /** 列表 */
-keys.get('/providers/:providerId/keys', (c) => {
+keys.get('/providers/:providerId/keys', async (c) => {
   const providerId = c.req.param('providerId')
-  return c.json(listKeys(providerId))
+  return c.json(await listKeys(providerId))
 })
 
 /** 批量排序（须在 PUT /:id 之前注册） */
@@ -55,7 +55,7 @@ keys.put('/providers/:providerId/keys/reorder', async (c) => {
   if (!Array.isArray(body) || !body.every(isReorderItem)) {
     return jsonError(c, 400, 'Body must be an array of {id, sort}')
   }
-  reorderKeys(body)
+  await reorderKeys(body)
   return c.json({ok: true})
 })
 
@@ -66,7 +66,7 @@ keys.post('/providers/:providerId/keys', async (c) => {
   const {data, error} = parseKeyBody(body)
   if (!data) return jsonError(c, 400, error!)
 
-  const created = insertKey(newId(), providerId, data)
+  const created = await insertKey(newId(), providerId, data)
   return c.json(created, 201)
 })
 
@@ -77,14 +77,14 @@ keys.put('/providers/:providerId/keys/:id', async (c) => {
   const {data, error} = parseKeyBody(body)
   if (!data) return jsonError(c, 400, error!)
 
-  const updated = updateKey(id, data)
+  const updated = await updateKey(id, data)
   if (!updated) return jsonError(c, 404, 'Key not found')
   return c.json(updated)
 })
 
 /** 删除 */
-keys.delete('/providers/:providerId/keys/:id', (c) => {
+keys.delete('/providers/:providerId/keys/:id', async (c) => {
   const id = c.req.param('id')
-  if (!removeKey(id)) return jsonError(c, 404, 'Key not found')
+  if (!(await removeKey(id))) return jsonError(c, 404, 'Key not found')
   return c.json({ok: true})
 })

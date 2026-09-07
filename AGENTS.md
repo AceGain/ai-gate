@@ -10,7 +10,7 @@ AI 网关：聚合多供应商/多密钥，对外提供 OpenAI 兼容入口。
 
 - 前端：Nuxt 4 + Nuxt UI v4 + Tailwind CSS 4 + `@nuxtjs/i18n`（默认 zh-CN）
 
-- 后端：Hono
+- 后端：Hono + Drizzle ORM + @libsql/client（SQLite）
 
 - 桌面：Tauri 2（Rust）
 
@@ -23,6 +23,8 @@ pnpm dev:all            # 前后端同时启动（concurrently -k，供 tauri de
 pnpm tauri dev          # 桌面开发（自动执行 pnpm dev:all 同时拉起前端 9255 与后端 9256）
 pnpm tauri build        # 桌面打包（自动执行 pnpm generate 产出到 dist/）
 pnpm typecheck          # 唯一验证手段（无 lint / test），前端 vue-tsc + 后端 tsc，提交前必跑
+pnpm db:generate        # 根据 server/src/schema/ 生成 Drizzle SQL 迁移文件
+pnpm db:studio          # 启动 Drizzle Studio 可视化管理 SQLite 数据库
 ```
 
 ## 目录与结构
@@ -31,7 +33,7 @@ pnpm typecheck          # 唯一验证手段（无 lint / test），前端 vue-t
 
 - `shared/` — 前后端共用的纯 TS 模块（供应商类型/协议元数据/预置供应商），不得引入 Nuxt 或浏览器特有 API
 
-- `server/` — Hono 后端（src/routes 管理 API、src/store.ts JSON 持久化）；生产形态直接服务 `dist/`
+- `server/` — Hono 后端（src/schema/ 单源 Schema、drizzle/ SQL 迁移、src/routes 管理 API、src/store.ts 持久化）；生产形态直接服务 `dist/`
 
 - `src-tauri/` — Rust 侧；lib 名为 `ai_gate_lib`（Windows 下 lib/bin 命名冲突问题，勿改名）
 
