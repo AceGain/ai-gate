@@ -258,7 +258,7 @@ const tabs = computed(() => [
 
 <template>
   <UDashboardPanel class="min-h-0" :ui="{ body: 'p-0 sm:p-0 gap-0 sm:gap-0' }">
-    <!-- 极简顶栏：轻量面包屑导航 + 状态微标 + 开关 -->
+    <!-- 极简顶栏：纯粹的面包屑导航 + 返回 -->
     <template #header>
       <AppNavbar :title="title">
         <template #title>
@@ -270,84 +270,114 @@ const tabs = computed(() => [
               {{ t('providers.title') }}
             </NuxtLink>
             <span class="text-dimmed">/</span>
-            <template v-if="provider">
-              <span class="truncate font-semibold text-highlighted">
-                {{ provider.name || provider.code }}
-              </span>
-              <UButton
-                icon="i-lucide-square-pen"
-                variant="ghost"
-                color="neutral"
-                size="xs"
-                :title="t('providers.edit')"
-                :aria-label="t('providers.edit')"
-                @click="openEditProvider"
-              />
-            </template>
-            <span v-else>{{ title }}</span>
+            <span class="truncate font-semibold text-highlighted">
+              {{ provider ? (provider.name || provider.code) : title }}
+            </span>
           </div>
         </template>
 
         <template #right>
-          <div class="flex items-center gap-2">
-            <div v-if="provider" class="flex items-center gap-1.5 rounded-full border border-default bg-elevated/50 px-2.5 py-1 text-xs">
-              <span
-                class="size-1.5 rounded-full"
-                :class="provider.enabled ? 'bg-success' : 'bg-neutral'"
-              />
-              <span class="text-muted">
-                {{ provider.enabled ? t('providers.enabled') : t('providers.disabled') }}
-              </span>
-              <USwitch
-                :model-value="provider.enabled"
-                :aria-label="t('providers.toggleEnabled')"
-                class="ml-1"
-                @update:model-value="v => toggleProvider(provider!, !!v)"
-              />
-            </div>
-
-            <UButton
-              icon="i-lucide-arrow-left"
-              variant="ghost"
-              color="neutral"
-              size="sm"
-              to="/providers"
-              :aria-label="t('common.back')"
-              :title="t('common.back')"
-            >
-              <span class="hidden sm:inline">{{ t('common.back') }}</span>
-            </UButton>
-          </div>
+          <UButton
+            icon="i-lucide-chevron-left"
+            variant="ghost"
+            color="neutral"
+            size="sm"
+            to="/providers"
+            :aria-label="t('common.back')"
+            :title="t('common.back')"
+          >
+            <span class="hidden sm:inline">{{ t('common.back') }}</span>
+          </UButton>
         </template>
       </AppNavbar>
     </template>
 
-    <!-- 页面内容：顶部干净 Tab 栏切换，各 Tab 单屏适读、扁平无卡片框 -->
+    <!-- 页面内容：除去 Navbar，主体用 Card 包裹 -->
     <template #body>
-      <div v-if="provider" class="flex h-full flex-col overflow-hidden">
-        <!-- 顶部 Tab 栏：干净利落的下划线切换条 -->
-        <div class="flex shrink-0 items-center gap-6 border-b border-default bg-default px-6">
-          <button
-            v-for="tab in tabs"
-            :key="tab.id"
-            type="button"
-            class="relative flex items-center gap-2 py-3 text-sm font-medium transition-colors cursor-pointer"
-            :class="activeTab === tab.id ? 'text-highlighted font-semibold' : 'text-muted hover:text-default'"
-            @click="activeTab = tab.id"
+      <div v-if="provider" class="h-full overflow-y-auto p-4 sm:p-6">
+        <div class="mx-auto max-w-5xl">
+          <UCard
+            :ui="{
+              header: 'px-6 py-4',
+              body: 'p-0 sm:p-0'
+            }"
           >
-            <UIcon :name="tab.icon" class="size-4" />
-            <span>{{ tab.label }}</span>
-            <span
-              v-if="activeTab === tab.id"
-              class="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary"
-            />
-          </button>
-        </div>
+            <!-- 1. 卡片头部：供应商实体档案（品牌图标 + 基本信息 + 启停状态 + 编辑按钮） -->
+            <template #header>
+              <div class="flex items-center justify-between gap-4">
+                <!-- 左侧：图标 + 名称/编码 + 描述 -->
+                <div class="flex min-w-0 items-center gap-3.5">
+                  <ProviderIcon :icon="provider.icon" :name="provider.name || provider.code" size="lg" />
+                  <div class="flex min-w-0 flex-col gap-0.5">
+                    <div class="flex items-center gap-2">
+                      <h1 class="truncate text-base font-bold text-highlighted">
+                        {{ provider.name || provider.code }}
+                      </h1>
+                      <UBadge color="neutral" variant="subtle" size="xs" class="shrink-0 font-mono">
+                        {{ provider.code }}
+                      </UBadge>
+                    </div>
+                    <p v-if="provider.description" class="truncate text-xs text-muted" :title="provider.description">
+                      {{ provider.description }}
+                    </p>
+                  </div>
+                </div>
 
-        <!-- 各 Tab 内容区域：单屏适读、直接标题 + 下方内容、滚动自适应 -->
-        <div class="flex-1 overflow-y-auto">
-          <!-- 1. 网络端点 Tab -->
-          <div v-if="activeTab === 'endpoints'" class="mx-auto max-w-5xl space-y-4 p-6">
+                <!-- 右侧：启用状态开关 + 编辑按钮 -->
+                <div class="flex shrink-0 items-center gap-2.5">
+                  <div class="flex items-center gap-1.5 rounded-full border border-default bg-elevated/50 px-2.5 py-1 text-xs">
+                    <span
+                      class="size-1.5 rounded-full"
+                      :class="provider.enabled ? 'bg-success' : 'bg-neutral'"
+                    />
+                    <span class="text-muted">
+                      {{ provider.enabled ? t('providers.enabled') : t('providers.disabled') }}
+                    </span>
+                    <USwitch
+                      :model-value="provider.enabled"
+                      :aria-label="t('providers.toggleEnabled')"
+                      class="ml-1"
+                      @update:model-value="v => toggleProvider(provider!, !!v)"
+                    />
+                  </div>
+
+                  <UButton
+                    icon="i-lucide-square-pen"
+                    variant="outline"
+                    color="neutral"
+                    size="xs"
+                    @click="openEditProvider"
+                  >
+                    {{ t('providers.edit') }}
+                  </UButton>
+                </div>
+              </div>
+            </template>
+
+            <!-- 2. 卡片主体：Tab 切换栏 + 当前 Tab 配置内容 -->
+            <!-- 顶部 Tab 栏：干净利落的下划线切换条 -->
+            <div class="flex shrink-0 items-center gap-6 border-b border-default px-6">
+                <button
+                  v-for="tab in tabs"
+                  :key="tab.id"
+                  type="button"
+                  class="relative flex items-center gap-2 py-3 text-sm font-medium transition-colors cursor-pointer"
+                  :class="activeTab === tab.id ? 'text-highlighted font-semibold' : 'text-muted hover:text-default'"
+                  @click="activeTab = tab.id"
+                >
+                  <UIcon :name="tab.icon" class="size-4" />
+                  <span>{{ tab.label }}</span>
+                  <span
+                    v-if="activeTab === tab.id"
+                    class="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary"
+                  />
+                </button>
+              </div>
+
+              <!-- 各 Tab 内容区域 -->
+              <div class="p-6">
+                <!-- 1. 网络端点 Tab -->
+                <div v-if="activeTab === 'endpoints'" class="space-y-4">
             <div class="flex items-center justify-between border-b border-default pb-2">
               <div>
                 <h2 class="text-base font-semibold text-highlighted">
@@ -438,7 +468,7 @@ const tabs = computed(() => [
           </div>
 
           <!-- 2. API 密钥 Tab -->
-          <div v-else-if="activeTab === 'keys'" class="mx-auto max-w-5xl space-y-4 p-6">
+          <div v-else-if="activeTab === 'keys'" class="space-y-4">
             <div class="flex items-center justify-between border-b border-default pb-2">
               <div>
                 <h2 class="text-base font-semibold text-highlighted">
@@ -558,7 +588,7 @@ const tabs = computed(() => [
           </div>
 
           <!-- 3. 模型列表 Tab -->
-          <div v-else-if="activeTab === 'models'" class="mx-auto max-w-5xl space-y-4 p-6">
+          <div v-else-if="activeTab === 'models'" class="space-y-4">
             <div class="flex items-center justify-between border-b border-default pb-2">
               <div>
                 <h2 class="text-base font-semibold text-highlighted">
@@ -680,7 +710,9 @@ const tabs = computed(() => [
             />
           </div>
         </div>
-      </div>
+      </UCard>
+    </div>
+  </div>
 
       <!-- 供应商不存在 -->
       <div v-else class="flex min-h-full items-center justify-center p-8">
