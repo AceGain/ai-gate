@@ -7,7 +7,7 @@ const {t} = useI18n()
     <template #header>
       <AppNavbar>
         <template #right>
-          <UButton icon="i-lucide-plus">{{ t('virtualModels.add') }}</UButton>
+          <UButton icon="i-lucide-plus" variant="ghost">{{ t('virtualModels.add') }}</UButton>
         </template>
       </AppNavbar>
     </template>
@@ -16,7 +16,6 @@ const {t} = useI18n()
       <div class="flex min-h-full items-center justify-center p-4">
         <UEmpty
           :title="t('common.empty')"
-          :description="t('virtualModels.emptyDesc')"
           variant="naked"
         />
       </div>

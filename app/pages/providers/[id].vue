@@ -246,49 +246,23 @@ useSortable(modelListEl, models, {
     void nextTick(() => saveModelOrder(provider.value!.id))
   }
 })
-
-/* ---------------- Tab 标签页切换 ---------------- */
-type TabKey = 'endpoints' | 'keys' | 'models'
-const validTabs: TabKey[] = ['endpoints', 'keys', 'models']
-const activeTab = ref<TabKey>(
-  validTabs.includes(route.query.tab as TabKey) ? (route.query.tab as TabKey) : 'endpoints'
-)
-
-watch(activeTab, (tab) => {
-  if (route.query.tab !== tab) {
-    void navigateTo({query: {...route.query, tab}}, {replace: true})
-  }
-})
-
-watch(() => route.query.tab, (tab) => {
-  if (tab && validTabs.includes(tab as TabKey) && activeTab.value !== tab) {
-    activeTab.value = tab as TabKey
-  }
-})
-
-const tabs = computed(() => [
-  {id: 'endpoints' as const, label: t('providerEndpoints.title'), icon: 'i-lucide-network'},
-  {id: 'keys' as const, label: t('providerKeys.title'), icon: 'i-lucide-key-round'},
-  {id: 'models' as const, label: t('providerModels.title'), icon: 'i-lucide-cpu'}
-])
 </script>
 
 <template>
   <UDashboardPanel class="min-h-0" :ui="{ body: 'p-0 sm:p-0 gap-0 sm:gap-0' }">
-    <!-- 极简顶栏：纯粹的面包屑导航 + 返回 -->
     <template #header>
       <AppNavbar :title="title">
         <template #title>
-          <div class="flex items-center gap-2 text-sm">
+          <div class="flex items-center gap-1.5 text-base">
             <NuxtLink
               to="/providers"
-              class="text-muted transition-colors hover:text-default"
+              class="text-muted transition-colors hover:text-highlighted font-medium"
             >
               {{ t('providers.title') }}
             </NuxtLink>
-            <span class="text-dimmed">/</span>
+            <UIcon name="i-lucide-chevron-right" class="size-4 shrink-0 text-muted" />
             <span class="truncate font-semibold text-highlighted">
-              {{ provider ? (provider.name || provider.code) : title }}
+              {{ title }}
             </span>
           </div>
         </template>
@@ -298,7 +272,6 @@ const tabs = computed(() => [
             icon="i-lucide-chevron-left"
             variant="ghost"
             color="neutral"
-            size="sm"
             to="/providers"
             :aria-label="t('common.back')"
             :title="t('common.back')"
@@ -309,104 +282,76 @@ const tabs = computed(() => [
       </AppNavbar>
     </template>
 
-    <!-- 页面内容：除去 Navbar，主体用 Card 包裹 -->
+    <!-- 页面内容：扁平流式布局 -->
     <template #body>
       <div v-if="provider" class="h-full overflow-y-auto p-4 sm:p-6">
-        <div class="mx-auto max-w-5xl">
-          <UCard
-            :ui="{
-              header: 'px-6 py-4',
-              body: 'p-0 sm:p-0'
-            }"
-          >
-            <!-- 1. 卡片头部：供应商实体档案（品牌图标 + 基本信息 + 启停状态 + 编辑按钮） -->
-            <template #header>
-              <div class="flex items-center justify-between gap-4">
-                <!-- 左侧：图标 + 名称/编码 + 描述 -->
-                <div class="flex min-w-0 items-center gap-3.5">
-                  <ProviderIcon :icon="provider.icon" :name="provider.name || provider.code" size="lg" />
-                  <div class="flex min-w-0 flex-col gap-0.5">
-                    <div class="flex items-center gap-2">
-                      <h1 class="truncate text-base font-bold text-highlighted">
-                        {{ provider.name || provider.code }}
-                      </h1>
-                      <UBadge color="neutral" variant="subtle" size="xs" class="shrink-0 font-mono">
-                        {{ provider.code }}
-                      </UBadge>
-                    </div>
-                    <p v-if="provider.description" class="truncate text-xs text-muted" :title="provider.description">
-                      {{ provider.description }}
-                    </p>
-                  </div>
+        <div class="mx-auto max-w-5xl space-y-6 sm:space-y-8">
+          <!-- 1. 顶部档案区：纯净自然留白分层，无冗余线条，契合页面通透扁平风格 -->
+          <div class="flex items-center justify-between gap-4 pb-1">
+            <!-- 左侧：图标 + 名称/编码 + 描述 -->
+            <div class="flex min-w-0 items-center gap-3.5">
+              <ProviderIcon :icon="provider.icon" :name="provider.name || provider.code" size="lg" />
+              <div class="flex min-w-0 flex-col gap-0.5">
+                <div class="flex items-center gap-2">
+                  <h1 class="truncate text-base font-bold text-highlighted">
+                    {{ provider.name || provider.code }}
+                  </h1>
+                  <UBadge color="neutral" variant="subtle" size="xs" class="shrink-0 font-mono">
+                    {{ provider.code }}
+                  </UBadge>
                 </div>
-
-                <!-- 右侧：启用状态开关 + 编辑按钮 -->
-                <div class="flex shrink-0 items-center gap-2.5">
-                  <div class="flex items-center gap-1.5 rounded-full border border-default bg-elevated/50 px-2.5 py-1 text-xs">
-                    <span
-                      class="size-1.5 rounded-full"
-                      :class="provider.enabled ? 'bg-success' : 'bg-neutral'"
-                    />
-                    <span class="text-muted">
-                      {{ provider.enabled ? t('providers.enabled') : t('providers.disabled') }}
-                    </span>
-                    <USwitch
-                      :model-value="provider.enabled"
-                      :aria-label="t('providers.toggleEnabled')"
-                      class="ml-1"
-                      @update:model-value="v => toggleProvider(provider!, !!v)"
-                    />
-                  </div>
-
-                  <UButton
-                    icon="i-lucide-square-pen"
-                    variant="outline"
-                    color="neutral"
-                    size="xs"
-                    @click="openEditProvider"
-                  >
-                    {{ t('providers.edit') }}
-                  </UButton>
-                </div>
+                <p v-if="provider.description" class="truncate text-xs text-muted" :title="provider.description">
+                  {{ provider.description }}
+                </p>
               </div>
-            </template>
+            </div>
 
-            <!-- 2. 卡片主体：Tab 切换栏 + 当前 Tab 配置内容 -->
-            <!-- 顶部 Tab 栏：干净利落的下划线切换条 -->
-            <div class="flex shrink-0 items-center gap-6 border-b border-default px-6">
-                <button
-                  v-for="tab in tabs"
-                  :key="tab.id"
-                  type="button"
-                  class="relative flex items-center gap-2 py-3 text-sm font-medium transition-colors cursor-pointer"
-                  :class="activeTab === tab.id ? 'text-highlighted font-semibold' : 'text-muted hover:text-default'"
-                  @click="activeTab = tab.id"
-                >
-                  <UIcon :name="tab.icon" class="size-4" />
-                  <span>{{ tab.label }}</span>
-                  <span
-                    v-if="activeTab === tab.id"
-                    class="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary"
-                  />
-                </button>
+            <!-- 右侧：启用状态开关 + 编辑按钮 -->
+            <div class="flex shrink-0 items-center gap-2.5">
+              <div class="flex items-center gap-1.5 rounded-full border border-default bg-elevated/50 px-2.5 py-1 text-xs">
+                <span
+                  class="size-1.5 rounded-full"
+                  :class="provider.enabled ? 'bg-success' : 'bg-neutral'"
+                />
+                <span class="text-muted">
+                  {{ provider.enabled ? t('providers.enabled') : t('providers.disabled') }}
+                </span>
+                <USwitch
+                  :model-value="provider.enabled"
+                  :aria-label="t('providers.toggleEnabled')"
+                  class="ml-1"
+                  @update:model-value="v => toggleProvider(provider!, !!v)"
+                />
               </div>
 
-              <!-- 各 Tab 内容区域 -->
-              <div class="p-6">
-                <!-- 1. 网络端点 Tab -->
-                <div v-if="activeTab === 'endpoints'" class="space-y-4">
+              <UButton
+                icon="i-lucide-square-pen"
+                variant="ghost"
+                color="neutral"
+                size="xs"
+                @click="openEditProvider"
+              >
+                {{ t('providers.edit') }}
+              </UButton>
+            </div>
+          </div>
+
+          <!-- 2. 端点列表 -->
+          <section class="space-y-3">
+            <!-- 标题 + 新增按钮 + 下划线 -->
             <div class="flex items-center justify-between border-b border-default pb-2">
-              <div>
-                <h2 class="text-base font-semibold text-highlighted">
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-semibold text-highlighted">
                   {{ t('providerEndpoints.title') }}
                 </h2>
-                <p class="mt-0.5 text-xs text-muted">
-                  {{ t('providerEndpoints.desc') }}
-                </p>
+                <UBadge v-if="endpoints.length" color="neutral" variant="subtle" size="xs">
+                  {{ endpoints.length }}
+                </UBadge>
               </div>
 
               <UButton
                 icon="i-lucide-plus"
+                variant="ghost"
                 size="xs"
                 @click="openCreateEndpoint"
               >
@@ -415,11 +360,11 @@ const tabs = computed(() => [
             </div>
 
             <!-- 端点列表：扁平无边框行 -->
-            <div v-if="endpoints.length" class="divide-y divide-default">
+            <div v-if="endpoints.length" class="divide-y divide-default/50">
               <div
                 v-for="ep in endpoints"
                 :key="ep.id"
-                class="flex items-center justify-between py-2.5 px-1 hover:bg-elevated/20 transition-colors rounded-sm"
+                class="flex items-center justify-between py-2 px-1 hover:bg-elevated/20 transition-colors rounded-sm"
               >
                 <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-xs">
                   <UBadge :color="typeBadgeColor(ep.type)" variant="subtle" size="xs">
@@ -473,31 +418,32 @@ const tabs = computed(() => [
 
             <UEmpty
               v-else
-              icon="i-lucide-network"
               :title="t('common.empty')"
               variant="naked"
               size="sm"
               :ui="{
-                root: 'rounded-lg border border-dashed border-default/70 bg-elevated/20 py-8 gap-1.5',
+                root: 'rounded-lg border border-dashed border-default/70 bg-elevated/20 py-6',
                 title: 'text-xs font-medium text-muted'
               }"
             />
-          </div>
+          </section>
 
-          <!-- 2. API 密钥 Tab -->
-          <div v-else-if="activeTab === 'keys'" class="space-y-4">
+          <!-- 3. API 密钥 -->
+          <section class="space-y-3">
+            <!-- 标题 + 新增按钮 + 下划线 -->
             <div class="flex items-center justify-between border-b border-default pb-2">
-              <div>
-                <h2 class="text-base font-semibold text-highlighted">
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-semibold text-highlighted">
                   {{ t('providerKeys.title') }}
                 </h2>
-                <p class="mt-0.5 text-xs text-muted">
-                  {{ t('providerKeys.desc') }}
-                </p>
+                <UBadge v-if="keys.length" color="neutral" variant="subtle" size="xs">
+                  {{ keys.length }}
+                </UBadge>
               </div>
 
               <UButton
                 icon="i-lucide-plus"
+                variant="ghost"
                 size="xs"
                 @click="openCreateKey"
               >
@@ -506,11 +452,11 @@ const tabs = computed(() => [
             </div>
 
             <!-- 密钥列表：扁平无边框行 -->
-            <div v-if="keys.length" ref="keyListEl" class="divide-y divide-default">
+            <div v-if="keys.length" ref="keyListEl" class="divide-y divide-default/50">
               <div
                 v-for="k in keys"
                 :key="k.id"
-                class="flex items-center justify-between py-2.5 px-1 hover:bg-elevated/20 transition-colors rounded-sm gap-2"
+                class="flex items-center justify-between py-2 px-1 hover:bg-elevated/20 transition-colors rounded-sm gap-2"
               >
                 <div class="flex min-w-0 flex-1 items-center gap-2.5">
                   <div
@@ -593,31 +539,32 @@ const tabs = computed(() => [
 
             <UEmpty
               v-else
-              icon="i-lucide-key-round"
               :title="t('common.empty')"
               variant="naked"
               size="sm"
               :ui="{
-                root: 'rounded-lg border border-dashed border-default/70 bg-elevated/20 py-8 gap-1.5',
+                root: 'rounded-lg border border-dashed border-default/70 bg-elevated/20 py-6',
                 title: 'text-xs font-medium text-muted'
               }"
             />
-          </div>
+          </section>
 
-          <!-- 3. 模型列表 Tab -->
-          <div v-else-if="activeTab === 'models'" class="space-y-4">
+          <!-- 4. 模型列表 -->
+          <section class="space-y-3">
+            <!-- 标题 + 新增按钮 + 下划线 -->
             <div class="flex items-center justify-between border-b border-default pb-2">
-              <div>
-                <h2 class="text-base font-semibold text-highlighted">
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-semibold text-highlighted">
                   {{ t('providerModels.title') }}
                 </h2>
-                <p class="mt-0.5 text-xs text-muted">
-                  {{ t('providerModels.desc') }}
-                </p>
+                <UBadge v-if="models.length" color="neutral" variant="subtle" size="xs">
+                  {{ models.length }}
+                </UBadge>
               </div>
 
               <UButton
                 icon="i-lucide-plus"
+                variant="ghost"
                 size="xs"
                 @click="openCreateModel"
               >
@@ -626,11 +573,11 @@ const tabs = computed(() => [
             </div>
 
             <!-- 模型列表：扁平无边框行 -->
-            <div v-if="models.length" ref="modelListEl" class="divide-y divide-default">
+            <div v-if="models.length" ref="modelListEl" class="divide-y divide-default/50">
               <div
                 v-for="m in models"
                 :key="m.id"
-                class="flex items-center justify-between py-2.5 px-1 hover:bg-elevated/20 transition-colors rounded-sm gap-2"
+                class="flex items-center justify-between py-2 px-1 hover:bg-elevated/20 transition-colors rounded-sm gap-2"
               >
                 <div class="flex min-w-0 flex-1 items-center gap-2.5">
                   <div
@@ -716,29 +663,25 @@ const tabs = computed(() => [
 
             <UEmpty
               v-else
-              icon="i-lucide-cpu"
               :title="t('common.empty')"
               variant="naked"
               size="sm"
               :ui="{
-                root: 'rounded-lg border border-dashed border-default/70 bg-elevated/20 py-8 gap-1.5',
+                root: 'rounded-lg border border-dashed border-default/70 bg-elevated/20 py-6',
                 title: 'text-xs font-medium text-muted'
               }"
             />
-          </div>
+          </section>
         </div>
-      </UCard>
-    </div>
-  </div>
+      </div>
 
       <!-- 供应商不存在 -->
       <div v-else class="flex min-h-full items-center justify-center p-8">
         <UEmpty
           :title="t('common.empty')"
-          icon="i-lucide-server-cog"
           variant="naked"
           :ui="{
-            root: 'rounded-xl border border-dashed border-default/70 bg-elevated/20 p-8 gap-2',
+            root: 'rounded-xl border border-dashed border-default/70 bg-elevated/20 p-8',
             title: 'text-sm font-medium text-muted'
           }"
         />

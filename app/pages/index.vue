@@ -12,7 +12,6 @@ const {t} = useI18n()
       <div class="flex min-h-full items-center justify-center p-4">
         <UEmpty
           :title="t('common.empty')"
-          :description="t('dashboard.emptyDesc')"
           variant="naked"
         />
       </div>

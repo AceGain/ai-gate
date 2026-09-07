@@ -26,17 +26,14 @@
     "copy": "复制"
   },
   "dashboard": {
-    "title": "仪表盘",
-    "emptyDesc": "当前暂无调用监控与统计数据"
+    "title": "仪表盘"
   },
   "endpoints": {
     "title": "端点",
-    "add": "新增",
-    "emptyDesc": "当前暂无网络端点配置"
+    "add": "新增"
   },
   "providers": {
     "title": "供应商",
-    "emptyDesc": "当前暂无已配置的供应商，添加供应商以接入 AI 能力",
     "configTitle": "供应商配置",
     "enabled": "已启用",
     "disabled": "已停用",
@@ -76,7 +73,7 @@
     "backendUnavailable": "后端服务不可用"
   },
   "providerEndpoints": {
-    "title": "网络端点",
+    "title": "端点列表",
     "desc": "配置供应商基础请求地址、模型列表与各协议转发路径",
     "editTitle": "编辑端点",
     "newTitle": "新增端点",
@@ -164,8 +161,7 @@
   },
   "virtualModels": {
     "title": "虚拟模型",
-    "add": "新增",
-    "emptyDesc": "当前暂无虚拟模型配置，聚合多个模型以提供统一入口"
+    "add": "新增"
   },
   "settings": {
     "title": "设置",

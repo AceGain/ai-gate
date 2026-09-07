@@ -69,7 +69,7 @@ onBeforeUnmount(() => {
     <template #header>
       <AppNavbar>
         <template #right>
-          <UButton icon="i-lucide-plus" @click="openCreate">{{ t('providers.add') }}</UButton>
+          <UButton icon="i-lucide-plus" variant="ghost" @click="openCreate">{{ t('providers.add') }}</UButton>
         </template>
       </AppNavbar>
     </template>
@@ -152,7 +152,6 @@ onBeforeUnmount(() => {
       <div v-else class="flex min-h-full items-center justify-center p-4">
         <UEmpty
           :title="t('common.empty')"
-          :description="t('providers.emptyDesc')"
           variant="naked"
         />
       </div>
