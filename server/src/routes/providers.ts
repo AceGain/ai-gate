@@ -9,8 +9,8 @@ import {getProvider, insertProvider, listProviders, removeProvider, reorderProvi
 
 export const providers = new Hono()
 
-/** 请求体解析与校验：code/name 必填，sort 为非负整数 */
-function parseProviderBody(raw: unknown): {data?: SysProviderInput; error?: string} {
+/** 请求体解析与校验：code/name 必填，新增时 baseUrl 必填，sort 为非负整数 */
+function parseProviderBody(raw: unknown, isCreate = false): {data?: SysProviderInput; error?: string} {
   const p = (raw ?? {}) as Partial<SysProviderInput>
   if (typeof p.code !== 'string' || !p.code.trim()) {
     return {error: 'Invalid provider entry: missing code'}
@@ -18,10 +18,23 @@ function parseProviderBody(raw: unknown): {data?: SysProviderInput; error?: stri
   if (typeof p.name !== 'string' || !p.name.trim()) {
     return {error: 'Invalid provider entry: missing name'}
   }
+  if (isCreate && (typeof p.baseUrl !== 'string' || !p.baseUrl.trim())) {
+    return {error: 'Invalid provider entry: missing baseUrl'}
+  }
   if (p.sort !== undefined && (!Number.isSafeInteger(p.sort) || p.sort < 0)) {
     return {error: 'Invalid provider entry: sort must be a non-negative integer'}
   }
-  return {data: {code: p.code.trim(), name: p.name.trim(), icon: p.icon, enabled: p.enabled, description: p.description, sort: p.sort}}
+  return {
+    data: {
+      code: p.code.trim(),
+      name: p.name.trim(),
+      icon: p.icon,
+      enabled: p.enabled,
+      description: p.description,
+      sort: p.sort,
+      ...(p.baseUrl ? {baseUrl: p.baseUrl.trim()} : {})
+    }
+  }
 }
 
 /** code 唯一约束冲突 → 409 */
@@ -70,7 +83,7 @@ providers.get('/providers/:id', async (c) => {
 /** 新增 */
 providers.post('/providers', async (c) => {
   const body = await c.req.json<unknown>().catch(() => null)
-  const {data, error} = parseProviderBody(body)
+  const {data, error} = parseProviderBody(body, true)
   if (!data) return c.json({error: error!}, 400)
 
   try {
@@ -86,7 +99,7 @@ providers.post('/providers', async (c) => {
 providers.put('/providers/:id', async (c) => {
   const id = c.req.param('id')
   const body = await c.req.json<unknown>().catch(() => null)
-  const {data, error} = parseProviderBody(body)
+  const {data, error} = parseProviderBody(body, false)
   if (!data) return c.json({error: error!}, 400)
 
   try {

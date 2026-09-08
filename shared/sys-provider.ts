@@ -30,6 +30,8 @@ export interface SysProviderInput {
   enabled?: boolean
   description?: string
   sort?: number
+  /** 新增时指定的基础端点 URL（由服务端写入 sys_endpoint 表） */
+  baseUrl?: string
 }
 
 /** 生成唯一 id（浏览器与 Node 均可用） */

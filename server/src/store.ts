@@ -3,6 +3,7 @@
  * 时间戳由数据库维护（CURRENT_TIMESTAMP / UPDATE 时显式刷新）；列表按 sort 升序
  */
 import {and, asc, desc, eq, ne, sql} from 'drizzle-orm'
+import {newId} from '../../shared/sys-provider'
 import type {SysProvider, SysProviderInput} from '../../shared/sys-provider'
 import type {SysEndpoint, SysEndpointInput} from '../../shared/sys-endpoint'
 import type {SysKey, SysKeyInput} from '../../shared/sys-key'
@@ -30,18 +31,42 @@ export async function getProvider(id: string): Promise<SysProvider | null> {
   return row ?? null
 }
 
-/** 新增供应商：时间戳由数据库默认值生成；code 重复抛出约束错误（由路由层转 409） */
+/** 新增供应商：时间戳由数据库默认值生成；同时初始化默认 base 与 models 端点；code 重复抛出约束错误（由路由层转 409） */
 export async function insertProvider(id: string, input: SysProviderInput): Promise<SysProvider> {
-  await db.insert(sysProvider)
-    .values({
-      id,
-      code: input.code,
-      name: input.name,
-      icon: input.icon ?? '',
-      enabled: input.enabled === true,
-      description: input.description ?? '',
-      sort: input.sort ?? 0
-    })
+  await db.transaction(async (tx) => {
+    await tx.insert(sysProvider)
+      .values({
+        id,
+        code: input.code,
+        name: input.name,
+        icon: input.icon ?? '',
+        enabled: input.enabled === true,
+        description: input.description ?? '',
+        sort: input.sort ?? 0
+      })
+
+    if (input.baseUrl) {
+      await tx.insert(sysEndpoint)
+        .values({
+          id: newId(),
+          providerId: id,
+          type: 'base',
+          protocol: '',
+          path: input.baseUrl,
+          isDefault: false
+        })
+
+      await tx.insert(sysEndpoint)
+        .values({
+          id: newId(),
+          providerId: id,
+          type: 'models',
+          protocol: '',
+          path: '/v1/models',
+          isDefault: false
+        })
+    }
+  })
   return (await getProvider(id))!
 }
 
@@ -102,13 +127,14 @@ export async function getEndpoint(id: string): Promise<SysEndpoint | null> {
   return row ?? null
 }
 
-/** 新增端点（若设为默认，原子事务内将同 provider 同 type 的其它端点取消默认） */
+/** 新增端点（default 仅对 protocol 类型生效，原子事务内将同 provider 其它 protocol 端点取消默认） */
 export async function insertEndpoint(id: string, providerId: string, input: SysEndpointInput): Promise<SysEndpoint> {
-  if (input.isDefault) {
+  const isDefault = input.type === 'protocol' && !!input.isDefault
+  if (isDefault) {
     await db.transaction(async (tx) => {
       await tx.update(sysEndpoint)
         .set({isDefault: false, updateTime: sql`CURRENT_TIMESTAMP`})
-        .where(and(eq(sysEndpoint.providerId, providerId), eq(sysEndpoint.type, input.type)))
+        .where(and(eq(sysEndpoint.providerId, providerId), eq(sysEndpoint.type, 'protocol')))
       await tx.insert(sysEndpoint)
         .values({
           id,
@@ -133,20 +159,21 @@ export async function insertEndpoint(id: string, providerId: string, input: SysE
   return (await getEndpoint(id))!
 }
 
-/** 更新端点（原子事务维护同类型默认端点互斥） */
+/** 更新端点（default 仅对 protocol 类型生效，原子事务维护默认互斥） */
 export async function updateEndpoint(id: string, input: SysEndpointInput): Promise<SysEndpoint | null> {
   const existing = await getEndpoint(id)
   if (!existing) return null
 
+  const isDefault = input.type === 'protocol' && !!input.isDefault
   let rowsAffected = 0
-  if (input.isDefault) {
+  if (isDefault) {
     await db.transaction(async (tx) => {
       await tx.update(sysEndpoint)
         .set({isDefault: false, updateTime: sql`CURRENT_TIMESTAMP`})
         .where(
           and(
             eq(sysEndpoint.providerId, existing.providerId),
-            eq(sysEndpoint.type, input.type),
+            eq(sysEndpoint.type, 'protocol'),
             ne(sysEndpoint.id, id)
           )
         )
@@ -167,7 +194,7 @@ export async function updateEndpoint(id: string, input: SysEndpointInput): Promi
         type: input.type,
         protocol: input.protocol ?? '',
         path: input.path,
-        isDefault: !!input.isDefault,
+        isDefault: false,
         updateTime: sql`CURRENT_TIMESTAMP`
       })
       .where(eq(sysEndpoint.id, id))

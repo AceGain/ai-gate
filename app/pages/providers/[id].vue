@@ -3,6 +3,7 @@ import {useClipboard} from '@vueuse/core'
 import {useSortable} from '@vueuse/integrations/useSortable'
 import type {
   SysEndpoint,
+  SysEndpointType,
   SysKey,
   SysModel,
   SysProvider
@@ -61,14 +62,60 @@ function openEditProvider() {
 /* ---------------- 2. 端点操作与弹窗 ---------------- */
 const endpointModalOpen = ref(false)
 const editingEndpoint = ref<SysEndpoint | null>(null)
+const endpointModalType = ref<SysEndpointType>('protocol')
+
+const baseEndpoint = computed(() => endpoints.value.find(e => e.type === 'base'))
+const modelsEndpoint = computed(() => endpoints.value.find(e => e.type === 'models'))
+const protocolEndpoints = computed(() => endpoints.value.filter(e => e.type === 'protocol'))
+
+function splitUrl(baseUrl?: string, path?: string): {basePart: string; pathPart: string; fullUrl: string} {
+  if (!path) return {basePart: '', pathPart: '', fullUrl: ''}
+  const trimmedPath = path.trim()
+  if (!trimmedPath) return {basePart: '', pathPart: '', fullUrl: ''}
+
+  if (/^https?:\/\//i.test(trimmedPath)) {
+    try {
+      const u = new URL(trimmedPath)
+      const origin = u.origin
+      const pathname = trimmedPath.slice(origin.length)
+      return {basePart: origin, pathPart: pathname, fullUrl: trimmedPath}
+    } catch {
+      return {basePart: '', pathPart: trimmedPath, fullUrl: trimmedPath}
+    }
+  }
+
+  const base = baseUrl?.trim()
+  if (!base) {
+    return {basePart: '', pathPart: trimmedPath, fullUrl: trimmedPath}
+  }
+
+  const baseNormalized = base.replace(/\/+$/, '')
+  const subNormalized = trimmedPath.replace(/^\/+/, '')
+  const full = `${baseNormalized}/${subNormalized}`
+  return {basePart: baseNormalized, pathPart: `/${subNormalized}`, fullUrl: full}
+}
 
 function openCreateEndpoint() {
   editingEndpoint.value = null
+  endpointModalType.value = 'protocol'
+  endpointModalOpen.value = true
+}
+
+function openEditBaseEndpoint() {
+  editingEndpoint.value = baseEndpoint.value ?? null
+  endpointModalType.value = 'base'
+  endpointModalOpen.value = true
+}
+
+function openEditModelsEndpoint() {
+  editingEndpoint.value = modelsEndpoint.value ?? null
+  endpointModalType.value = 'models'
   endpointModalOpen.value = true
 }
 
 function openEditEndpoint(ep: SysEndpoint) {
   editingEndpoint.value = ep
+  endpointModalType.value = ep.type
   endpointModalOpen.value = true
 }
 
@@ -79,19 +126,6 @@ async function confirmDeleteEndpoint(ep: SysEndpoint) {
   })
   if (confirmed && provider.value) {
     await removeEndpoint(provider.value.id, ep.id)
-  }
-}
-
-function typeBadgeColor(type: string): 'primary' | 'secondary' | 'neutral' {
-  switch (type) {
-    case 'base':
-      return 'primary'
-    case 'models':
-      return 'secondary'
-    case 'protocol':
-      return 'neutral'
-    default:
-      return 'neutral'
   }
 }
 
@@ -246,6 +280,31 @@ useSortable(modelListEl, models, {
     void nextTick(() => saveModelOrder(provider.value!.id))
   }
 })
+
+/* ---------------- 5. Tab 标签页切换 ---------------- */
+type TabKey = 'endpoints' | 'keys' | 'models'
+const validTabs: TabKey[] = ['endpoints', 'keys', 'models']
+const activeTab = ref<TabKey>(
+  validTabs.includes(route.query.tab as TabKey) ? (route.query.tab as TabKey) : 'endpoints'
+)
+
+watch(activeTab, (tab) => {
+  if (route.query.tab !== tab) {
+    void navigateTo({query: {...route.query, tab}}, {replace: true})
+  }
+})
+
+watch(() => route.query.tab, (tab) => {
+  if (tab && validTabs.includes(tab as TabKey) && activeTab.value !== tab) {
+    activeTab.value = tab as TabKey
+  }
+})
+
+const tabs = computed(() => [
+  {id: 'endpoints' as const, label: t('providerEndpoints.title'), icon: 'i-lucide-route', count: endpoints.value.length},
+  {id: 'keys' as const, label: t('providerKeys.title'), icon: 'i-lucide-key', count: keys.value.length},
+  {id: 'models' as const, label: t('providerModels.title'), icon: 'i-lucide-sparkles', count: models.value.length}
+])
 </script>
 
 <template>
@@ -282,10 +341,10 @@ useSortable(modelListEl, models, {
       </AppNavbar>
     </template>
 
-    <!-- 页面内容：扁平流式布局 -->
+    <!-- 页面内容：扁平流式布局 + Tab 标签页切换 -->
     <template #body>
       <div v-if="provider" class="h-full overflow-y-auto p-4 sm:p-6">
-        <div class="mx-auto max-w-5xl space-y-6 sm:space-y-8">
+        <div class="mx-auto max-w-5xl space-y-6">
           <!-- 1. 顶部档案区：纯净自然留白分层，无冗余线条，契合页面通透扁平风格 -->
           <div class="flex items-center justify-between gap-4 pb-1">
             <!-- 左侧：图标 + 名称/编码 + 描述 -->
@@ -336,65 +395,220 @@ useSortable(modelListEl, models, {
             </div>
           </div>
 
-          <!-- 2. 端点列表 -->
-          <section class="space-y-3">
-            <!-- 标题 + 新增按钮 + 下划线 -->
-            <div class="flex items-center justify-between border-b border-default pb-2">
-              <div class="flex items-center gap-2">
-                <h2 class="text-sm font-semibold text-highlighted">
-                  {{ t('providerEndpoints.title') }}
-                </h2>
-                <UBadge v-if="endpoints.length" color="neutral" variant="subtle" size="xs">
-                  {{ endpoints.length }}
-                </UBadge>
-              </div>
-
-              <UButton
-                icon="i-lucide-plus"
-                variant="ghost"
-                size="xs"
-                @click="openCreateEndpoint"
+          <!-- 2. Tab 切换与操作栏：扁平下划线切换条 + 对应操作按钮 -->
+          <div class="flex items-center justify-between border-b border-default">
+            <div class="flex items-center gap-6">
+              <button
+                v-for="tab in tabs"
+                :key="tab.id"
+                type="button"
+                class="relative flex items-center gap-2 pb-2.5 pt-1 text-sm font-medium transition-colors cursor-pointer"
+                :class="activeTab === tab.id ? 'text-highlighted font-semibold' : 'text-muted hover:text-default'"
+                @click="activeTab = tab.id"
               >
-                {{ t('providers.add') }}
-              </UButton>
+                <UIcon :name="tab.icon" class="size-4" />
+                <span>{{ tab.label }}</span>
+                <UBadge
+                  v-if="tab.count !== undefined && tab.count > 0"
+                  color="neutral"
+                  variant="subtle"
+                  size="xs"
+                >
+                  {{ tab.count }}
+                </UBadge>
+                <span
+                  v-if="activeTab === tab.id"
+                  class="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary"
+                />
+              </button>
             </div>
 
-            <!-- 端点列表：扁平无边框行 -->
-            <div v-if="endpoints.length" class="divide-y divide-default/50">
+            <!-- 右侧操作按钮 -->
+            <UButton
+              v-if="activeTab === 'endpoints'"
+              icon="i-lucide-plus"
+              variant="ghost"
+              size="xs"
+              class="mb-1.5"
+              @click="openCreateEndpoint"
+            >
+              {{ t('providers.add') }}
+            </UButton>
+            <UButton
+              v-else-if="activeTab === 'keys'"
+              icon="i-lucide-plus"
+              variant="ghost"
+              size="xs"
+              class="mb-1.5"
+              @click="openCreateKey"
+            >
+              {{ t('providers.add') }}
+            </UButton>
+            <UButton
+              v-else-if="activeTab === 'models'"
+              icon="i-lucide-plus"
+              variant="ghost"
+              size="xs"
+              class="mb-1.5"
+              @click="openCreateModel"
+            >
+              {{ t('providers.add') }}
+            </UButton>
+          </div>
+
+          <!-- 3. 各 Tab 配置内容区域 -->
+          <!-- 1. 网络端点 Tab -->
+          <div v-if="activeTab === 'endpoints'">
+            <!-- 端点列表：两行格式（第一行标题，第二行地址） -->
+            <div class="divide-y divide-default/50">
+              <!-- 默认端点 1: Base URL -->
               <div
-                v-for="ep in endpoints"
-                :key="ep.id"
-                class="flex items-center justify-between py-2 px-1 hover:bg-elevated/20 transition-colors rounded-sm"
+                class="group flex items-center justify-between py-2.5 px-2 hover:bg-elevated/20 transition-colors rounded-sm gap-4"
               >
-                <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-xs">
-                  <UBadge :color="typeBadgeColor(ep.type)" variant="subtle" size="xs">
-                    {{ ep.type }}
-                  </UBadge>
+                <!-- 左侧两行信息：第一行标题，第二行地址 -->
+                <div class="flex min-w-0 flex-1 flex-col gap-1">
+                  <!-- 第一行：标题 -->
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-semibold text-highlighted">
+                      base url
+                    </span>
+                  </div>
 
-                  <UBadge
-                    v-if="ep.protocol"
-                    color="neutral"
-                    variant="outline"
-                    size="xs"
-                    class="font-mono"
-                  >
-                    {{ ep.protocol }}
-                  </UBadge>
-
-                  <UBadge
-                    v-if="ep.isDefault"
-                    color="success"
-                    variant="subtle"
-                    size="xs"
-                  >
-                    {{ t('providerEndpoints.defaultBadge') }}
-                  </UBadge>
-
-                  <code class="font-mono text-highlighted select-all text-xs">
-                    {{ ep.path }}
-                  </code>
+                  <!-- 第二行：地址 -->
+                  <div class="flex items-center gap-2 min-w-0">
+                    <code
+                      class="truncate font-mono text-xs text-muted select-all"
+                      :title="baseEndpoint?.path || t('common.empty')"
+                    >
+                      {{ baseEndpoint?.path || t('common.empty') }}
+                    </code>
+                    <button
+                      v-if="baseEndpoint?.path"
+                      type="button"
+                      class="cursor-pointer text-dimmed transition-colors hover:text-default shrink-0 opacity-0 group-hover:opacity-100"
+                      :title="t('providerKeys.copySecret')"
+                      @click="handleCopy(baseEndpoint.path)"
+                    >
+                      <UIcon name="i-lucide-copy" class="size-3" />
+                    </button>
+                  </div>
                 </div>
 
+                <!-- 右侧操作按钮 -->
+                <div class="flex shrink-0 items-center gap-1">
+                  <UButton
+                    icon="i-lucide-square-pen"
+                    variant="ghost"
+                    color="neutral"
+                    size="xs"
+                    :aria-label="t('providers.edit')"
+                    @click="openEditBaseEndpoint"
+                  />
+                </div>
+              </div>
+
+              <!-- 默认端点 2: Models -->
+              <div
+                class="group flex items-center justify-between py-2.5 px-2 hover:bg-elevated/20 transition-colors rounded-sm gap-4"
+              >
+                <!-- 左侧两行信息：第一行标题，第二行全路径地址 -->
+                <div class="flex min-w-0 flex-1 flex-col gap-1">
+                  <!-- 第一行：标题 -->
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-semibold text-highlighted">
+                      models
+                    </span>
+                  </div>
+
+                  <!-- 第二行：全路径展示（域名弱化，路径高亮） -->
+                  <div class="flex items-center gap-2 min-w-0">
+                    <code
+                      class="truncate font-mono text-xs select-all"
+                      :title="splitUrl(baseEndpoint?.path, modelsEndpoint?.path).fullUrl || t('common.empty')"
+                    >
+                      <span
+                        v-if="splitUrl(baseEndpoint?.path, modelsEndpoint?.path).basePart"
+                        class="text-dimmed"
+                      >{{ splitUrl(baseEndpoint?.path, modelsEndpoint?.path).basePart }}</span>
+                      <span
+                        :class="splitUrl(baseEndpoint?.path, modelsEndpoint?.path).basePart ? 'text-highlighted font-medium' : 'text-muted'"
+                      >{{ splitUrl(baseEndpoint?.path, modelsEndpoint?.path).pathPart || t('common.empty') }}</span>
+                    </code>
+                    <button
+                      v-if="splitUrl(baseEndpoint?.path, modelsEndpoint?.path).fullUrl"
+                      type="button"
+                      class="cursor-pointer text-dimmed transition-colors hover:text-default shrink-0 opacity-0 group-hover:opacity-100"
+                      :title="t('providerKeys.copySecret')"
+                      @click="handleCopy(splitUrl(baseEndpoint?.path, modelsEndpoint?.path).fullUrl)"
+                    >
+                      <UIcon name="i-lucide-copy" class="size-3" />
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 右侧操作按钮 -->
+                <div class="flex shrink-0 items-center gap-1">
+                  <UButton
+                    icon="i-lucide-square-pen"
+                    variant="ghost"
+                    color="neutral"
+                    size="xs"
+                    :aria-label="t('providers.edit')"
+                    @click="openEditModelsEndpoint"
+                  />
+                </div>
+              </div>
+
+              <!-- 协议端点列表 -->
+              <div
+                v-for="ep in protocolEndpoints"
+                :key="ep.id"
+                class="group flex items-center justify-between py-2.5 px-2 hover:bg-elevated/20 transition-colors rounded-sm gap-4"
+              >
+                <!-- 左侧两行信息：第一行标题，第二行全路径地址 -->
+                <div class="flex min-w-0 flex-1 flex-col gap-1">
+                  <!-- 第一行：标题（协议名称） + 默认标识（仅针对 protocol 生效） -->
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-semibold text-highlighted font-mono">
+                      {{ ep.protocol }}
+                    </span>
+                    <UBadge
+                      v-if="ep.isDefault"
+                      color="success"
+                      variant="subtle"
+                      size="xs"
+                    >
+                      {{ t('providerEndpoints.defaultBadge') }}
+                    </UBadge>
+                  </div>
+
+                  <!-- 第二行：全路径展示（域名弱化，路径高亮） -->
+                  <div class="flex items-center gap-2 min-w-0">
+                    <code
+                      class="truncate font-mono text-xs select-all"
+                      :title="splitUrl(baseEndpoint?.path, ep.path).fullUrl"
+                    >
+                      <span
+                        v-if="splitUrl(baseEndpoint?.path, ep.path).basePart"
+                        class="text-dimmed"
+                      >{{ splitUrl(baseEndpoint?.path, ep.path).basePart }}</span>
+                      <span
+                        :class="splitUrl(baseEndpoint?.path, ep.path).basePart ? 'text-highlighted font-medium' : 'text-muted'"
+                      >{{ splitUrl(baseEndpoint?.path, ep.path).pathPart }}</span>
+                    </code>
+                    <button
+                      v-if="splitUrl(baseEndpoint?.path, ep.path).fullUrl"
+                      type="button"
+                      class="cursor-pointer text-dimmed transition-colors hover:text-default shrink-0 opacity-0 group-hover:opacity-100"
+                      :title="t('providerKeys.copySecret')"
+                      @click="handleCopy(splitUrl(baseEndpoint?.path, ep.path).fullUrl)"
+                    >
+                      <UIcon name="i-lucide-copy" class="size-3" />
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 右侧操作按钮 -->
                 <div class="flex shrink-0 items-center gap-1">
                   <UButton
                     icon="i-lucide-square-pen"
@@ -415,42 +629,10 @@ useSortable(modelListEl, models, {
                 </div>
               </div>
             </div>
+          </div>
 
-            <UEmpty
-              v-else
-              :title="t('common.empty')"
-              variant="naked"
-              size="sm"
-              :ui="{
-                root: 'rounded-lg border border-dashed border-default/70 bg-elevated/20 py-6',
-                title: 'text-xs font-medium text-muted'
-              }"
-            />
-          </section>
-
-          <!-- 3. API 密钥 -->
-          <section class="space-y-3">
-            <!-- 标题 + 新增按钮 + 下划线 -->
-            <div class="flex items-center justify-between border-b border-default pb-2">
-              <div class="flex items-center gap-2">
-                <h2 class="text-sm font-semibold text-highlighted">
-                  {{ t('providerKeys.title') }}
-                </h2>
-                <UBadge v-if="keys.length" color="neutral" variant="subtle" size="xs">
-                  {{ keys.length }}
-                </UBadge>
-              </div>
-
-              <UButton
-                icon="i-lucide-plus"
-                variant="ghost"
-                size="xs"
-                @click="openCreateKey"
-              >
-                {{ t('providers.add') }}
-              </UButton>
-            </div>
-
+          <!-- 2. API 密钥 Tab -->
+          <div v-else-if="activeTab === 'keys'">
             <!-- 密钥列表：扁平无边框行 -->
             <div v-if="keys.length" ref="keyListEl" class="divide-y divide-default/50">
               <div
@@ -547,31 +729,10 @@ useSortable(modelListEl, models, {
                 title: 'text-xs font-medium text-muted'
               }"
             />
-          </section>
+          </div>
 
-          <!-- 4. 模型列表 -->
-          <section class="space-y-3">
-            <!-- 标题 + 新增按钮 + 下划线 -->
-            <div class="flex items-center justify-between border-b border-default pb-2">
-              <div class="flex items-center gap-2">
-                <h2 class="text-sm font-semibold text-highlighted">
-                  {{ t('providerModels.title') }}
-                </h2>
-                <UBadge v-if="models.length" color="neutral" variant="subtle" size="xs">
-                  {{ models.length }}
-                </UBadge>
-              </div>
-
-              <UButton
-                icon="i-lucide-plus"
-                variant="ghost"
-                size="xs"
-                @click="openCreateModel"
-              >
-                {{ t('providers.add') }}
-              </UButton>
-            </div>
-
+          <!-- 3. 模型列表 Tab -->
+          <div v-else-if="activeTab === 'models'">
             <!-- 模型列表：扁平无边框行 -->
             <div v-if="models.length" ref="modelListEl" class="divide-y divide-default/50">
               <div
@@ -671,7 +832,7 @@ useSortable(modelListEl, models, {
                 title: 'text-xs font-medium text-muted'
               }"
             />
-          </section>
+          </div>
         </div>
       </div>
 
@@ -702,6 +863,7 @@ useSortable(modelListEl, models, {
     v-model:open="endpointModalOpen"
     :provider-id="provider.id"
     :endpoint="editingEndpoint"
+    :default-type="endpointModalType"
     @saved="() => loadEndpoints(provider!.id)"
   />
 

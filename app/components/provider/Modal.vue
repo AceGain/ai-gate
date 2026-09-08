@@ -23,6 +23,7 @@ const form = reactive({
   code: '',
   name: '',
   icon: defaultProviderIcon,
+  baseUrl: '',
   description: '',
   enabled: true
 })
@@ -39,6 +40,7 @@ watch(open, (v) => {
   form.code = props.provider?.code ?? ''
   form.name = props.provider?.name ?? ''
   form.icon = props.provider?.icon ?? defaultProviderIcon
+  form.baseUrl = ''
   form.description = props.provider?.description ?? ''
   form.enabled = props.provider?.enabled ?? true
   serverCodeError.value = ''
@@ -69,8 +71,26 @@ const nameError = computed(() =>
   showErrors.value && !form.name.trim() ? t('providers.nameRequired') : undefined
 )
 
+/** Base URL 校验结果：仅新增模式下校验必填 */
+const baseUrlInvalidReason = computed(() => {
+  if (props.provider) return undefined
+  const v = form.baseUrl.trim()
+  if (!v) return t('providers.baseUrlRequired')
+  return undefined
+})
+
+const baseUrlError = computed(() => {
+  if (!showErrors.value) return undefined
+  return baseUrlInvalidReason.value
+})
+
 const saving = ref(false)
-const canSave = computed(() => !codeInvalidReason.value && !!form.name.trim() && !saving.value)
+const canSave = computed(() =>
+  !codeInvalidReason.value &&
+  !!form.name.trim() &&
+  !baseUrlInvalidReason.value &&
+  !saving.value
+)
 
 async function save() {
   if (!canSave.value) {
@@ -84,7 +104,8 @@ async function save() {
     name: form.name.trim(),
     icon: form.icon,
     description: form.description.trim(),
-    enabled: form.enabled
+    enabled: form.enabled,
+    ...(!props.provider ? {baseUrl: form.baseUrl.trim()} : {})
   }
   try {
     const saved = props.provider
@@ -134,6 +155,18 @@ async function save() {
             v-model="form.name"
             :placeholder="t('providers.namePlaceholder')"
             class="w-full"
+          />
+        </UFormField>
+
+        <UFormField
+          v-if="!props.provider"
+          :label="t('providers.baseUrl')"
+          :error="baseUrlError"
+        >
+          <UInput
+            v-model="form.baseUrl"
+            :placeholder="t('providers.baseUrlPlaceholder')"
+            class="w-full font-mono"
           />
         </UFormField>
 

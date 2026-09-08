@@ -3,7 +3,8 @@
  */
 import {Hono} from 'hono'
 import {newId} from '../../../shared/sys-provider'
-import type {SysEndpointInput, SysEndpointType} from '../../../shared/sys-endpoint'
+import {SYS_ENDPOINT_PROTOCOLS} from '../../../shared/sys-endpoint'
+import type {SysEndpointInput, SysEndpointProtocol, SysEndpointType} from '../../../shared/sys-endpoint'
 import {insertEndpoint, listEndpoints, removeEndpoint, updateEndpoint} from '../store'
 
 export const endpoints = new Hono()
@@ -16,12 +17,20 @@ function parseEndpointBody(raw: unknown): {data?: SysEndpointInput; error?: stri
   if (typeof p.path !== 'string' || !p.path.trim()) {
     return {error: 'Invalid endpoint: missing path'}
   }
+  if (p.type === 'protocol') {
+    if (!p.protocol || typeof p.protocol !== 'string' || !p.protocol.trim()) {
+      return {error: 'Invalid endpoint: missing protocol'}
+    }
+    if (!SYS_ENDPOINT_PROTOCOLS.includes(p.protocol as SysEndpointProtocol)) {
+      return {error: `Invalid protocol: must be one of ${SYS_ENDPOINT_PROTOCOLS.join(', ')}`}
+    }
+  }
   return {
     data: {
       type: p.type as SysEndpointType,
-      protocol: p.type === 'protocol' && typeof p.protocol === 'string' ? p.protocol.trim() : '',
+      protocol: p.type === 'protocol' ? (p.protocol as string).trim() : '',
       path: p.path.trim(),
-      isDefault: !!p.isDefault
+      isDefault: p.type === 'protocol' && !!p.isDefault
     }
   }
 }

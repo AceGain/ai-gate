@@ -19,12 +19,12 @@ export const navRoutes: NavRoute[] = [
   },
   {
     labelKey: 'nav.endpoints',
-    icon: 'i-lucide-network',
+    icon: 'i-lucide-route',
     to: '/endpoints'
   },
   {
     labelKey: 'nav.providers',
-    icon: 'i-lucide-server-cog',
+    icon: 'i-lucide-server',
     to: '/providers'
   },
   {

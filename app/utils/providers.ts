@@ -4,7 +4,16 @@
  */
 
 export type {SysProvider, SysProviderInput} from '../../shared/sys-provider'
-export type {SysEndpoint, SysEndpointInput, SysEndpointType} from '../../shared/sys-endpoint'
+export {
+  SYS_ENDPOINT_PROTOCOLS,
+  SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS
+} from '../../shared/sys-endpoint'
+export type {
+  SysEndpoint,
+  SysEndpointInput,
+  SysEndpointType,
+  SysEndpointProtocol
+} from '../../shared/sys-endpoint'
 export type {SysKey, SysKeyInput, SysKeyStatus} from '../../shared/sys-key'
 export type {
   SysModel,
