@@ -260,7 +260,7 @@ useSortable(modelListEl, models, {
             >
               {{ t('providers.title') }}
             </NuxtLink>
-            <UIcon name="i-lucide-chevron-right" class="size-4 shrink-0 text-muted" />
+            <span class="text-muted select-none">/</span>
             <span class="truncate font-semibold text-highlighted">
               {{ title }}
             </span>
@@ -269,7 +269,7 @@ useSortable(modelListEl, models, {
 
         <template #right>
           <UButton
-            icon="i-lucide-chevron-left"
+            icon="i-lucide-arrow-left"
             variant="ghost"
             color="neutral"
             to="/providers"
