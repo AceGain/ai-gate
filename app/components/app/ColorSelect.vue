@@ -40,14 +40,14 @@ function onSelect(value: unknown) {
     <template #leading>
       <span
         v-if="current"
-        class="size-2.5 rounded-full bg-(--chip-light) ring-1 ring-bg dark:bg-(--chip-dark)"
+        class="size-2.5 rounded-full bg-(--chip-light) ring-1 ring-(--ui-bg) dark:bg-(--chip-dark)"
         :style="swatchStyle(current.swatch)"
       />
     </template>
 
     <template #item-leading="{ item }">
       <span
-        class="size-2.5 rounded-full bg-(--chip-light) ring-1 ring-bg dark:bg-(--chip-dark)"
+        class="size-2.5 rounded-full bg-(--chip-light) ring-1 ring-(--ui-bg) dark:bg-(--chip-dark)"
         :style="swatchStyle((item as AppColorItem).swatch)"
       />
     </template>

@@ -23,7 +23,7 @@ AI Gate 是一款面向开发者与高级用户的 AI 网关产品，核心任�
    - 杜绝花哨的渐变与多色混杂，通过字体层级与 Badge 变体（`subtle`）清晰传达信息。
 
 ### 1.2 组件优先原则（Nuxt UI Component-First）
-* **优先使用官方组件**：界面中的交互单元（如 `<UTabs>`, `<UTable>`, `<UButton>`, `<USwitch>`, `<UBadge>`, `<UDropdownMenu>`, `<UModal>` 等）必须 100% 优先采用 Nuxt UI 官方组件，**严禁**随意使用原生 HTML 标签手写替代（例如严禁用原生 `<button>` 拼接手写 Tab 切换条、手写 Switch 开关等）。
+* **优先使用官方组件**：界面中的交互单元（如 `<UTabs>`, `<UButton>`, `<USwitch>`, `<UBadge>`, `<UDropdownMenu>`, `<UModal>` 等）必须 100% 优先采用 Nuxt UI 官方组件，**严禁**随意使用原生 HTML 标签手写替代（例如严禁用原生 `<button>` 拼接手写 Tab 切换条、手写 Switch 开关等）。
 * **无障碍与规范保证**：Nuxt UI 组件内置 Reka UI 的无障碍支持（A11y、ARIA 属性、键盘导航与焦点管理），并具备完善的语义 Token 挂载机制；
 * **样式定制收敛**：若需对组件视觉微调，必须通过官方提供的 `variant`、`color`、`size`、`ui` 属性配置或官方插槽（如 `#leading`、`#trailing`、`#list-trailing` 等）进行微调，不得跳过官方组件手写基础交互部件。
 
@@ -33,7 +33,7 @@ AI Gate 是一款面向开发者与高级用户的 AI 网关产品，核心任�
 
 ### 2.1 基础配置与变量
 * **全局字体**：统一采用 `Inter` 作为西文/数字主字体，系统字体作为后备（`--font-sans: 'Inter', system-ui, sans-serif;`）。
-* **代码/标识字体**：API Key、Model ID、Endpoint URL、Provider Code 等必须统一使用等宽字体（`font-mono`）。
+* **代码/标识字体**：API Key、Model ID、Endpoint URL、Provider Code 等技术标识与正文统一使用 **Inter** 字体。
 * **圆角大小**：`--ui-radius: 0.25rem;`（即 `rounded-sm` / 4px）。
 * **桌面端标题栏**：`--ui-header-height: 2rem;`（32px，Windows 11 原生高度，全宽拖拽区 `data-tauri-drag-region`）。
 
@@ -94,13 +94,13 @@ const { t } = useI18n()
 
 ---
 
-## 4. 四大标准页面范式（Page Archetypes）
+## 4. 三大标准页面范式（Page Archetypes）
 
-在 AI Gate 中新增页面时，必须选择以下四种范式之一进行构建，禁止自创杂乱排版。
+在 AI Gate 中新增页面时，必须选择以下三种范式之一进行构建，禁止自创杂乱排版。
 
-### 范式 A：高密度卡片/网格列表页（Card List Archetype）
-* **适用场景**：供应商列表（Providers）、预设路由规则列表。
-* **视觉特征**：一行一条独立卡片（高度约 56px），左侧拖拽手柄与图标，中部标题+代码徽标+描述，右侧 Switch 状态与操作组。
+### 范式 A：高密度卡片/条目列表页（Card List Archetype）
+* **适用场景**：供应商列表（Providers）、预设路由规则列表、未来虚拟模型卡片列表。
+* **视觉特征**：一行一条独立卡片（高度约 56px），左侧拖拽手柄与图标，中部标题+描述（无多余徽标），右侧 Switch 状态与操作组。
 * **代码规范结构**：
 ```vue
 <div class="flex flex-col gap-2.5">
@@ -119,12 +119,9 @@ const { t } = useI18n()
 
     <!-- 3. 信息区 -->
     <div class="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
-      <div class="flex min-w-0 items-center gap-2">
-        <span class="truncate text-sm font-medium" :class="item.enabled ? 'text-highlighted' : 'text-dimmed'">
-          {{ item.name }}
-        </span>
-        <UBadge color="neutral" variant="subtle" size="xs" class="shrink-0 font-mono">{{ item.code }}</UBadge>
-      </div>
+      <span class="truncate text-sm font-medium" :class="item.enabled ? 'text-highlighted' : 'text-dimmed'">
+        {{ item.name }}
+      </span>
       <p v-if="item.description" class="truncate text-xs text-muted">{{ item.description }}</p>
     </div>
 
@@ -142,78 +139,10 @@ const { t } = useI18n()
 
 ---
 
-### 范式 B：高密度数据表格页（Dense Data Table Archetype）
-* **适用场景**：端点管理（Endpoints）、模型管理（Models）、API 调用日志、API Keys 列表。
-* **视觉特征**：顶部过滤工具栏（搜索框 + 下拉筛选 + 快速操作）+ 紧凑 `<UTable>` + 底部信息/分页。
-* **代码规范结构**：
-```vue
-<template>
-  <div class="flex h-full flex-col overflow-hidden">
-    <!-- 1. 紧凑过滤栏 -->
-    <div class="flex items-center justify-between gap-3 border-b border-default p-3 bg-elevated/30 shrink-0">
-      <div class="flex items-center gap-2 flex-1 max-w-md">
-        <UInput
-          v-model="searchQuery"
-          icon="i-lucide-search"
-          size="sm"
-          :placeholder="t('common.search')"
-          class="w-full"
-        />
-        <USelectMenu
-          v-model="filterType"
-          :items="typeOptions"
-          size="sm"
-          class="w-36 shrink-0"
-        />
-      </div>
-      <div class="flex items-center gap-2">
-        <UButton icon="i-lucide-rotate-cw" variant="ghost" color="neutral" size="xs" />
-        <UButton icon="i-lucide-plus" color="primary" size="xs">{{ t('common.add') }}</UButton>
-      </div>
-    </div>
-
-    <!-- 2. 表格内容区（滚动自适应） -->
-    <div class="flex-1 overflow-y-auto">
-      <UTable
-        :data="filteredItems"
-        :columns="columns"
-        class="w-full text-xs"
-        :ui="{
-          th: 'py-2 px-3 text-muted font-medium bg-elevated/60 text-xs border-b border-default',
-          td: 'py-2 px-3 text-default border-b border-default/60 font-mono text-xs'
-        }"
-      >
-        <!-- 自定义状态列 -->
-        <template #status-cell="{ row }">
-          <UBadge :color="row.status === 'active' ? 'success' : 'neutral'" variant="subtle" size="xs">
-            {{ row.status }}
-          </UBadge>
-        </template>
-        <!-- 操作列 -->
-        <template #actions-cell="{ row }">
-          <div class="flex items-center justify-end gap-1">
-            <UButton icon="i-lucide-square-pen" variant="ghost" color="neutral" size="xs" />
-            <UButton icon="i-lucide-trash-2" variant="ghost" color="error" size="xs" />
-          </div>
-        </template>
-      </UTable>
-    </div>
-
-    <!-- 3. 底部信息条 -->
-    <div class="flex items-center justify-between border-t border-default px-3 py-2 text-xs text-muted shrink-0 bg-elevated/20">
-      <span>{{ t('common.total', { count: totalCount }) }}</span>
-      <!-- 分页组件或快捷键提示 -->
-    </div>
-  </div>
-</template>
-```
-
----
-
-### 范式 C：分栏/标签页配置详情页（Master-Detail Archetype）
+### 范式 B：分栏/标签页配置详情页（Master-Detail Archetype）
 * **适用场景**：供应商详情（`providers/[id].vue`）、网关全局设置、日志详情查看。
 * **视觉特征**：
-  - 顶部导航区（返回箭头 + 当前名称 + 快捷全局开关）；
+  - 顶部导航区（返回按钮置于 Navbar 右侧 `#right` 插槽，避免与左侧侧栏折叠按钮冲突；面包屑居中；当前标题无多余徽章；快捷全局开关）；
   - 下划线 Tab 栏：**优先使用 `<UTabs>` 组件**（`variant="link"`、`color="neutral"`、`:content="false"`，自带激活指示条与无障碍键盘导航；Tab 项通过 `items` 传入 `icon` 与 `badge`；右侧操作按钮通过 `#list-trailing` 插槽同轴对齐）；
   - 内容分组卡片，区块边界清晰。
 * **Tab 栏规范实现**：
@@ -273,7 +202,7 @@ const tabs = computed<TabsItem[]>(() => [
 
 ---
 
-### 范式 D：监控与概览仪表盘页（Dashboard / Metric Archetype）
+### 范式 C：监控与概览仪表盘页（Dashboard / Metric Archetype）
 * **适用场景**：首页总览（`index.vue`）、调用量监控大盘。
 * **视觉特征**：
   - 顶部 KPI 指标卡片网格（网格间距 `gap-3`，紧凑卡片，左侧大数字，右侧小微图标，下部环比/状态）；
@@ -297,7 +226,7 @@ const tabs = computed<TabsItem[]>(() => [
 
 ### 5.2 弹窗与抽屉（Modal & Slideover）
 * **宽度控制**：严禁无限制全屏或过宽弹窗。表单模态框统一使用 `class="sm:max-w-md"` 或 `sm:max-w-lg`。
-* **圆角与边框**：弹窗容器必须为 `rounded-sm border border-default bg-elevated`。
+* **背景、阴影与层级**：弹窗属于最高层级浮窗，背景必须为 `bg-default`（严禁使用与浅色遮罩混淆的 `bg-elevated`），圆角为 `rounded-sm`，搭配外边框 `border border-default` 与明确的立体投影（`shadow-xl`）；遮罩层统一采用半透明暗色遮罩（`bg-black/40 backdrop-blur-xs`），确保产生清晰的纵深与聚焦效果。
 * **破坏性二次确认**：
   - 严禁调用原生 `window.confirm()`；
   - 必须使用内置组合式函数 `useConfirmDialog()` 或 `<ConfirmRemoveModal>`。
@@ -309,10 +238,10 @@ const tabs = computed<TabsItem[]>(() => [
 在编写或审查任何新页面代码时，必须逐一验证以下 8 项：
 
 - [ ] **1. 布局基座**：是否以 `<UDashboardPanel>` 为根且正确挂载 `<AppNavbar>`？
-- [ ] **2. 风格对齐**：是否属于四大范式（A列表/B表格/C配置/D大盘）之一？
+- [ ] **2. 风格对齐**：是否属于三大范式（A卡片列表/B配置详情/C概览大盘）之一？
 - [ ] **3. 颜色 Token**：是否 100% 采用语义 Token（`border-default`, `bg-elevated`, `text-muted` 等），有无写死具象色？
 - [ ] **4. 紧凑密度**：按钮是否为 `size="xs"`，输入框是否为 `size="sm"`，图标是否为 `size-4`？
-- [ ] **5. 圆角与字体**：全局圆角是否统一为 small (`rounded-sm`)？字体优先 Inter，代码标识使用 `font-mono`？
+- [ ] **5. 圆角与字体**：全局圆角是否统一为 small (`rounded-sm`)？全站字体统一使用 Inter（严禁使用 `font-mono`）？
 - [ ] **6. 状态覆盖**：是否完整处理了数据加载中骨架、极简空态（`<UEmpty :title="t('common.empty')" variant="naked" />`，无图标与操作按钮）和操作后 `toast` 提示？
 - [ ] **7. 国际化同步**：页面上所有文字是否均使用 `t('...')` 并且在 `i18n/locales/zh-CN.json` 与 `en-US.json` 双语添加？
 - [ ] **8. 桌面端可用性**：是否适配 Tauri 窗口高度（无不可控溢出滚动条，内部区域滚动良好）？

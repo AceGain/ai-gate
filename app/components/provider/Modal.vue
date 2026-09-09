@@ -146,7 +146,7 @@ async function save() {
           <UInput
             v-model="form.code"
             :placeholder="t('providers.codePlaceholder')"
-            class="w-full font-mono"
+            class="w-full"
           />
         </UFormField>
 
@@ -166,7 +166,7 @@ async function save() {
           <UInput
             v-model="form.baseUrl"
             :placeholder="t('providers.baseUrlPlaceholder')"
-            class="w-full font-mono"
+            class="w-full"
           />
         </UFormField>
 

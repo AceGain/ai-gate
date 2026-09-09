@@ -154,7 +154,7 @@ async function save() {
             <UInput
               v-model="form.code"
               :placeholder="t('providerModels.codePlaceholder')"
-              class="w-full font-mono"
+              class="w-full"
             />
           </UFormField>
 
@@ -215,7 +215,7 @@ async function save() {
           <UInput
             v-model="form.protocolsText"
             :placeholder="t('providerModels.protocolsPlaceholder')"
-            class="w-full font-mono"
+            class="w-full"
           />
         </UFormField>
 
@@ -224,7 +224,7 @@ async function save() {
             <UInput
               v-model.number="form.maxContext"
               type="number"
-              class="w-full font-mono"
+              class="w-full"
             />
           </UFormField>
 
@@ -232,7 +232,7 @@ async function save() {
             <UInput
               v-model.number="form.maxInput"
               type="number"
-              class="w-full font-mono"
+              class="w-full"
             />
           </UFormField>
 
@@ -240,7 +240,7 @@ async function save() {
             <UInput
               v-model.number="form.maxOutput"
               type="number"
-              class="w-full font-mono"
+              class="w-full"
             />
           </UFormField>
         </div>
@@ -273,9 +273,9 @@ async function save() {
           />
         </UFormField>
 
-        <div class="flex items-center justify-between rounded-lg border border-default p-3">
+        <div class="flex items-center justify-between rounded-sm border border-default p-3">
           <span class="text-sm font-medium">{{ t('providers.enable') }}</span>
-          <USwitch v-model="form.enabled" />
+          <USwitch v-model="form.enabled" :aria-label="t('providers.enable')" />
         </div>
       </div>
     </template>

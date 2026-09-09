@@ -65,7 +65,7 @@ const neutralModel = computed({
   <UModal
     v-model:open="open"
     :title="t('settings.title')"
-    :ui="{content: 'max-w-xl'}"
+    :ui="{ content: 'sm:max-w-lg' }"
   >
     <template #body>
       <div class="flex flex-col divide-y divide-default">

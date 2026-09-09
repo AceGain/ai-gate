@@ -155,7 +155,7 @@ async function save() {
             v-model="form.protocol"
             :items="protocolOptions"
             :placeholder="t('providerEndpoints.protocolPlaceholder')"
-            class="w-full font-mono"
+            class="w-full"
           />
         </UFormField>
 
@@ -164,17 +164,17 @@ async function save() {
           <UInput
             v-model="form.path"
             :placeholder="pathPlaceholder"
-            class="w-full font-mono"
+            class="w-full"
           />
         </UFormField>
 
         <!-- 设为默认开关：仅针对 protocol 类型生效与展示 -->
         <div
           v-if="form.type === 'protocol'"
-          class="flex items-center justify-between rounded-lg border border-default p-3"
+          class="flex items-center justify-between rounded-sm border border-default p-3"
         >
           <span class="text-sm font-medium">{{ t('providerEndpoints.isDefault') }}</span>
-          <USwitch v-model="form.isDefault" />
+          <USwitch v-model="form.isDefault" :aria-label="t('providerEndpoints.isDefault')" />
         </div>
       </div>
     </template>

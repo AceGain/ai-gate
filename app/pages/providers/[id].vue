@@ -21,6 +21,7 @@ const {
   endpoints,
   keys,
   models,
+  loading: configLoading,
   reset,
   loadAll,
   loadEndpoints,
@@ -39,17 +40,25 @@ const id = computed(() => route.params.id as string)
 const provider = computed<SysProvider | undefined>(() => providers.value.find(p => p.id === id.value))
 const title = computed(() => provider.value ? (provider.value.name || provider.value.code) : t('providers.configTitle'))
 
-watch(id, (newId) => {
+const loadingProvider = ref(false)
+
+watch(id, async (newId) => {
   reset()
   if (newId) {
     if (!providers.value.some(p => p.id === newId)) {
-      void fetchProvider(newId)
+      loadingProvider.value = true
+      try {
+        await fetchProvider(newId)
+      } finally {
+        loadingProvider.value = false
+      }
     }
     void loadAll(newId)
   }
 }, { immediate: true })
 
 onBeforeUnmount(() => {
+  document.body.classList.remove('provider-sortable-dragging')
   reset()
   if (copyTimer) clearTimeout(copyTimer)
 })
@@ -148,9 +157,9 @@ function maskSecret(secret: string): string {
   return `${secret.slice(0, 4)}••••••••${secret.slice(-4)}`
 }
 
-async function handleCopy(secret: string) {
-  await copy(secret)
-  toast.add({color: 'success', title: t('providerKeys.copied')})
+async function handleCopy(text: string) {
+  await copy(text)
+  toast.add({color: 'success', title: t('common.copied')})
 }
 
 const copiedKeyId = ref<string | null>(null)
@@ -225,7 +234,11 @@ useSortable(keyListEl, keys, {
   forceFallback: true,
   fallbackOnBody: true,
   watchElement: true,
+  onStart: () => {
+    document.body.classList.add('provider-sortable-dragging')
+  },
   onEnd: (evt) => {
+    document.body.classList.remove('provider-sortable-dragging')
     if (evt.oldIndex == null || evt.newIndex == null || evt.oldIndex === evt.newIndex || !provider.value) return
     void nextTick(() => saveKeyOrder(provider.value!.id))
   }
@@ -308,7 +321,11 @@ useSortable(modelListEl, models, {
   forceFallback: true,
   fallbackOnBody: true,
   watchElement: true,
+  onStart: () => {
+    document.body.classList.add('provider-sortable-dragging')
+  },
   onEnd: (evt) => {
+    document.body.classList.remove('provider-sortable-dragging')
     if (evt.oldIndex == null || evt.newIndex == null || evt.oldIndex === evt.newIndex || !provider.value) return
     void nextTick(() => saveModelOrder(provider.value!.id))
   }
@@ -406,7 +423,30 @@ const tabs = computed<TabsItem[]>(() => [
 
     <!-- 页面内容：扁平流式布局 + Tab 标签页切换 -->
     <template #body>
-      <div v-if="provider" class="h-full overflow-y-auto p-4 sm:p-6">
+      <!-- 详情加载中骨架屏 -->
+      <div v-if="loadingProvider && !provider" class="h-full overflow-y-auto p-4 sm:p-6">
+        <div class="mx-auto max-w-5xl space-y-6">
+          <div class="flex items-center justify-between gap-4 pb-1">
+            <div class="flex items-center gap-3.5">
+              <USkeleton class="size-11 rounded-sm" />
+              <div class="space-y-1.5">
+                <USkeleton class="h-5 w-36 rounded-sm" />
+                <USkeleton class="h-3.5 w-60 rounded-sm" />
+              </div>
+            </div>
+            <div class="flex items-center gap-2.5">
+              <USkeleton class="h-6 w-24 rounded-sm" />
+              <USkeleton class="size-7 rounded-sm" />
+            </div>
+          </div>
+          <USkeleton class="h-9 w-full rounded-sm" />
+          <div class="space-y-3 pt-2">
+            <USkeleton v-for="i in 3" :key="i" class="h-16 w-full rounded-sm" />
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="provider" class="h-full overflow-y-auto p-4 sm:p-6">
         <div class="mx-auto max-w-5xl space-y-6">
           <!-- 1. 顶部档案区：纯净自然留白分层，无冗余线条，契合页面通透扁平风格 -->
           <div class="flex items-center justify-between gap-4 pb-1">
@@ -425,7 +465,7 @@ const tabs = computed<TabsItem[]>(() => [
 
             <!-- 右侧：启用状态开关 + 编辑按钮 -->
             <div class="flex shrink-0 items-center gap-2.5">
-              <div class="flex items-center gap-1.5 rounded-full border border-default bg-elevated/50 px-2.5 py-1 text-xs">
+              <div class="flex items-center gap-1.5 rounded-sm border border-default bg-elevated/50 px-2 py-1 text-xs">
                 <span
                   class="size-1.5 rounded-full"
                   :class="provider.enabled ? 'bg-success' : 'bg-neutral'"
@@ -504,8 +544,19 @@ const tabs = computed<TabsItem[]>(() => [
           <!-- 3. 各 Tab 配置内容区域 -->
           <!-- 1. 网络端点 Tab -->
           <div v-if="activeTab === 'endpoints'">
+            <!-- 加载骨架 -->
+            <div v-if="configLoading && !endpoints.length" class="divide-y divide-default/50">
+              <div v-for="i in 3" :key="i" class="flex items-center justify-between py-2.5 px-2 gap-4">
+                <div class="flex-1 space-y-2">
+                  <USkeleton class="h-4 w-32 rounded-sm" />
+                  <USkeleton class="h-3 w-72 rounded-sm" />
+                </div>
+                <USkeleton class="size-7 rounded-sm" />
+              </div>
+            </div>
+
             <!-- 端点列表：两行格式（第一行标题，第二行地址） -->
-            <div class="divide-y divide-default/50">
+            <div v-else class="divide-y divide-default/50">
               <!-- 默认端点 1: Base URL -->
               <div
                 class="group flex items-center justify-between py-2.5 px-2 hover:bg-elevated/20 transition-colors rounded-sm gap-4"
@@ -514,7 +565,7 @@ const tabs = computed<TabsItem[]>(() => [
                 <div class="flex min-w-0 flex-1 flex-col gap-1">
                   <!-- 第一行：标题 -->
                   <div class="flex items-center gap-2">
-                    <span class="text-sm font-semibold text-highlighted font-mono">
+                    <span class="text-sm font-semibold text-highlighted">
                       Base URL
                     </span>
                   </div>
@@ -522,20 +573,22 @@ const tabs = computed<TabsItem[]>(() => [
                   <!-- 第二行：地址 -->
                   <div class="flex items-center gap-2 min-w-0">
                     <code
-                      class="truncate font-mono text-xs text-muted select-all"
+                      class="truncate text-xs text-muted select-all"
                       :title="baseEndpoint?.path || t('common.empty')"
                     >
                       {{ baseEndpoint?.path || t('common.empty') }}
                     </code>
-                    <button
+                    <UButton
                       v-if="baseEndpoint?.path"
-                      type="button"
-                      class="cursor-pointer text-dimmed transition-colors hover:text-default shrink-0 opacity-0 group-hover:opacity-100"
-                      :title="t('providerKeys.copySecret')"
+                      icon="i-lucide-copy"
+                      variant="ghost"
+                      color="neutral"
+                      size="xs"
+                      class="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      :title="t('common.copy')"
+                      :aria-label="t('common.copy')"
                       @click="handleCopy(baseEndpoint.path)"
-                    >
-                      <UIcon name="i-lucide-copy" class="size-3" />
-                    </button>
+                    />
                   </div>
                 </div>
 
@@ -560,7 +613,7 @@ const tabs = computed<TabsItem[]>(() => [
                 <div class="flex min-w-0 flex-1 flex-col gap-1">
                   <!-- 第一行：标题 -->
                   <div class="flex items-center gap-2">
-                    <span class="text-sm font-semibold text-highlighted font-mono">
+                    <span class="text-sm font-semibold text-highlighted">
                       Models
                     </span>
                   </div>
@@ -568,7 +621,7 @@ const tabs = computed<TabsItem[]>(() => [
                   <!-- 第二行：全路径展示（域名弱化，路径高亮） -->
                   <div class="flex items-center gap-2 min-w-0">
                     <code
-                      class="truncate font-mono text-xs select-all"
+                      class="truncate text-xs select-all"
                       :title="splitUrl(baseEndpoint?.path, modelsEndpoint?.path).fullUrl || t('common.empty')"
                     >
                       <span
@@ -579,15 +632,17 @@ const tabs = computed<TabsItem[]>(() => [
                         :class="splitUrl(baseEndpoint?.path, modelsEndpoint?.path).basePart ? 'text-highlighted font-medium' : 'text-muted'"
                       >{{ splitUrl(baseEndpoint?.path, modelsEndpoint?.path).pathPart || t('common.empty') }}</span>
                     </code>
-                    <button
+                    <UButton
                       v-if="splitUrl(baseEndpoint?.path, modelsEndpoint?.path).fullUrl"
-                      type="button"
-                      class="cursor-pointer text-dimmed transition-colors hover:text-default shrink-0 opacity-0 group-hover:opacity-100"
-                      :title="t('providerKeys.copySecret')"
+                      icon="i-lucide-copy"
+                      variant="ghost"
+                      color="neutral"
+                      size="xs"
+                      class="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      :title="t('common.copy')"
+                      :aria-label="t('common.copy')"
                       @click="handleCopy(splitUrl(baseEndpoint?.path, modelsEndpoint?.path).fullUrl)"
-                    >
-                      <UIcon name="i-lucide-copy" class="size-3" />
-                    </button>
+                    />
                   </div>
                 </div>
 
@@ -614,7 +669,7 @@ const tabs = computed<TabsItem[]>(() => [
                 <div class="flex min-w-0 flex-1 flex-col gap-1">
                   <!-- 第一行：标题（协议名称） + 默认标识（仅针对 protocol 生效） -->
                   <div class="flex items-center gap-2">
-                    <span class="text-sm font-semibold text-highlighted font-mono">
+                    <span class="text-sm font-semibold text-highlighted">
                       {{ ep.protocol }}
                     </span>
                     <UBadge
@@ -630,7 +685,7 @@ const tabs = computed<TabsItem[]>(() => [
                   <!-- 第二行：全路径展示（域名弱化，路径高亮） -->
                   <div class="flex items-center gap-2 min-w-0">
                     <code
-                      class="truncate font-mono text-xs select-all"
+                      class="truncate text-xs select-all"
                       :title="splitUrl(baseEndpoint?.path, ep.path).fullUrl"
                     >
                       <span
@@ -641,15 +696,17 @@ const tabs = computed<TabsItem[]>(() => [
                         :class="splitUrl(baseEndpoint?.path, ep.path).basePart ? 'text-highlighted font-medium' : 'text-muted'"
                       >{{ splitUrl(baseEndpoint?.path, ep.path).pathPart }}</span>
                     </code>
-                    <button
+                    <UButton
                       v-if="splitUrl(baseEndpoint?.path, ep.path).fullUrl"
-                      type="button"
-                      class="cursor-pointer text-dimmed transition-colors hover:text-default shrink-0 opacity-0 group-hover:opacity-100"
-                      :title="t('providerKeys.copySecret')"
+                      icon="i-lucide-copy"
+                      variant="ghost"
+                      color="neutral"
+                      size="xs"
+                      class="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      :title="t('common.copy')"
+                      :aria-label="t('common.copy')"
                       @click="handleCopy(splitUrl(baseEndpoint?.path, ep.path).fullUrl)"
-                    >
-                      <UIcon name="i-lucide-copy" class="size-3" />
-                    </button>
+                    />
                   </div>
                 </div>
 
@@ -673,22 +730,49 @@ const tabs = computed<TabsItem[]>(() => [
                   />
                 </div>
               </div>
+
+              <!-- 协议端点为空时的极简空态 -->
+              <div v-if="!protocolEndpoints.length" class="py-8">
+                <UEmpty :title="t('providerEndpoints.emptyProtocols')" variant="naked" />
+              </div>
             </div>
           </div>
 
           <!-- 2. API 密钥 Tab -->
           <div v-else-if="activeTab === 'keys'">
+            <!-- 加载骨架 -->
+            <div v-if="configLoading && !keys.length" class="flex flex-col gap-2.5">
+              <div
+                v-for="i in 3"
+                :key="i"
+                class="flex items-start justify-between gap-4 rounded-sm border border-default bg-default p-3.5"
+              >
+                <div class="flex flex-1 items-start gap-2.5">
+                  <USkeleton class="size-7 rounded-sm" />
+                  <div class="flex-1 space-y-2">
+                    <USkeleton class="h-4 w-40 rounded-sm" />
+                    <USkeleton class="h-3 w-64 rounded-sm" />
+                  </div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <USkeleton class="h-5 w-9 rounded-sm" />
+                  <USkeleton class="size-6 rounded-sm" />
+                  <USkeleton class="size-6 rounded-sm" />
+                </div>
+              </div>
+            </div>
+
             <!-- 密钥列表：单层卡片结构，无多层嵌套，纵向分行清晰 -->
-            <div v-if="keys.length" ref="keyListEl" class="flex flex-col gap-3">
+            <div v-else-if="keys.length" ref="keyListEl" class="flex flex-col gap-2.5">
               <div
                 v-for="k in keys"
                 :key="k.id"
-                class="group flex items-start justify-between gap-4 rounded-lg border border-default bg-default p-3.5 transition-colors hover:border-primary/40 hover:bg-elevated/30"
+                class="group flex items-start justify-between gap-4 rounded-sm border border-default bg-default p-3.5 transition-colors hover:border-primary/40 hover:bg-elevated/30"
               >
                 <!-- 左侧信息区：拖拽手柄 + 纵向信息流（第一行名称/状态/过期，第二行密文与操作，第三行备注） -->
                 <div class="flex min-w-0 flex-1 items-start gap-2.5">
                   <div
-                    class="drag-handle -ml-1 mt-0.5 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-dimmed transition-colors hover:bg-elevated hover:text-default"
+                    class="drag-handle -ml-1 mt-0.5 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm text-dimmed transition-colors hover:bg-elevated hover:text-default"
                     role="button"
                     :aria-label="t('providers.dragToSort')"
                   >
@@ -731,33 +815,33 @@ const tabs = computed<TabsItem[]>(() => [
                     <!-- 第二行：密钥密文 + 明文切换 + 快捷复制（单层卡片内自然排布，无嵌套内盒） -->
                     <div class="flex items-center gap-2 min-w-0">
                       <code
-                        class="truncate font-mono text-xs select-all text-muted"
+                        class="truncate text-xs select-all text-muted"
                         :title="revealedKeys.has(k.id) ? k.secret : undefined"
                       >
                         {{ revealedKeys.has(k.id) ? k.secret : maskSecret(k.secret) }}
                       </code>
 
-                      <button
-                        type="button"
-                        class="cursor-pointer text-dimmed transition-colors hover:text-default shrink-0"
+                      <UButton
+                        :icon="revealedKeys.has(k.id) ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                        variant="ghost"
+                        color="neutral"
+                        size="xs"
+                        class="shrink-0"
                         :title="revealedKeys.has(k.id) ? t('providerKeys.hideSecret') : t('providerKeys.showSecret')"
+                        :aria-label="revealedKeys.has(k.id) ? t('providerKeys.hideSecret') : t('providerKeys.showSecret')"
                         @click="toggleReveal(k.id)"
-                      >
-                        <UIcon :name="revealedKeys.has(k.id) ? 'i-lucide-eye-off' : 'i-lucide-eye'" class="size-3.5" />
-                      </button>
+                      />
 
-                      <button
-                        type="button"
-                        class="cursor-pointer text-dimmed transition-colors hover:text-default shrink-0"
+                      <UButton
+                        :icon="copiedKeyId === k.id ? 'i-lucide-check' : 'i-lucide-copy'"
+                        :color="copiedKeyId === k.id ? 'success' : 'neutral'"
+                        variant="ghost"
+                        size="xs"
+                        class="shrink-0"
                         :title="t('providerKeys.copySecret')"
+                        :aria-label="t('providerKeys.copySecret')"
                         @click="handleCopyKey(k)"
-                      >
-                        <UIcon
-                          :name="copiedKeyId === k.id ? 'i-lucide-check' : 'i-lucide-copy'"
-                          class="size-3.5"
-                          :class="copiedKeyId === k.id ? 'text-success' : ''"
-                        />
-                      </button>
+                      />
                     </div>
 
                     <!-- 第三行（选填）：备注说明 -->
@@ -799,22 +883,39 @@ const tabs = computed<TabsItem[]>(() => [
             </div>
 
             <!-- 空状态 -->
-            <UEmpty
-              v-else
-              :title="t('common.empty')"
-              variant="naked"
-              size="sm"
-              :ui="{
-                root: 'rounded-lg border border-dashed border-default/70 bg-elevated/20 py-6',
-                title: 'text-xs font-medium text-muted'
-              }"
-            />
+            <div v-else class="flex min-h-48 items-center justify-center p-4">
+              <UEmpty
+                :title="t('common.empty')"
+                variant="naked"
+              />
+            </div>
           </div>
 
           <!-- 3. 模型列表 Tab -->
           <div v-else-if="activeTab === 'models'">
+            <!-- 加载骨架 -->
+            <div v-if="configLoading && !models.length" class="divide-y divide-default/50">
+              <div
+                v-for="i in 5"
+                :key="i"
+                class="flex items-center justify-between py-2 px-1 gap-2"
+              >
+                <div class="flex flex-1 items-center gap-2.5">
+                  <USkeleton class="size-6 rounded-sm" />
+                  <USkeleton class="h-4 w-28 rounded-sm" />
+                  <USkeleton class="h-4 w-16 rounded-sm" />
+                  <USkeleton class="h-4 w-12 rounded-sm" />
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <USkeleton class="h-5 w-9 rounded-sm" />
+                  <USkeleton class="size-6 rounded-sm" />
+                  <USkeleton class="size-6 rounded-sm" />
+                </div>
+              </div>
+            </div>
+
             <!-- 模型列表：扁平无边框行 -->
-            <div v-if="models.length" ref="modelListEl" class="divide-y divide-default/50">
+            <div v-else-if="models.length" ref="modelListEl" class="divide-y divide-default/50">
               <div
                 v-for="m in models"
                 :key="m.id"
@@ -822,22 +923,22 @@ const tabs = computed<TabsItem[]>(() => [
               >
                 <div class="flex min-w-0 flex-1 items-center gap-2.5">
                   <div
-                    class="drag-handle flex size-6 shrink-0 cursor-pointer items-center justify-center text-dimmed hover:text-default"
+                    class="drag-handle flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm text-dimmed hover:bg-elevated hover:text-default"
                     role="button"
                     :aria-label="t('providers.dragToSort')"
                   >
-                    <UIcon name="i-lucide-grip-vertical" class="size-3.5" />
+                    <UIcon name="i-lucide-grip-vertical" class="size-4" />
                   </div>
 
                   <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-xs">
                     <span
-                      class="font-mono font-medium truncate"
+                      class="font-medium truncate"
                       :class="m.enabled ? 'text-highlighted' : 'text-dimmed'"
                     >
                       {{ m.code }}
                     </span>
 
-                    <span v-if="m.name && m.name !== m.code" class="text-muted text-[11px] truncate max-w-[140px]">
+                    <span v-if="m.name && m.name !== m.code" class="text-muted truncate max-w-[140px]">
                       ({{ m.name }})
                     </span>
 
@@ -857,20 +958,20 @@ const tabs = computed<TabsItem[]>(() => [
                       {{ m.status === 'ACTIVE' ? t('providerModels.statusActive') : t('providerModels.statusInvalid') }}
                     </UBadge>
 
-                    <span v-if="m.maxContext" class="text-muted text-[11px]">
+                    <span v-if="m.maxContext" class="text-muted">
                       {{ formatTokens(m.maxContext) }}
                     </span>
 
-                    <span v-if="m.reasoning && m.reasoning !== 'DISABLE'" class="inline-flex items-center gap-0.5 text-[11px] text-primary">
+                    <span v-if="m.reasoning && m.reasoning !== 'DISABLE'" class="inline-flex items-center gap-0.5 text-primary">
                       <UIcon name="i-lucide-brain" class="size-3" />
                       <span>{{ m.reasoning }}</span>
                     </span>
 
-                    <span v-if="m.inputModal?.length" class="text-dimmed text-[10px]">
+                    <span v-if="m.inputModal?.length" class="text-dimmed">
                       {{ t('providerModels.inputModalPrefix') }}: [{{ m.inputModal.join(', ') }}]
                     </span>
 
-                    <span v-if="m.outputModal?.length" class="text-dimmed text-[10px]">
+                    <span v-if="m.outputModal?.length" class="text-dimmed">
                       {{ t('providerModels.outputModalPrefix') }}: [{{ m.outputModal.join(', ') }}]
                     </span>
                   </div>
@@ -902,29 +1003,21 @@ const tabs = computed<TabsItem[]>(() => [
               </div>
             </div>
 
-            <UEmpty
-              v-else
-              :title="t('common.empty')"
-              variant="naked"
-              size="sm"
-              :ui="{
-                root: 'rounded-lg border border-dashed border-default/70 bg-elevated/20 py-6',
-                title: 'text-xs font-medium text-muted'
-              }"
-            />
+            <div v-else class="flex min-h-48 items-center justify-center p-4">
+              <UEmpty
+                :title="t('common.empty')"
+                variant="naked"
+              />
+            </div>
           </div>
         </div>
       </div>
 
       <!-- 供应商不存在 -->
-      <div v-else class="flex min-h-full items-center justify-center p-8">
+      <div v-else class="flex min-h-full items-center justify-center p-4">
         <UEmpty
           :title="t('common.empty')"
           variant="naked"
-          :ui="{
-            root: 'rounded-xl border border-dashed border-default/70 bg-elevated/20 p-8',
-            title: 'text-sm font-medium text-muted'
-          }"
         />
       </div>
     </template>
@@ -968,6 +1061,14 @@ const tabs = computed<TabsItem[]>(() => [
 /* 拖拽落点占位提示 */
 :deep(.sortable-ghost) {
   opacity: 0.35;
+}
+</style>
+
+<style>
+/* 拖拽期间全局光标锁定为抓取状态 */
+body.provider-sortable-dragging,
+body.provider-sortable-dragging * {
+  cursor: grabbing !important;
 }
 </style>
 

@@ -73,6 +73,7 @@ export function useProviderConfig() {
     try {
       await $fetch(`${apiBase()}/api/providers/${providerId}/endpoints/${id}`, {method: 'DELETE'})
       endpoints.value = endpoints.value.filter(e => e.id !== id)
+      toast.add({color: 'success', title: t('common.deleted')})
     } catch (err) {
       console.warn('[ai-gate] 删除端点失败', err)
       notifyError()
@@ -118,6 +119,7 @@ export function useProviderConfig() {
     try {
       await $fetch(`${apiBase()}/api/providers/${providerId}/keys/${id}`, {method: 'DELETE'})
       keys.value = keys.value.filter(k => k.id !== id)
+      toast.add({color: 'success', title: t('common.deleted')})
     } catch (err) {
       console.warn('[ai-gate] 删除密钥失败', err)
       notifyError()
@@ -176,6 +178,7 @@ export function useProviderConfig() {
     try {
       await $fetch(`${apiBase()}/api/providers/${providerId}/models/${id}`, {method: 'DELETE'})
       models.value = models.value.filter(m => m.id !== id)
+      toast.add({color: 'success', title: t('common.deleted')})
     } catch (err) {
       console.warn('[ai-gate] 删除模型失败', err)
       notifyError()

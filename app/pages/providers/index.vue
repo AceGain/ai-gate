@@ -3,7 +3,7 @@ import {useSortable} from '@vueuse/integrations/useSortable'
 import type {SysProvider} from '~/utils/providers'
 
 const {t} = useI18n()
-const {providers, removeProvider, toggleProvider, saveOrder} = useProviders()
+const {providers, loading, removeProvider, toggleProvider, saveOrder} = useProviders()
 const confirmDialog = useConfirmDialog()
 
 /** 新增/编辑弹窗状态（editing 为 null = 新增） */
@@ -75,17 +75,41 @@ onBeforeUnmount(() => {
     </template>
 
     <template #body>
-      <!-- 有数据：一行一条独立卡片，卡片间留间距；拖拽手柄排序 -->
-      <div v-if="providers.length" class="h-full overflow-y-auto p-4">
-        <div ref="listEl" class="flex flex-col gap-3">
+      <!-- 加载中骨架屏 -->
+      <div v-if="loading && !providers.length" class="h-full overflow-y-auto p-4">
+        <div class="flex flex-col gap-2.5">
+          <div
+            v-for="i in 5"
+            :key="i"
+            class="flex min-h-[56px] items-center gap-2.5 rounded-sm border border-default bg-default px-3 py-2"
+          >
+            <USkeleton class="size-7 rounded-sm" />
+            <USkeleton class="size-8 rounded-sm" />
+            <div class="flex-1 space-y-1.5">
+              <USkeleton class="h-4 w-32 rounded-sm" />
+              <USkeleton class="h-3 w-48 rounded-sm" />
+            </div>
+            <USkeleton class="h-5 w-9 rounded-sm" />
+            <div class="flex items-center gap-1">
+              <USkeleton class="size-6 rounded-sm" />
+              <USkeleton class="size-6 rounded-sm" />
+              <USkeleton class="size-6 rounded-sm" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 有数据：一行一条独立卡片，严格贴合范式 A -->
+      <div v-else-if="providers.length" class="h-full overflow-y-auto p-4">
+        <div ref="listEl" class="flex flex-col gap-2.5">
           <div
             v-for="p in providers"
             :key="p.id"
-            class="flex min-h-[58px] select-none items-center gap-2.5 rounded-lg border border-default bg-default px-3 py-2.5 transition-colors hover:border-primary/40 hover:bg-elevated/50"
+            class="flex min-h-[56px] select-none items-center gap-2.5 rounded-sm border border-default bg-default px-3 py-2 transition-colors hover:border-primary/40 hover:bg-elevated/50"
           >
             <!-- 拖拽手柄（扩大命中区，hover 高亮） -->
             <div
-              class="drag-handle -ml-1 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-dimmed transition-colors hover:bg-elevated hover:text-default"
+              class="drag-handle -ml-1 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm text-dimmed transition-colors hover:bg-elevated hover:text-default"
               role="button"
               :aria-label="t('providers.dragToSort')"
             >
@@ -94,16 +118,13 @@ onBeforeUnmount(() => {
 
             <ProviderIcon :icon="p.icon" :name="p.name || p.code"/>
 
-            <!-- 图标右侧信息区（两行：第一行名称+编码，第二行备注，超长省略） -->
+            <!-- 图标右侧信息区（第一行名称，第二行备注，超长省略） -->
             <div class="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
-              <div class="flex min-w-0 items-center gap-2">
-                <span
-                  class="truncate text-sm font-medium"
-                  :class="p.enabled ? 'text-highlighted' : 'text-dimmed'"
-                  :title="p.name || p.code"
-                >{{ p.name || p.code }}</span>
-                <UBadge color="neutral" variant="subtle" size="sm" class="shrink-0 font-mono">{{ p.code }}</UBadge>
-              </div>
+              <span
+                class="truncate text-sm font-medium"
+                :class="p.enabled ? 'text-highlighted' : 'text-dimmed'"
+                :title="p.name || p.code"
+              >{{ p.name || p.code }}</span>
               <p
                 v-if="p.description"
                 class="truncate text-xs text-muted"
@@ -120,30 +141,32 @@ onBeforeUnmount(() => {
             />
 
             <!-- 配置 / 修改 / 删除 -->
-            <UButton
-              icon="i-lucide-settings-2"
-              variant="ghost"
-              color="neutral"
-              class="shrink-0 text-muted hover:text-default"
-              :aria-label="t('providers.config')"
-              @click="openConfig(p)"
-            />
-            <UButton
-              icon="i-lucide-square-pen"
-              variant="ghost"
-              color="neutral"
-              class="shrink-0 text-muted hover:text-default"
-              :aria-label="t('providers.edit')"
-              @click="openEdit(p)"
-            />
-            <UButton
-              icon="i-lucide-trash-2"
-              variant="ghost"
-              color="error"
-              class="shrink-0 text-muted hover:text-error"
-              :aria-label="t('providers.remove')"
-              @click="confirmRemove(p)"
-            />
+            <div class="flex items-center gap-1 shrink-0">
+              <UButton
+                icon="i-lucide-settings-2"
+                variant="ghost"
+                color="neutral"
+                class="text-muted hover:text-default"
+                :aria-label="t('providers.config')"
+                @click="openConfig(p)"
+              />
+              <UButton
+                icon="i-lucide-square-pen"
+                variant="ghost"
+                color="neutral"
+                class="text-muted hover:text-default"
+                :aria-label="t('providers.edit')"
+                @click="openEdit(p)"
+              />
+              <UButton
+                icon="i-lucide-trash-2"
+                variant="ghost"
+                color="error"
+                class="text-muted hover:text-error"
+                :aria-label="t('providers.remove')"
+                @click="confirmRemove(p)"
+              />
+            </div>
           </div>
         </div>
       </div>

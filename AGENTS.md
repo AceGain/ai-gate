@@ -42,12 +42,12 @@ pnpm db:studio          # 启动 Drizzle Studio 可视化管理 SQLite 数据库
 ## 前端 UI 与页面设计规范（强约定，必须遵守）
 
 - **设计单源**：创建或修改任何页面/组件前，必须严格对照并遵循 `docs/DESIGN.md`。
-- **组件优先**：优先使用 Nuxt UI 官方提供的组件（如 `<UTabs>`, `<UTable>`, `<UButton>`, `<USwitch>`, `<UBadge>` 等），严禁随意手写原生 HTML 标签拼凑基础交互组件。
+- **组件优先**：优先使用 Nuxt UI 官方提供的组件（如 `<UTabs>`, `<UButton>`, `<USwitch>`, `<UBadge>` 等），严禁随意手写原生 HTML 标签拼凑基础交互组件。
 - **风格定位**：统一遵循 **Mira 风格**（高密度 Dense、数据密集型 Data-Heavy、极简严谨、无冗余装饰）。
-- **字体与圆角**：西文与数字主字体统一为 **Inter**，技术标识（Key / Code / URL / ID）统一 `font-mono`；全局圆角为 **small**（`--ui-radius: 0.25rem` / `rounded-sm`）。
+- **字体与圆角**：全站所有文字与技术标识（Key / Code / URL / ID）统一使用 **Inter**，严禁使用 `font-mono`；全局圆角为 **small**（`--ui-radius: 0.25rem` / `rounded-sm`）。
 - **语义 Token**：100% 使用 Nuxt UI 语义类（如 `bg-default`, `bg-elevated`, `border-default`, `text-highlighted`, `text-muted`, `text-dimmed` 等），**严禁**硬编码具象 Tailwind 色阶（如 `bg-zinc-800`）。
 - **页面架构**：所有页面根节点必须使用 `<UDashboardPanel class="min-h-0" :ui="{ body: 'p-0 sm:p-0 gap-0 sm:gap-0' }">`，并在 `#header` 插槽挂载 `<AppNavbar>`。
-- **四大范式**：页面布局严格在四大范式中归位（A列表 / B数据表格 / C配置详情 / D概览大盘），禁止自创松散排版。
+- **三大范式**：页面布局严格在三大范式中归位（A卡片列表 / B配置详情 / C概览大盘），禁止自创松散排版。
 - **状态闭环**：每个页面必须处理完整生命周期：加载骨架（Skeleton）、极简空态（`<UEmpty :title="t('common.empty')" variant="naked" />`，无图标与操作按钮）、操作反馈（`toast`）与删除二次确认（`useConfirmDialog`）。
 
 ## 注意事项

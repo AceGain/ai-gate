@@ -8,6 +8,7 @@ import {apiBase} from '~/utils/providers'
 export function useProviders() {
   const providers = useState<SysProvider[]>('providers', () => [])
   const loaded = useState<boolean>('providers-loaded', () => false)
+  const loading = useState<boolean>('providers-loading', () => false)
   const toast = useToast()
   const {t} = useI18n()
 
@@ -22,11 +23,14 @@ export function useProviders() {
 
   /** 拉取列表（后端按 sort 升序返回） */
   async function load(): Promise<void> {
+    loading.value = true
     try {
       providers.value = await $fetch<SysProvider[]>(`${apiBase()}/api/providers`)
     } catch (err) {
       console.warn('[ai-gate] 加载供应商失败', err)
       notifyBackendError()
+    } finally {
+      loading.value = false
     }
   }
 
@@ -61,6 +65,7 @@ export function useProviders() {
     try {
       await $fetch(`${apiBase()}/api/providers/${id}`, {method: 'DELETE'})
       providers.value = providers.value.filter(p => p.id !== id)
+      toast.add({color: 'success', title: t('common.deleted')})
     } catch (err) {
       console.warn('[ai-gate] 删除供应商失败', err)
       notifyBackendError()
@@ -124,5 +129,5 @@ export function useProviders() {
     }
   }
 
-  return {providers, load, fetchProvider, createProvider, updateProvider, removeProvider, toggleProvider, saveOrder}
+  return {providers, loading, load, fetchProvider, createProvider, updateProvider, removeProvider, toggleProvider, saveOrder}
 }

@@ -23,9 +23,9 @@ const colorMode = useColorMode()
 const src = computed(() => brandIconUrl(props.icon, colorMode.value === 'dark'))
 
 const boxClass = computed(() => {
-  if (props.size === 'xl') return 'size-14 rounded-lg'
-  if (props.size === 'lg') return 'size-11 rounded-lg'
-  return 'size-8 rounded-md'
+  if (props.size === 'xl') return 'size-14 rounded-sm'
+  if (props.size === 'lg') return 'size-11 rounded-sm'
+  return 'size-8 rounded-sm'
 })
 const imgClass = computed(() => {
   if (props.size === 'xl') return 'size-8'

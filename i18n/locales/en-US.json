@@ -24,6 +24,8 @@
     "add": "Add",
     "save": "Save",
     "copy": "Copy",
+    "copied": "Copied to clipboard",
+    "deleted": "Deleted",
     "clear": "Clear",
     "today": "Today",
     "selectDate": "Select date"

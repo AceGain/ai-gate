@@ -24,6 +24,8 @@
     "add": "添加",
     "save": "保存",
     "copy": "复制",
+    "copied": "已复制到剪贴板",
+    "deleted": "已删除",
     "clear": "清空",
     "today": "今天",
     "selectDate": "选择日期"

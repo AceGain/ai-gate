@@ -123,7 +123,7 @@ async function save() {
             v-model="form.secret"
             type="password"
             :placeholder="t('providerKeys.secretPlaceholder')"
-            class="w-full font-mono"
+            class="w-full"
           />
         </UFormField>
 
@@ -145,10 +145,14 @@ async function save() {
               </span>
 
               <template #trailing>
-                <UIcon
+                <UButton
                   v-if="expiresDate"
-                  name="i-lucide-circle-x"
-                  class="size-4 text-dimmed hover:text-default cursor-pointer ms-auto"
+                  variant="ghost"
+                  color="neutral"
+                  size="xs"
+                  icon="i-lucide-circle-x"
+                  class="ms-auto -me-1 text-dimmed hover:text-default"
+                  :aria-label="t('providerKeys.clearExpires')"
                   :title="t('providerKeys.clearExpires')"
                   @click.stop="expiresDate = null"
                 />
@@ -194,9 +198,9 @@ async function save() {
           />
         </UFormField>
 
-        <div class="flex items-center justify-between rounded-lg border border-default p-3">
+        <div class="flex items-center justify-between rounded-sm border border-default p-3">
           <span class="text-sm font-medium">{{ t('providers.enable') }}</span>
-          <USwitch v-model="form.enabled" />
+          <USwitch v-model="form.enabled" :aria-label="t('providers.enable')" />
         </div>
       </div>
     </template>

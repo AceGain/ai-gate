@@ -89,19 +89,20 @@ watch(open, (v) => {
     <UPopover
       v-model:open="open"
       :content="{ side: 'bottom', align: 'center', sideOffset: 8 }"
-      :ui="{ content: 'w-84 p-3 shadow-xl' }"
+      :ui="{ content: 'w-84 p-3 rounded-sm border border-default bg-default shadow-lg' }"
     >
-      <button
-        type="button"
-        class="group relative flex size-14 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-default bg-elevated transition-all hover:border-primary/60 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      <UButton
+        color="neutral"
+        variant="outline"
+        class="group relative size-14 shrink-0 p-0 overflow-hidden rounded-sm border border-default bg-elevated hover:border-primary/60 active:scale-95 justify-center items-center"
         :aria-label="t('providers.iconChange')"
       >
         <ProviderIcon :icon="model" :name="props.name || '?'" size="xl"/>
         <!-- 悬停半透明遮罩与相机提示 -->
-        <div class="absolute inset-0 flex items-center justify-center rounded-lg bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-          <UIcon name="i-lucide-camera" class="size-4.5 text-white drop-shadow"/>
+        <div class="absolute inset-0 flex items-center justify-center rounded-sm bg-elevated/80 opacity-0 transition-opacity group-hover:opacity-100">
+          <UIcon name="i-lucide-camera" class="size-4 text-highlighted"/>
         </div>
-      </button>
+      </UButton>
 
       <!-- 弹出的网格选择面板 -->
       <template #content>
@@ -121,42 +122,49 @@ watch(open, (v) => {
                 variant="ghost"
                 color="neutral"
                 size="xs"
+                :aria-label="t('common.clear')"
                 @click="search = ''"
               />
             </template>
           </UInput>
 
           <!-- 顶部快捷操作：自动首字母 / 上传图片 -->
-          <div class="flex items-center gap-2 border-b border-default pb-2.5 text-xs">
-            <button
-              type="button"
-              class="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border px-2.5 py-1.5 transition-colors"
-              :class="!model ? 'border-primary bg-primary/10 font-medium text-primary' : 'border-default bg-elevated text-default hover:bg-accented'"
+          <div class="flex items-center gap-2 border-b border-default pb-2.5">
+            <UButton
+              :color="!model ? 'primary' : 'neutral'"
+              :variant="!model ? 'subtle' : 'outline'"
+              size="xs"
+              icon="i-lucide-sparkles"
+              class="flex-1 justify-center rounded-sm"
               @click="resetToAuto"
             >
-              <UIcon name="i-lucide-sparkles" class="size-3.5"/>
-              <span>{{ t('providers.iconAuto') }}</span>
-            </button>
-            <button
-              type="button"
-              class="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-default bg-elevated px-2.5 py-1.5 text-default transition-colors hover:bg-accented"
+              {{ t('providers.iconAuto') }}
+            </UButton>
+            <UButton
+              color="neutral"
+              variant="outline"
+              size="xs"
+              icon="i-lucide-upload"
+              class="flex-1 justify-center rounded-sm"
               @click="pickFile"
             >
-              <UIcon name="i-lucide-upload" class="size-3.5"/>
-              <span>{{ t('providers.iconUpload') }}</span>
-            </button>
+              {{ t('providers.iconUpload') }}
+            </UButton>
           </div>
 
           <!-- 图标网格展示区（不区分常用品牌，单一平铺网格） -->
           <div class="max-h-64 overflow-y-auto overscroll-contain pr-0.5">
             <div v-if="displayedIcons.length" class="grid grid-cols-6 gap-1.5">
-              <button
+              <UButton
                 v-for="item in displayedIcons"
                 :key="item.value"
-                type="button"
-                class="flex size-10 cursor-pointer items-center justify-center rounded-lg border p-1 transition-all hover:border-primary/50 hover:bg-elevated"
+                variant="ghost"
+                color="neutral"
+                size="xs"
+                class="size-10 p-1 justify-center rounded-sm border transition-all hover:border-primary/50 hover:bg-elevated"
                 :class="model === item.value ? 'border-primary bg-primary/10 ring-1 ring-primary' : 'border-transparent bg-elevated/60'"
                 :title="item.label"
+                :aria-label="item.label"
                 @click="selectIcon(item.value)"
               >
                 <img
@@ -164,7 +172,7 @@ watch(open, (v) => {
                   alt=""
                   class="size-6 object-contain"
                 >
-              </button>
+              </UButton>
             </div>
             <div v-else class="py-8 text-center text-xs text-muted">
               {{ t('providers.iconNotFound') }}
