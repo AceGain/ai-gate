@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type {SysKey, SysKeyInput, SysKeyStatus} from '~/utils/providers'
+import {CalendarDate, parseDate} from '@internationalized/date'
+import type {SysKey, SysKeyInput} from '~/utils/providers'
 
 const props = defineProps<{
   providerId: string
@@ -18,26 +19,28 @@ const form = reactive({
   name: '',
   secret: '',
   enabled: true,
-  status: 'ACTIVE' as SysKeyStatus,
-  expiresTime: '',
   description: ''
 })
 
+const expiresDate = shallowRef<CalendarDate | null>(null)
 const showErrors = ref(false)
 const saving = ref(false)
-
-const statusOptions = computed(() => [
-  {label: t('providerKeys.statusActive'), value: 'ACTIVE'},
-  {label: t('providerKeys.statusInvalid'), value: 'INVALID'}
-])
 
 watch(open, (v) => {
   if (!v) return
   form.name = props.keyItem?.name ?? ''
   form.secret = props.keyItem?.secret ?? ''
   form.enabled = props.keyItem?.enabled ?? true
-  form.status = props.keyItem?.status ?? 'ACTIVE'
-  form.expiresTime = props.keyItem?.expiresTime ?? ''
+  const rawDate = props.keyItem?.expiresTime ? props.keyItem.expiresTime.slice(0, 10) : ''
+  if (rawDate) {
+    try {
+      expiresDate.value = parseDate(rawDate)
+    } catch {
+      expiresDate.value = null
+    }
+  } else {
+    expiresDate.value = null
+  }
   form.description = props.keyItem?.description ?? ''
   showErrors.value = false
 })
@@ -63,8 +66,8 @@ async function save() {
     name: form.name.trim(),
     secret: form.secret.trim(),
     enabled: form.enabled,
-    status: form.status,
-    expiresTime: form.expiresTime.trim() ? form.expiresTime.trim() : null,
+    status: props.keyItem?.status ?? 'ACTIVE',
+    expiresTime: expiresDate.value ? expiresDate.value.toString() : null,
     description: form.description.trim()
   }
   try {
@@ -108,23 +111,46 @@ async function save() {
           />
         </UFormField>
 
-        <div class="grid grid-cols-2 gap-3">
-          <UFormField :label="t('providerKeys.status')">
-            <USelect
-              v-model="form.status"
-              :items="statusOptions"
-              class="w-full"
-            />
-          </UFormField>
+        <UFormField
+          :label="t('providerKeys.expiresTime')"
+          :help="t('providerKeys.permanentHint')"
+        >
+          <UInputDate
+            v-model="expiresDate"
+            class="w-full"
+            :ui="{ trailing: 'pe-1' }"
+          >
+            <template #trailing>
+              <div class="flex items-center gap-0.5">
+                <UButton
+                  v-if="expiresDate"
+                  color="neutral"
+                  variant="link"
+                  size="sm"
+                  icon="i-lucide-circle-x"
+                  class="text-dimmed hover:text-default"
+                  :title="t('providerKeys.clearExpires')"
+                  @click="expiresDate = null"
+                />
 
-          <UFormField :label="t('providerKeys.expiresTime')">
-            <UInput
-              v-model="form.expiresTime"
-              :placeholder="t('providerKeys.expiresPlaceholder')"
-              class="w-full"
-            />
-          </UFormField>
-        </div>
+                <UPopover>
+                  <UButton
+                    color="neutral"
+                    variant="link"
+                    size="sm"
+                    icon="i-lucide-calendar"
+                    :title="t('providerKeys.expiresSelectPlaceholder')"
+                    class="text-dimmed hover:text-default px-1"
+                  />
+
+                  <template #content>
+                    <UCalendar v-model="expiresDate" class="p-2" />
+                  </template>
+                </UPopover>
+              </div>
+            </template>
+          </UInputDate>
+        </UFormField>
 
         <UFormField :label="t('providers.description')">
           <UTextarea

@@ -50,6 +50,7 @@ watch(id, (newId) => {
 
 onBeforeUnmount(() => {
   reset()
+  if (copyTimer) clearTimeout(copyTimer)
 })
 
 /* ---------------- 1. 供应商基础信息编辑弹窗 ---------------- */
@@ -149,6 +150,37 @@ function maskSecret(secret: string): string {
 async function handleCopy(secret: string) {
   await copy(secret)
   toast.add({color: 'success', title: t('providerKeys.copied')})
+}
+
+const copiedKeyId = ref<string | null>(null)
+let copyTimer: ReturnType<typeof setTimeout> | null = null
+
+async function handleCopyKey(k: SysKey) {
+  await copy(k.secret)
+  copiedKeyId.value = k.id
+  if (copyTimer) clearTimeout(copyTimer)
+  copyTimer = setTimeout(() => {
+    copiedKeyId.value = null
+  }, 2000)
+  toast.add({color: 'success', title: t('providerKeys.copied')})
+}
+
+function isKeyExpired(expiresTime: string | null): boolean {
+  if (!expiresTime) return false
+  const trimmed = expiresTime.trim()
+  if (!trimmed) return false
+  const dateStr = /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? `${trimmed}T23:59:59.999` : trimmed
+  const timestamp = Date.parse(dateStr)
+  if (isNaN(timestamp)) return false
+  return timestamp < Date.now()
+}
+
+function formatKeyExpiry(expiresTime: string | null): string {
+  if (!expiresTime) return t('providerKeys.permanent')
+  if (isKeyExpired(expiresTime)) {
+    return `${expiresTime} (${t('providerKeys.expired')})`
+  }
+  return expiresTime
 }
 
 function openCreateKey() {
@@ -633,67 +665,99 @@ const tabs = computed(() => [
 
           <!-- 2. API 密钥 Tab -->
           <div v-else-if="activeTab === 'keys'">
-            <!-- 密钥列表：扁平无边框行 -->
-            <div v-if="keys.length" ref="keyListEl" class="divide-y divide-default/50">
+            <!-- 密钥列表：单层卡片结构，无多层嵌套，纵向分行清晰 -->
+            <div v-if="keys.length" ref="keyListEl" class="flex flex-col gap-3">
               <div
                 v-for="k in keys"
                 :key="k.id"
-                class="flex items-center justify-between py-2 px-1 hover:bg-elevated/20 transition-colors rounded-sm gap-2"
+                class="group flex items-start justify-between gap-4 rounded-lg border border-default bg-default p-3.5 transition-colors hover:border-primary/40 hover:bg-elevated/30"
               >
-                <div class="flex min-w-0 flex-1 items-center gap-2.5">
+                <!-- 左侧信息区：拖拽手柄 + 纵向信息流（第一行名称/状态/过期，第二行密文与操作，第三行备注） -->
+                <div class="flex min-w-0 flex-1 items-start gap-2.5">
                   <div
-                    class="drag-handle flex size-6 shrink-0 cursor-pointer items-center justify-center text-dimmed hover:text-default"
+                    class="drag-handle -ml-1 mt-0.5 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-dimmed transition-colors hover:bg-elevated hover:text-default"
                     role="button"
                     :aria-label="t('providers.dragToSort')"
                   >
-                    <UIcon name="i-lucide-grip-vertical" class="size-3.5" />
+                    <UIcon name="i-lucide-grip-vertical" class="size-4" />
                   </div>
 
-                  <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-xs">
-                    <span
-                      class="truncate font-medium text-sm"
-                      :class="k.enabled ? 'text-highlighted' : 'text-dimmed'"
+                  <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+                    <!-- 第一行：名称 + 状态徽标 + 有效期 -->
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span
+                        class="truncate text-sm font-semibold"
+                        :class="k.enabled ? 'text-highlighted' : 'text-dimmed'"
+                        :title="k.name"
+                      >
+                        {{ k.name }}
+                      </span>
+
+                      <UBadge
+                        :color="k.status === 'ACTIVE' ? 'success' : 'error'"
+                        variant="subtle"
+                        size="xs"
+                      >
+                        {{ k.status === 'ACTIVE' ? t('providerKeys.statusActive') : t('providerKeys.statusInvalid') }}
+                      </UBadge>
+
+                      <span
+                        class="inline-flex items-center gap-1 text-xs"
+                        :class="isKeyExpired(k.expiresTime) ? 'text-error' : 'text-muted'"
+                      >
+                        <UIcon
+                          :name="k.expiresTime ? 'i-lucide-calendar-clock' : 'i-lucide-infinity'"
+                          class="size-3.5 shrink-0 text-dimmed"
+                        />
+                        <span>{{ formatKeyExpiry(k.expiresTime) }}</span>
+                      </span>
+                    </div>
+
+                    <!-- 第二行：密钥密文 + 明文切换 + 快捷复制（单层卡片内自然排布，无嵌套内盒） -->
+                    <div class="flex items-center gap-2 min-w-0">
+                      <code
+                        class="truncate font-mono text-xs select-all text-muted"
+                        :title="revealedKeys.has(k.id) ? k.secret : undefined"
+                      >
+                        {{ revealedKeys.has(k.id) ? k.secret : maskSecret(k.secret) }}
+                      </code>
+
+                      <button
+                        type="button"
+                        class="cursor-pointer text-dimmed transition-colors hover:text-default shrink-0"
+                        :title="revealedKeys.has(k.id) ? t('providerKeys.hideSecret') : t('providerKeys.showSecret')"
+                        @click="toggleReveal(k.id)"
+                      >
+                        <UIcon :name="revealedKeys.has(k.id) ? 'i-lucide-eye-off' : 'i-lucide-eye'" class="size-3.5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        class="cursor-pointer text-dimmed transition-colors hover:text-default shrink-0"
+                        :title="t('providerKeys.copySecret')"
+                        @click="handleCopyKey(k)"
+                      >
+                        <UIcon
+                          :name="copiedKeyId === k.id ? 'i-lucide-check' : 'i-lucide-copy'"
+                          class="size-3.5"
+                          :class="copiedKeyId === k.id ? 'text-success' : ''"
+                        />
+                      </button>
+                    </div>
+
+                    <!-- 第三行（选填）：备注说明 -->
+                    <p
+                      v-if="k.description"
+                      class="truncate text-xs text-muted"
+                      :title="k.description"
                     >
-                      {{ k.name }}
-                    </span>
-
-                    <UBadge
-                      :color="k.status === 'ACTIVE' ? 'success' : 'error'"
-                      variant="subtle"
-                      size="xs"
-                    >
-                      {{ k.status === 'ACTIVE' ? t('providerKeys.statusActive') : t('providerKeys.statusInvalid') }}
-                    </UBadge>
-
-                    <span class="text-muted text-[11px]">
-                      {{ k.expiresTime || t('providerKeys.permanent') }}
-                    </span>
-
-                    <span class="font-mono text-muted bg-elevated/60 px-1.5 py-0.5 rounded text-[11px]">
-                      {{ revealedKeys.has(k.id) ? k.secret : maskSecret(k.secret) }}
-                    </span>
-
-                    <button
-                      type="button"
-                      class="cursor-pointer text-dimmed transition-colors hover:text-default"
-                      :title="revealedKeys.has(k.id) ? t('providerKeys.hideSecret') : t('providerKeys.showSecret')"
-                      @click="toggleReveal(k.id)"
-                    >
-                      <UIcon :name="revealedKeys.has(k.id) ? 'i-lucide-eye-off' : 'i-lucide-eye'" class="size-3" />
-                    </button>
-
-                    <button
-                      type="button"
-                      class="cursor-pointer text-dimmed transition-colors hover:text-default"
-                      :title="t('providerKeys.copySecret')"
-                      @click="handleCopy(k.secret)"
-                    >
-                      <UIcon :name="copied ? 'i-lucide-check' : 'i-lucide-copy'" class="size-3" />
-                    </button>
+                      {{ k.description }}
+                    </p>
                   </div>
                 </div>
 
-                <div class="flex shrink-0 items-center gap-1.5">
+                <!-- 右侧操作按钮：启用状态开关 + 编辑 + 删除 -->
+                <div class="flex shrink-0 items-center gap-1.5 pt-0.5">
                   <USwitch
                     :model-value="k.enabled"
                     :aria-label="t('providers.toggleEnabled')"
@@ -719,6 +783,7 @@ const tabs = computed(() => [
               </div>
             </div>
 
+            <!-- 空状态 -->
             <UEmpty
               v-else
               :title="t('common.empty')"
@@ -883,3 +948,11 @@ const tabs = computed(() => [
     @saved="() => loadModels(provider!.id)"
   />
 </template>
+
+<style scoped>
+/* 拖拽落点占位提示 */
+:deep(.sortable-ghost) {
+  opacity: 0.35;
+}
+</style>
+

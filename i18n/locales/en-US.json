@@ -23,7 +23,10 @@
     "back": "Back",
     "add": "Add",
     "save": "Save",
-    "copy": "Copy"
+    "copy": "Copy",
+    "clear": "Clear",
+    "today": "Today",
+    "selectDate": "Select date"
   },
   "dashboard": {
     "title": "Dashboard"
@@ -114,10 +117,16 @@
     "expiresTime": "Expiration",
     "expiresPlaceholder": "Optional, leave blank for permanent (YYYY-MM-DD)",
     "permanent": "Permanent",
+    "permanentHint": "Leave blank for permanent validity",
+    "clearExpires": "Set as permanent",
+    "expiresSelectPlaceholder": "Select expiration date",
     "copySecret": "Copy Secret",
     "copied": "Secret copied",
     "showSecret": "Show secret",
     "hideSecret": "Hide secret",
+    "emptyTitle": "No API Keys",
+    "emptyDesc": "Add an API key credential to authenticate upstream requests",
+    "expired": "Expired",
     "removeConfirmTitle": "Delete Key",
     "removeConfirmDesc": "Are you sure you want to delete key \"{name}\"?"
   },

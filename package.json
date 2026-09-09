@@ -20,6 +20,7 @@
   "dependencies": {
     "@hono/node-server": "^2.1.1",
     "@iconify-json/lucide": "^1.2.123",
+    "@internationalized/date": "^3.12.4",
     "@libsql/client": "^0.18.0",
     "@lobehub/icons-static-png": "^1.95.0",
     "@nuxt/fonts": "^0.14.0",

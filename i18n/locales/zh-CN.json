@@ -23,7 +23,10 @@
     "back": "返回",
     "add": "添加",
     "save": "保存",
-    "copy": "复制"
+    "copy": "复制",
+    "clear": "清空",
+    "today": "今天",
+    "selectDate": "选择日期"
   },
   "dashboard": {
     "title": "仪表盘"
@@ -114,10 +117,16 @@
     "expiresTime": "过期时间",
     "expiresPlaceholder": "选填，留空表示永久有效 (YYYY-MM-DD)",
     "permanent": "永久有效",
+    "permanentHint": "留空表示永久有效",
+    "clearExpires": "设为永久有效",
+    "expiresSelectPlaceholder": "选择过期时间",
     "copySecret": "复制密钥",
     "copied": "密钥已复制",
     "showSecret": "显示明文",
     "hideSecret": "隐藏明文",
+    "emptyTitle": "暂无 API 密钥",
+    "emptyDesc": "添加 API 密钥凭据以供模型调用",
+    "expired": "已过期",
     "removeConfirmTitle": "删除密钥",
     "removeConfirmDesc": "确定删除密钥「{name}」？"
   },
