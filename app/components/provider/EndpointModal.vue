@@ -81,20 +81,29 @@ const canSave = computed(() => {
 })
 
 const modalTitle = computed(() => {
-  if (form.type === 'base') return t('providerEndpoints.editBaseTitle')
-  if (form.type === 'models') return t('providerEndpoints.editModelsTitle')
-  return props.endpoint ? t('providerEndpoints.editProtocolTitle') : t('providerEndpoints.newProtocolTitle')
+  if (form.type === 'base') return `${t('providers.edit')} Base URL`
+  if (form.type === 'models') return `${t('providers.edit')} Models`
+  if (form.type === 'protocol') {
+    return props.endpoint
+      ? `${t('providers.edit')} ${props.endpoint.protocol || ''}`.trim()
+      : t('providerEndpoints.newTitle')
+  }
+  return props.endpoint ? t('providerEndpoints.editTitle') : t('providerEndpoints.newTitle')
 })
 
 const pathLabel = computed(() => {
-  if (form.type === 'base') return t('providers.baseUrl')
-  if (form.type === 'models') return t('providerEndpoints.typeModels')
+  if (form.type === 'base') return 'Base URL'
+  if (form.type === 'models') return 'Models'
+  if (form.type === 'protocol') return form.protocol || t('providerEndpoints.path')
   return t('providerEndpoints.path')
 })
 
 const pathPlaceholder = computed(() => {
   if (form.type === 'base') return t('providers.baseUrlPlaceholder')
   if (form.type === 'models') return '/v1/models'
+  if (form.type === 'protocol' && form.protocol in SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS) {
+    return SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS[form.protocol as SysEndpointProtocol]
+  }
   return t('providerEndpoints.pathPlaceholder')
 })
 
@@ -136,9 +145,9 @@ async function save() {
   >
     <template #body>
       <div class="space-y-4">
-        <!-- 协议标识：仅 protocol 类型展示，固定类型下拉选择 -->
+        <!-- 协议标识：仅新增 protocol 类型时展示下拉选择 -->
         <UFormField
-          v-if="form.type === 'protocol'"
+          v-if="form.type === 'protocol' && !props.endpoint"
           :label="t('providerEndpoints.protocol')"
           :error="protocolError"
         >

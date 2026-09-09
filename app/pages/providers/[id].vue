@@ -469,8 +469,8 @@ const tabs = computed(() => [
                 <div class="flex min-w-0 flex-1 flex-col gap-1">
                   <!-- 第一行：标题 -->
                   <div class="flex items-center gap-2">
-                    <span class="text-sm font-semibold text-highlighted">
-                      base url
+                    <span class="text-sm font-semibold text-highlighted font-mono">
+                      Base URL
                     </span>
                   </div>
 
@@ -515,8 +515,8 @@ const tabs = computed(() => [
                 <div class="flex min-w-0 flex-1 flex-col gap-1">
                   <!-- 第一行：标题 -->
                   <div class="flex items-center gap-2">
-                    <span class="text-sm font-semibold text-highlighted">
-                      models
+                    <span class="text-sm font-semibold text-highlighted font-mono">
+                      Models
                     </span>
                   </div>
 
