@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {useClipboard} from '@vueuse/core'
 import {useSortable} from '@vueuse/integrations/useSortable'
+import type {TabsItem} from '@nuxt/ui'
 import type {
   SysEndpoint,
   SysEndpointType,
@@ -176,7 +177,7 @@ function isKeyExpired(expiresTime: string | null): boolean {
 }
 
 function formatKeyExpiry(expiresTime: string | null): string {
-  if (!expiresTime) return t('providerKeys.permanent')
+  if (!expiresTime) return ''
   if (isKeyExpired(expiresTime)) {
     return `${expiresTime} (${t('providerKeys.expired')})`
   }
@@ -316,8 +317,8 @@ useSortable(modelListEl, models, {
 /* ---------------- 5. Tab 标签页切换 ---------------- */
 type TabKey = 'endpoints' | 'keys' | 'models'
 const validTabs: TabKey[] = ['endpoints', 'keys', 'models']
-const activeTab = ref<TabKey>(
-  validTabs.includes(route.query.tab as TabKey) ? (route.query.tab as TabKey) : 'endpoints'
+const activeTab = ref<string>(
+  validTabs.includes(route.query.tab as TabKey) ? (route.query.tab as string) : 'endpoints'
 )
 
 watch(activeTab, (tab) => {
@@ -328,14 +329,44 @@ watch(activeTab, (tab) => {
 
 watch(() => route.query.tab, (tab) => {
   if (tab && validTabs.includes(tab as TabKey) && activeTab.value !== tab) {
-    activeTab.value = tab as TabKey
+    activeTab.value = tab as string
   }
 })
 
-const tabs = computed(() => [
-  {id: 'endpoints' as const, label: t('providerEndpoints.title'), icon: 'i-lucide-route', count: endpoints.value.length},
-  {id: 'keys' as const, label: t('providerKeys.title'), icon: 'i-lucide-key', count: keys.value.length},
-  {id: 'models' as const, label: t('providerModels.title'), icon: 'i-lucide-sparkles', count: models.value.length}
+const tabs = computed<TabsItem[]>(() => [
+  {
+    value: 'endpoints',
+    label: t('providerEndpoints.title'),
+    icon: 'i-lucide-route',
+    badge: endpoints.value.length > 0 ? {
+      label: String(endpoints.value.length),
+      color: 'neutral',
+      variant: 'subtle',
+      size: 'xs'
+    } : undefined
+  },
+  {
+    value: 'keys',
+    label: t('providerKeys.title'),
+    icon: 'i-lucide-key',
+    badge: keys.value.length > 0 ? {
+      label: String(keys.value.length),
+      color: 'neutral',
+      variant: 'subtle',
+      size: 'xs'
+    } : undefined
+  },
+  {
+    value: 'models',
+    label: t('providerModels.title'),
+    icon: 'i-lucide-sparkles',
+    badge: models.value.length > 0 ? {
+      label: String(models.value.length),
+      color: 'neutral',
+      variant: 'subtle',
+      size: 'xs'
+    } : undefined
+  }
 ])
 </script>
 
@@ -383,14 +414,9 @@ const tabs = computed(() => [
             <div class="flex min-w-0 items-center gap-3.5">
               <ProviderIcon :icon="provider.icon" :name="provider.name || provider.code" size="lg" />
               <div class="flex min-w-0 flex-col gap-0.5">
-                <div class="flex items-center gap-2">
-                  <h1 class="truncate text-base font-bold text-highlighted">
-                    {{ provider.name || provider.code }}
-                  </h1>
-                  <UBadge color="neutral" variant="subtle" size="xs" class="shrink-0 font-mono">
-                    {{ provider.code }}
-                  </UBadge>
-                </div>
+                <h1 class="truncate text-base font-bold text-highlighted">
+                  {{ provider.name || provider.code }}
+                </h1>
                 <p v-if="provider.description" class="truncate text-xs text-muted" :title="provider.description">
                   {{ provider.description }}
                 </p>
@@ -427,66 +453,53 @@ const tabs = computed(() => [
             </div>
           </div>
 
-          <!-- 2. Tab 切换与操作栏：扁平下划线切换条 + 对应操作按钮 -->
-          <div class="flex items-center justify-between border-b border-default">
-            <div class="flex items-center gap-6">
-              <button
-                v-for="tab in tabs"
-                :key="tab.id"
-                type="button"
-                class="relative flex items-center gap-2 pb-2.5 pt-1 text-sm font-medium transition-colors cursor-pointer"
-                :class="activeTab === tab.id ? 'text-highlighted font-semibold' : 'text-muted hover:text-default'"
-                @click="activeTab = tab.id"
-              >
-                <UIcon :name="tab.icon" class="size-4" />
-                <span>{{ tab.label }}</span>
-                <UBadge
-                  v-if="tab.count !== undefined && tab.count > 0"
-                  color="neutral"
-                  variant="subtle"
+          <!-- 2. Tab 切换与操作栏：UTabs (variant="link") + #list-trailing 操作按钮 -->
+          <UTabs
+            v-model="activeTab"
+            :items="tabs"
+            variant="link"
+            color="neutral"
+            :content="false"
+            class="w-full"
+            :ui="{
+              list: 'border-b border-default',
+              indicator: '-bottom-px h-0.5 bg-primary',
+              trigger: 'cursor-pointer'
+            }"
+          >
+            <!-- 右侧操作按钮通过 list-trailing 插槽与 Tab 同行对齐 -->
+            <template #list-trailing>
+              <div class="ms-auto flex items-center">
+                <UButton
+                  v-if="activeTab === 'endpoints'"
+                  icon="i-lucide-plus"
+                  variant="ghost"
                   size="xs"
+                  @click="openCreateEndpoint"
                 >
-                  {{ tab.count }}
-                </UBadge>
-                <span
-                  v-if="activeTab === tab.id"
-                  class="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary"
-                />
-              </button>
-            </div>
-
-            <!-- 右侧操作按钮 -->
-            <UButton
-              v-if="activeTab === 'endpoints'"
-              icon="i-lucide-plus"
-              variant="ghost"
-              size="xs"
-              class="mb-1.5"
-              @click="openCreateEndpoint"
-            >
-              {{ t('providers.add') }}
-            </UButton>
-            <UButton
-              v-else-if="activeTab === 'keys'"
-              icon="i-lucide-plus"
-              variant="ghost"
-              size="xs"
-              class="mb-1.5"
-              @click="openCreateKey"
-            >
-              {{ t('providers.add') }}
-            </UButton>
-            <UButton
-              v-else-if="activeTab === 'models'"
-              icon="i-lucide-plus"
-              variant="ghost"
-              size="xs"
-              class="mb-1.5"
-              @click="openCreateModel"
-            >
-              {{ t('providers.add') }}
-            </UButton>
-          </div>
+                  {{ t('providers.add') }}
+                </UButton>
+                <UButton
+                  v-else-if="activeTab === 'keys'"
+                  icon="i-lucide-plus"
+                  variant="ghost"
+                  size="xs"
+                  @click="openCreateKey"
+                >
+                  {{ t('providers.add') }}
+                </UButton>
+                <UButton
+                  v-else-if="activeTab === 'models'"
+                  icon="i-lucide-plus"
+                  variant="ghost"
+                  size="xs"
+                  @click="openCreateModel"
+                >
+                  {{ t('providers.add') }}
+                </UButton>
+              </div>
+            </template>
+          </UTabs>
 
           <!-- 3. 各 Tab 配置内容区域 -->
           <!-- 1. 网络端点 Tab -->
@@ -694,19 +707,21 @@ const tabs = computed(() => [
                       </span>
 
                       <UBadge
-                        :color="k.status === 'ACTIVE' ? 'success' : 'error'"
+                        v-if="k.status !== 'ACTIVE'"
+                        color="error"
                         variant="subtle"
                         size="xs"
                       >
-                        {{ k.status === 'ACTIVE' ? t('providerKeys.statusActive') : t('providerKeys.statusInvalid') }}
+                        {{ t('providerKeys.statusInvalid') }}
                       </UBadge>
 
                       <span
+                        v-if="k.expiresTime"
                         class="inline-flex items-center gap-1 text-xs"
                         :class="isKeyExpired(k.expiresTime) ? 'text-error' : 'text-muted'"
                       >
                         <UIcon
-                          :name="k.expiresTime ? 'i-lucide-calendar-clock' : 'i-lucide-infinity'"
+                          name="i-lucide-calendar-clock"
                           class="size-3.5 shrink-0 text-dimmed"
                         />
                         <span>{{ formatKeyExpiry(k.expiresTime) }}</span>

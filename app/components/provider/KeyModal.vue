@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {CalendarDate, parseDate} from '@internationalized/date'
+import {CalendarDate, parseDate, DateFormatter, getLocalTimeZone, today} from '@internationalized/date'
 import type {SysKey, SysKeyInput} from '~/utils/providers'
 
 const props = defineProps<{
@@ -11,9 +11,13 @@ const emit = defineEmits<{saved: [keyItem: SysKey]}>()
 
 const open = defineModel<boolean>('open', {default: false})
 
-const {t} = useI18n()
+const {t, locale} = useI18n()
 const toast = useToast()
 const {createKey, updateKey} = useProviderConfig()
+
+const df = computed(() => new DateFormatter(locale.value, {
+  dateStyle: 'medium'
+}))
 
 const form = reactive({
   name: '',
@@ -23,11 +27,13 @@ const form = reactive({
 })
 
 const expiresDate = shallowRef<CalendarDate | null>(null)
+const isCalendarOpen = ref(false)
 const showErrors = ref(false)
 const saving = ref(false)
 
 watch(open, (v) => {
   if (!v) return
+  isCalendarOpen.value = false
   form.name = props.keyItem?.name ?? ''
   form.secret = props.keyItem?.secret ?? ''
   form.enabled = props.keyItem?.enabled ?? true
@@ -44,6 +50,16 @@ watch(open, (v) => {
   form.description = props.keyItem?.description ?? ''
   showErrors.value = false
 })
+
+function setToday(close?: () => void) {
+  expiresDate.value = today(getLocalTimeZone())
+  close?.()
+}
+
+function clearDate(close?: () => void) {
+  expiresDate.value = null
+  close?.()
+}
 
 const nameError = computed(() =>
   showErrors.value && !form.name.trim() ? t('providerKeys.nameRequired') : undefined
@@ -115,41 +131,57 @@ async function save() {
           :label="t('providerKeys.expiresTime')"
           :help="t('providerKeys.permanentHint')"
         >
-          <UInputDate
-            v-model="expiresDate"
-            class="w-full"
-            :ui="{ trailing: 'pe-1' }"
-          >
-            <template #trailing>
-              <div class="flex items-center gap-0.5">
-                <UButton
+          <UPopover v-model:open="isCalendarOpen" class="w-full block">
+            <UButton
+              color="neutral"
+              variant="subtle"
+              icon="i-lucide-calendar"
+              block
+              class="justify-start font-normal"
+              :class="expiresDate ? 'text-highlighted' : 'text-dimmed'"
+            >
+              <span class="truncate">
+                {{ expiresDate ? df.format(expiresDate.toDate(getLocalTimeZone())) : t('providerKeys.expiresSelectPlaceholder') }}
+              </span>
+
+              <template #trailing>
+                <UIcon
                   v-if="expiresDate"
-                  color="neutral"
-                  variant="link"
-                  size="sm"
-                  icon="i-lucide-circle-x"
-                  class="text-dimmed hover:text-default"
+                  name="i-lucide-circle-x"
+                  class="size-4 text-dimmed hover:text-default cursor-pointer ms-auto"
                   :title="t('providerKeys.clearExpires')"
-                  @click="expiresDate = null"
+                  @click.stop="expiresDate = null"
                 />
+              </template>
+            </UButton>
 
-                <UPopover>
+            <template #content="{ close }">
+              <div class="p-2 space-y-2">
+                <UCalendar
+                  v-model="expiresDate"
+                  @update:model-value="() => close()"
+                />
+                <div class="flex items-center justify-between border-t border-default/60 pt-2 px-1 text-xs">
                   <UButton
+                    size="xs"
                     color="neutral"
-                    variant="link"
-                    size="sm"
-                    icon="i-lucide-calendar"
-                    :title="t('providerKeys.expiresSelectPlaceholder')"
-                    class="text-dimmed hover:text-default px-1"
+                    variant="ghost"
+                    :label="t('common.today')"
+                    @click="setToday(close)"
                   />
-
-                  <template #content>
-                    <UCalendar v-model="expiresDate" class="p-2" />
-                  </template>
-                </UPopover>
+                  <UButton
+                    v-if="expiresDate"
+                    size="xs"
+                    color="neutral"
+                    variant="ghost"
+                    icon="i-lucide-circle-x"
+                    :label="t('providerKeys.clearExpires')"
+                    @click="clearDate(close)"
+                  />
+                </div>
               </div>
             </template>
-          </UInputDate>
+          </UPopover>
         </UFormField>
 
         <UFormField :label="t('providers.description')">
