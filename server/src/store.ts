@@ -110,12 +110,12 @@ export async function reorderProviders(items: {id: string, sort: number}[]): Pro
  * 供应商端点（sys_endpoint）
  * ========================================================================= */
 
-/** 查询某供应商的所有端点（默认端点置顶，同默认按创建时间正序） */
+/** 查询某供应商的所有端点（按创建时间正序） */
 export async function listEndpoints(providerId: string): Promise<SysEndpoint[]> {
   return await db.select()
     .from(sysEndpoint)
     .where(eq(sysEndpoint.providerId, providerId))
-    .orderBy(desc(sysEndpoint.isDefault), asc(sysEndpoint.createTime))
+    .orderBy(asc(sysEndpoint.createTime))
 }
 
 /** 按 id 查询单个端点 */
@@ -123,6 +123,21 @@ export async function getEndpoint(id: string): Promise<SysEndpoint | null> {
   const row = await db.select()
     .from(sysEndpoint)
     .where(eq(sysEndpoint.id, id))
+    .get()
+  return row ?? null
+}
+
+/** 按 providerId 和 protocol 查询 protocol 端点 */
+export async function getEndpointByProtocol(providerId: string, protocol: string): Promise<SysEndpoint | null> {
+  const row = await db.select()
+    .from(sysEndpoint)
+    .where(
+      and(
+        eq(sysEndpoint.providerId, providerId),
+        eq(sysEndpoint.type, 'protocol'),
+        eq(sysEndpoint.protocol, protocol)
+      )
+    )
     .get()
   return row ?? null
 }

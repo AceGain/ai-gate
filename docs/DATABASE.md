@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS sys_endpoint (
   id TEXT PRIMARY KEY, -- UUID
   provider_id TEXT NOT NULL REFERENCES sys_provider (id) ON DELETE CASCADE,
   type TEXT NOT NULL CHECK (type IN ('base', 'models', 'protocol')), -- base、models、protocol
-  protocol TEXT NOT NULL DEFAULT '', -- 协议标识，如 OpenAI/Chat、OpenAI/Response、Anthropic/Message
+  protocol TEXT NOT NULL DEFAULT '', -- 协议标识，如 Chat Completions、Responses、Messages
   path TEXT NOT NULL, -- 路径或完整URL，如 https://apihub.example.com、/v1/models、/v1/messages
   is_default BOOLEAN NOT NULL DEFAULT FALSE CHECK (is_default IN (TRUE, FALSE)),
   create_time TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -105,7 +105,14 @@ CREATE TABLE IF NOT EXISTS sys_endpoint (
 );
 
 CREATE INDEX IF NOT EXISTS idx_endpoint_provider ON sys_endpoint (provider_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_endpoint_provider_type_protocol ON sys_endpoint (provider_id, type, protocol);
 ```
+
+### 约束说明
+
+同一供应商下 `(provider_id, type, protocol)` 具备唯一约束：
+- `type = 'protocol'` 端点按协议强唯一（同一供应商下每种 protocol 仅允许新增一个）；
+- `type = 'base'` 与 `type = 'models'` 各仅允许存在一条。
 
 ### 字段说明
 
@@ -114,7 +121,7 @@ CREATE INDEX IF NOT EXISTS idx_endpoint_provider ON sys_endpoint (provider_id);
 | `id` | TEXT | PRIMARY KEY | UUID，单条记录主键 |
 | `provider_id` | TEXT | NOT NULL REFERENCES `sys_provider(id)` ON DELETE CASCADE | 关联的供应商 ID |
 | `type` | TEXT | NOT NULL, CHECK (`type IN ('base', 'models', 'protocol')`) | 类型；`base`（基地址）、`models`（模型列表地址）、`protocol`（协议地址） |
-| `protocol` | TEXT | NOT NULL DEFAULT `''` | 协议名称（如 `OpenAI/Chat`、`Anthropic/Message`），base/models 类型可为空 |
+| `protocol` | TEXT | NOT NULL DEFAULT `''` | 协议名称（如 `Chat Completions`、`Responses`、`Messages`），base/models 类型为空字符串 |
 | `path` | TEXT | NOT NULL | 路径或完整 URL |
 | `is_default` | BOOLEAN | NOT NULL DEFAULT FALSE, CHECK (`is_default IN (TRUE, FALSE)`) | 是否默认端点 |
 | `create_time` | TEXT | NOT NULL DEFAULT CURRENT_TIMESTAMP | 创建时间（UTC，数据库维护） |
@@ -122,7 +129,7 @@ CREATE INDEX IF NOT EXISTS idx_endpoint_provider ON sys_endpoint (provider_id);
 
 ### 排序约定
 
-列表查询：`ORDER BY is_default DESC, create_time ASC`（默认端点置顶，其后按创建时间正序）。
+列表查询：`ORDER BY create_time ASC`（按创建时间正序，设为默认不改变列表顺序）。
 
 ### 字段映射（DB → API）
 
@@ -140,8 +147,8 @@ CREATE INDEX IF NOT EXISTS idx_endpoint_provider ON sys_endpoint (provider_id);
 | 方法 | 路径 | 说明 | 错误 |
 |---|---|---|---|
 | GET | `/api/providers/:providerId/endpoints` | 列表（按排序约定） | 404 供应商不存在 |
-| POST | `/api/providers/:providerId/endpoints` | 新增端点 | 400 参数校验失败 |
-| PUT | `/api/providers/:providerId/endpoints/:id` | 修改端点 | 400；404 |
+| POST | `/api/providers/:providerId/endpoints` | 新增端点 | 400 参数校验失败；409 同类协议端点已存在 |
+| PUT | `/api/providers/:providerId/endpoints/:id` | 修改端点 | 400；404；409 同类协议端点已存在 |
 | DELETE | `/api/providers/:providerId/endpoints/:id` | 删除端点 | 404 |
 
 ---
@@ -263,7 +270,7 @@ CREATE INDEX IF NOT EXISTS idx_model_provider ON sys_model (provider_id, sort);
 | `type` | TEXT | NOT NULL, CHECK (`type IN ('GenText', 'GenImage', 'GenAudio', 'GenVideo', 'Embedding', 'Rerank')`) | 模型大类 |
 | `input_modal` | TEXT | NOT NULL DEFAULT `'["text"]'`, JSON 数组 | 输入模态，如 `["Text", "Image"]` |
 | `output_modal` | TEXT | NOT NULL DEFAULT `'["text"]'`, JSON 数组 | 输出模态，如 `["Text"]` |
-| `protocols` | TEXT | NOT NULL DEFAULT `'[]'`, JSON 数组 | 支持协议，如 `["OpenAI/Chat"]` |
+| `protocols` | TEXT | NOT NULL DEFAULT `'[]'`, JSON 数组 | 支持协议，如 `["Chat Completions"]` |
 | `max_context` | INTEGER | NOT NULL DEFAULT 0 | 最大上下文 tokens |
 | `max_input` | INTEGER | NOT NULL DEFAULT 0 | 最大输入 tokens |
 | `max_output` | INTEGER | NOT NULL DEFAULT 0 | 最大输出 tokens |

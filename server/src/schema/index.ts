@@ -5,7 +5,8 @@ import {
   primaryKey,
   sqliteTable,
   text,
-  unique
+  unique,
+  uniqueIndex
 } from 'drizzle-orm/sqlite-core'
 import type {SysModelReasoning, SysModelStatus, SysModelType} from '../../../shared/sys-model'
 import type {SysKeyStatus} from '../../../shared/sys-key'
@@ -35,7 +36,8 @@ export const sysEndpoint = sqliteTable('sys_endpoint', {
   createTime: text('create_time').notNull().default(sql`CURRENT_TIMESTAMP`),
   updateTime: text('update_time').notNull().default(sql`CURRENT_TIMESTAMP`)
 }, (t) => [
-  index('idx_endpoint_provider').on(t.providerId)
+  index('idx_endpoint_provider').on(t.providerId),
+  uniqueIndex('idx_endpoint_provider_type_protocol').on(t.providerId, t.type, t.protocol)
 ])
 
 /** 供应商密钥表 */

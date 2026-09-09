@@ -7,18 +7,18 @@ export type SysEndpointType = 'base' | 'models' | 'protocol'
 
 /** 固定支持的协议类型 */
 export const SYS_ENDPOINT_PROTOCOLS = [
-  'OpenAI/Chat Completions',
-  'OpenAI/Responses',
-  'Anthropic/Messages'
+  'Chat Completions',
+  'Responses',
+  'Messages'
 ] as const
 
 export type SysEndpointProtocol = (typeof SYS_ENDPOINT_PROTOCOLS)[number]
 
 /** 各协议对应的默认路径 */
 export const SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS: Record<SysEndpointProtocol, string> = {
-  'OpenAI/Chat Completions': '/v1/chat/completions',
-  'OpenAI/Responses': '/v1/responses',
-  'Anthropic/Messages': '/v1/messages'
+  'Chat Completions': '/v1/chat/completions',
+  'Responses': '/v1/responses',
+  'Messages': '/v1/messages'
 }
 
 export interface SysEndpoint {

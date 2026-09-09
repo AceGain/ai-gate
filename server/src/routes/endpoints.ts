@@ -5,9 +5,23 @@ import {Hono} from 'hono'
 import {newId} from '../../../shared/sys-provider'
 import {SYS_ENDPOINT_PROTOCOLS} from '../../../shared/sys-endpoint'
 import type {SysEndpointInput, SysEndpointProtocol, SysEndpointType} from '../../../shared/sys-endpoint'
-import {insertEndpoint, listEndpoints, removeEndpoint, updateEndpoint} from '../store'
+import {getEndpoint, getEndpointByProtocol, insertEndpoint, listEndpoints, removeEndpoint, updateEndpoint} from '../store'
 
 export const endpoints = new Hono()
+
+/** UNIQUE 约束冲突判断 */
+function isUniqueViolation(err: unknown): boolean {
+  if (!(err instanceof Error)) return false
+  if (err.message.includes('UNIQUE constraint failed')) return true
+  const cause = (err as {cause?: unknown}).cause
+  if (cause instanceof Error && cause.message.includes('UNIQUE constraint failed')) return true
+  if (typeof cause === 'object' && cause !== null) {
+    const code = (cause as {code?: string}).code
+    const ext = (cause as {extendedCode?: string}).extendedCode
+    if (code === 'SQLITE_CONSTRAINT' || ext === 'SQLITE_CONSTRAINT_UNIQUE') return true
+  }
+  return false
+}
 
 function parseEndpointBody(raw: unknown): {data?: SysEndpointInput; error?: string} {
   const p = (raw ?? {}) as Partial<SysEndpointInput>
@@ -41,27 +55,62 @@ endpoints.get('/providers/:providerId/endpoints', async (c) => {
   return c.json(await listEndpoints(providerId))
 })
 
-/** 新增 */
+/** 新增：同 providerId 下每种 protocol 仅允许新增一个 */
 endpoints.post('/providers/:providerId/endpoints', async (c) => {
   const providerId = c.req.param('providerId')
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseEndpointBody(body)
   if (!data) return c.json({error: error!}, 400)
 
-  const created = await insertEndpoint(newId(), providerId, data)
-  return c.json(created, 201)
+  if (data.type === 'protocol') {
+    const existing = await getEndpointByProtocol(providerId, data.protocol ?? '')
+    if (existing) {
+      return c.json({error: `Endpoint for protocol "${data.protocol}" already exists`}, 409)
+    }
+  }
+
+  try {
+    const created = await insertEndpoint(newId(), providerId, data)
+    return c.json(created, 201)
+  } catch (err: unknown) {
+    if (isUniqueViolation(err)) {
+      return c.json({
+        error: `Endpoint for ${data.type === 'protocol' ? `protocol "${data.protocol}"` : data.type} already exists`
+      }, 409)
+    }
+    throw err
+  }
 })
 
 /** 更新 */
 endpoints.put('/providers/:providerId/endpoints/:id', async (c) => {
   const id = c.req.param('id')
+  const existingEp = await getEndpoint(id)
+  if (!existingEp) return c.json({error: 'Endpoint not found'}, 404)
+
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseEndpointBody(body)
   if (!data) return c.json({error: error!}, 400)
 
-  const updated = await updateEndpoint(id, data)
-  if (!updated) return c.json({error: 'Endpoint not found'}, 404)
-  return c.json(updated)
+  if (data.type === 'protocol') {
+    const existingSameProto = await getEndpointByProtocol(existingEp.providerId, data.protocol ?? '')
+    if (existingSameProto && existingSameProto.id !== id) {
+      return c.json({error: `Endpoint for protocol "${data.protocol}" already exists`}, 409)
+    }
+  }
+
+  try {
+    const updated = await updateEndpoint(id, data)
+    if (!updated) return c.json({error: 'Endpoint not found'}, 404)
+    return c.json(updated)
+  } catch (err: unknown) {
+    if (isUniqueViolation(err)) {
+      return c.json({
+        error: `Endpoint for ${data.type === 'protocol' ? `protocol "${data.protocol}"` : data.type} already exists`
+      }, 409)
+    }
+    throw err
+  }
 })
 
 /** 删除 */

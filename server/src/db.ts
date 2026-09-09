@@ -38,3 +38,12 @@ try {
   throw err
 }
 
+// 历史协议名称平滑迁移：去除 OpenAI/ 与 Anthropic/ 前缀
+try {
+  await client.execute(`UPDATE sys_endpoint SET protocol = 'Chat Completions' WHERE protocol = 'OpenAI/Chat Completions'`)
+  await client.execute(`UPDATE sys_endpoint SET protocol = 'Responses' WHERE protocol = 'OpenAI/Responses'`)
+  await client.execute(`UPDATE sys_endpoint SET protocol = 'Messages' WHERE protocol = 'Anthropic/Messages'`)
+} catch (err) {
+  console.warn('[ai-gate] failed to normalize legacy protocol names:', err)
+}
+

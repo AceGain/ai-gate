@@ -55,7 +55,7 @@ export function useProviderConfig() {
       method: 'POST',
       body: input
     })
-    // 重新拉取以保证 is_default 联动正确排序
+    // 重新拉取以同步服务端其它端点的 is_default 互斥状态
     await loadEndpoints(providerId)
     return created
   }

@@ -2,12 +2,13 @@
 import {useClipboard} from '@vueuse/core'
 import {useSortable} from '@vueuse/integrations/useSortable'
 import type {TabsItem} from '@nuxt/ui'
-import type {
-  SysEndpoint,
-  SysEndpointType,
-  SysKey,
-  SysModel,
-  SysProvider
+import {
+  SYS_ENDPOINT_PROTOCOLS,
+  type SysEndpoint,
+  type SysEndpointType,
+  type SysKey,
+  type SysModel,
+  type SysProvider
 } from '~/utils/providers'
 
 const {t} = useI18n()
@@ -25,6 +26,7 @@ const {
   reset,
   loadAll,
   loadEndpoints,
+  updateEndpoint,
   removeEndpoint,
   loadKeys,
   updateKey,
@@ -78,6 +80,10 @@ const endpointModalType = ref<SysEndpointType>('protocol')
 const baseEndpoint = computed(() => endpoints.value.find(e => e.type === 'base'))
 const modelsEndpoint = computed(() => endpoints.value.find(e => e.type === 'models'))
 const protocolEndpoints = computed(() => endpoints.value.filter(e => e.type === 'protocol'))
+const isAllProtocolsAdded = computed(() => {
+  const addedProtocols = new Set(protocolEndpoints.value.map(e => e.protocol))
+  return SYS_ENDPOINT_PROTOCOLS.every(p => addedProtocols.has(p))
+})
 
 function splitUrl(baseUrl?: string, path?: string): {basePart: string; pathPart: string; fullUrl: string} {
   if (!path) return {basePart: '', pathPart: '', fullUrl: ''}
@@ -137,6 +143,26 @@ async function confirmDeleteEndpoint(ep: SysEndpoint) {
   })
   if (confirmed && provider.value) {
     await removeEndpoint(provider.value.id, ep.id)
+  }
+}
+
+async function handleToggleDefault(ep: SysEndpoint) {
+  if (!provider.value) return
+  const nextDefault = !ep.isDefault
+  try {
+    await updateEndpoint(provider.value.id, ep.id, {
+      type: ep.type,
+      protocol: ep.protocol,
+      path: ep.path,
+      isDefault: nextDefault
+    })
+    toast.add({
+      color: 'success',
+      title: nextDefault ? t('providerEndpoints.defaultSet') : t('providerEndpoints.defaultCanceled')
+    })
+  } catch (err: any) {
+    console.warn('[ai-gate] 切换默认端点失败', err)
+    toast.add({color: 'error', title: t('providers.backendUnavailable')})
   }
 }
 
@@ -515,6 +541,8 @@ const tabs = computed<TabsItem[]>(() => [
                   icon="i-lucide-plus"
                   variant="ghost"
                   size="xs"
+                  :disabled="isAllProtocolsAdded"
+                  :title="isAllProtocolsAdded ? t('providerEndpoints.allProtocolsAdded') : t('providers.add')"
                   @click="openCreateEndpoint"
                 >
                   {{ t('providers.add') }}
@@ -667,16 +695,17 @@ const tabs = computed<TabsItem[]>(() => [
               >
                 <!-- 左侧两行信息：第一行标题，第二行全路径地址 -->
                 <div class="flex min-w-0 flex-1 flex-col gap-1">
-                  <!-- 第一行：标题（协议名称） + 默认标识（仅针对 protocol 生效） -->
+                  <!-- 第一行：标题（协议名称） + 默认徽章（仅针对 protocol 生效） -->
                   <div class="flex items-center gap-2">
                     <span class="text-sm font-semibold text-highlighted">
                       {{ ep.protocol }}
                     </span>
                     <UBadge
                       v-if="ep.isDefault"
-                      color="success"
+                      color="primary"
                       variant="subtle"
-                      size="xs"
+                      size="sm"
+                      class="rounded-sm py-0.5"
                     >
                       {{ t('providerEndpoints.defaultBadge') }}
                     </UBadge>
@@ -713,10 +742,32 @@ const tabs = computed<TabsItem[]>(() => [
                 <!-- 右侧操作按钮 -->
                 <div class="flex shrink-0 items-center gap-1">
                   <UButton
+                    v-if="ep.isDefault"
+                    icon="i-lucide-star"
+                    variant="ghost"
+                    color="primary"
+                    size="xs"
+                    class="[&_svg_path]:fill-current"
+                    :title="t('providerEndpoints.cancelDefault')"
+                    :aria-label="t('providerEndpoints.cancelDefault')"
+                    @click="handleToggleDefault(ep)"
+                  />
+                  <UButton
+                    v-else
+                    icon="i-lucide-star"
+                    variant="ghost"
+                    color="neutral"
+                    size="xs"
+                    :title="t('providerEndpoints.setDefault')"
+                    :aria-label="t('providerEndpoints.setDefault')"
+                    @click="handleToggleDefault(ep)"
+                  />
+                  <UButton
                     icon="i-lucide-square-pen"
                     variant="ghost"
                     color="neutral"
                     size="xs"
+                    :title="t('providers.edit')"
                     :aria-label="t('providers.edit')"
                     @click="openEditEndpoint(ep)"
                   />
@@ -725,6 +776,7 @@ const tabs = computed<TabsItem[]>(() => [
                     variant="ghost"
                     color="error"
                     size="xs"
+                    :title="t('providers.remove')"
                     :aria-label="t('providers.remove')"
                     @click="confirmDeleteEndpoint(ep)"
                   />
@@ -1037,6 +1089,7 @@ const tabs = computed<TabsItem[]>(() => [
     :provider-id="provider.id"
     :endpoint="editingEndpoint"
     :default-type="endpointModalType"
+    :existing-endpoints="endpoints"
     @saved="() => loadEndpoints(provider!.id)"
   />
 
