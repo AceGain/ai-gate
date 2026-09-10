@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {en, zh_cn} from '@nuxt/ui/locale'
+import type {ToasterProps} from '@nuxt/ui'
 
 const {locale} = useI18n()
 
@@ -7,6 +8,11 @@ const {locale} = useI18n()
 const uiLocales = {
   'zh-CN': zh_cn,
   'en-US': en
+}
+
+const toaster: ToasterProps = {
+  position: 'bottom-right',
+  duration: 3000
 }
 
 const appConfig = useAppConfig()
@@ -44,7 +50,10 @@ useSeoMeta({
 </script>
 
 <template>
-  <UApp :locale="uiLocales[locale as keyof typeof uiLocales] ?? zh_cn">
+  <UApp
+    :locale="uiLocales[locale as keyof typeof uiLocales] ?? zh_cn"
+    :toaster="toaster"
+  >
     <NuxtLoadingIndicator/>
 
     <!-- 顶部窗口标题栏（代替系统标题栏）：品牌 + 颜色模式 + 窗口控制 -->

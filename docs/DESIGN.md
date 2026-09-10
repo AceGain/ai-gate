@@ -104,7 +104,7 @@
 
 - **加载**：`USkeleton` 骨架必须与真实内容同尺寸，避免加载完成时跳动；
 - **空态**：默认 `<UEmpty variant="naked" />` 极简呈现，无图标无按钮（操作入口在 Navbar）；确需引导时按需扩展；
-- **结果**：操作成功/失败用 `useToast()` 提示；
+- **结果**：操作成功/失败用 `useToast()` 提示（全局右下角显示，持续时间 3 秒）；
 - **二次确认**：删除等破坏性操作使用 `useConfirmDialog()` / `<ConfirmRemoveModal>`，禁止 `window.confirm`；
 - **弹窗**：样式继承全局配置；表单弹窗宽度控制在 `sm:max-w-md` ~ `sm:max-w-lg`。
 

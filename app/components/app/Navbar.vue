@@ -27,7 +27,7 @@ const pageTitle = computed(() => {
     :title="pageTitle"
     :toggle="false"
     :ui="{
-      root: 'h-14 px-4 sm:px-4',
+      root: 'h-12 px-4 sm:px-4',
       title: 'text-base font-semibold text-highlighted'
     }"
   >

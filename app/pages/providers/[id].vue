@@ -57,7 +57,7 @@ watch(id, async (newId) => {
     }
     void loadAll(newId)
   }
-}, { immediate: true })
+}, {immediate: true})
 
 onBeforeUnmount(() => {
   document.body.classList.remove('provider-sortable-dragging')
@@ -85,7 +85,7 @@ const isAllProtocolsAdded = computed(() => {
   return SYS_ENDPOINT_PROTOCOLS.every(p => addedProtocols.has(p))
 })
 
-function splitUrl(baseUrl?: string, path?: string): {basePart: string; pathPart: string; fullUrl: string} {
+function splitUrl(baseUrl?: string, path?: string): { basePart: string; pathPart: string; fullUrl: string } {
   if (!path) return {basePart: '', pathPart: '', fullUrl: ''}
   const trimmedPath = path.trim()
   if (!trimmedPath) return {basePart: '', pathPart: '', fullUrl: ''}
@@ -451,34 +451,34 @@ const tabs = computed<TabsItem[]>(() => [
     <template #body>
       <!-- 详情加载中骨架屏 -->
       <div v-if="loadingProvider && !provider" class="h-full overflow-y-auto p-4 sm:p-6">
-        <div class="mx-auto max-w-5xl space-y-6">
+        <div class="mx-auto max-w-5xl space-y-4">
           <div class="flex items-center justify-between gap-4 pb-1">
             <div class="flex items-center gap-3.5">
-              <USkeleton class="size-11 rounded-sm" />
+              <USkeleton class="size-11 rounded-sm"/>
               <div class="space-y-1.5">
-                <USkeleton class="h-5 w-36 rounded-sm" />
-                <USkeleton class="h-3.5 w-60 rounded-sm" />
+                <USkeleton class="h-5 w-36 rounded-sm"/>
+                <USkeleton class="h-3.5 w-60 rounded-sm"/>
               </div>
             </div>
             <div class="flex items-center gap-2.5">
-              <USkeleton class="h-6 w-24 rounded-sm" />
-              <USkeleton class="size-7 rounded-sm" />
+              <USkeleton class="h-6 w-24 rounded-sm"/>
+              <USkeleton class="size-7 rounded-sm"/>
             </div>
           </div>
-          <USkeleton class="h-9 w-full rounded-sm" />
+          <USkeleton class="h-9 w-full rounded-sm"/>
           <div class="space-y-3 pt-2">
-            <USkeleton v-for="i in 3" :key="i" class="h-16 w-full rounded-sm" />
+            <USkeleton v-for="i in 3" :key="i" class="h-16 w-full rounded-sm"/>
           </div>
         </div>
       </div>
 
       <div v-else-if="provider" class="h-full overflow-y-auto p-4 sm:p-6">
-        <div class="mx-auto max-w-5xl space-y-6">
+        <div class="mx-auto max-w-5xl space-y-4">
           <!-- 1. 顶部档案区：纯净自然留白分层，无冗余线条，契合页面通透扁平风格 -->
           <div class="flex items-center justify-between gap-4 pb-1">
             <!-- 左侧：图标 + 名称/编码 + 描述 -->
             <div class="flex min-w-0 items-center gap-3.5">
-              <ProviderIcon :icon="provider.icon" :name="provider.name || provider.code" size="lg" />
+              <ProviderIcon :icon="provider.icon" :name="provider.name || provider.code" size="lg"/>
               <div class="flex min-w-0 flex-col gap-0.5">
                 <h1 class="truncate text-base font-bold text-highlighted">
                   {{ provider.name || provider.code }}
@@ -576,10 +576,10 @@ const tabs = computed<TabsItem[]>(() => [
             <div v-if="configLoading && !endpoints.length" class="divide-y divide-default/50">
               <div v-for="i in 3" :key="i" class="flex items-center justify-between py-2.5 px-2 gap-4">
                 <div class="flex-1 space-y-2">
-                  <USkeleton class="h-4 w-32 rounded-sm" />
-                  <USkeleton class="h-3 w-72 rounded-sm" />
+                  <USkeleton class="h-4 w-32 rounded-sm"/>
+                  <USkeleton class="h-3 w-72 rounded-sm"/>
                 </div>
-                <USkeleton class="size-7 rounded-sm" />
+                <USkeleton class="size-7 rounded-sm"/>
               </div>
             </div>
 
@@ -785,7 +785,7 @@ const tabs = computed<TabsItem[]>(() => [
 
               <!-- 协议端点为空时的极简空态 -->
               <div v-if="!protocolEndpoints.length" class="py-8">
-                <UEmpty :title="t('providerEndpoints.emptyProtocols')" variant="naked" />
+                <UEmpty :title="t('providerEndpoints.emptyProtocols')" variant="naked"/>
               </div>
             </div>
           </div>
@@ -800,16 +800,16 @@ const tabs = computed<TabsItem[]>(() => [
                 class="flex items-start justify-between gap-4 rounded-sm border border-default bg-default p-3.5"
               >
                 <div class="flex flex-1 items-start gap-2.5">
-                  <USkeleton class="size-7 rounded-sm" />
+                  <USkeleton class="size-7 rounded-sm"/>
                   <div class="flex-1 space-y-2">
-                    <USkeleton class="h-4 w-40 rounded-sm" />
-                    <USkeleton class="h-3 w-64 rounded-sm" />
+                    <USkeleton class="h-4 w-40 rounded-sm"/>
+                    <USkeleton class="h-3 w-64 rounded-sm"/>
                   </div>
                 </div>
                 <div class="flex items-center gap-1.5">
-                  <USkeleton class="h-5 w-9 rounded-sm" />
-                  <USkeleton class="size-6 rounded-sm" />
-                  <USkeleton class="size-6 rounded-sm" />
+                  <USkeleton class="h-5 w-9 rounded-sm"/>
+                  <USkeleton class="size-6 rounded-sm"/>
+                  <USkeleton class="size-6 rounded-sm"/>
                 </div>
               </div>
             </div>
@@ -828,7 +828,7 @@ const tabs = computed<TabsItem[]>(() => [
                     role="button"
                     :aria-label="t('providers.dragToSort')"
                   >
-                    <UIcon name="i-lucide-grip-vertical" class="size-4" />
+                    <UIcon name="i-lucide-grip-vertical" class="size-4"/>
                   </div>
 
                   <div class="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -953,15 +953,15 @@ const tabs = computed<TabsItem[]>(() => [
                 class="flex items-center justify-between py-2 px-1 gap-2"
               >
                 <div class="flex flex-1 items-center gap-2.5">
-                  <USkeleton class="size-6 rounded-sm" />
-                  <USkeleton class="h-4 w-28 rounded-sm" />
-                  <USkeleton class="h-4 w-16 rounded-sm" />
-                  <USkeleton class="h-4 w-12 rounded-sm" />
+                  <USkeleton class="size-6 rounded-sm"/>
+                  <USkeleton class="h-4 w-28 rounded-sm"/>
+                  <USkeleton class="h-4 w-16 rounded-sm"/>
+                  <USkeleton class="h-4 w-12 rounded-sm"/>
                 </div>
                 <div class="flex items-center gap-1.5">
-                  <USkeleton class="h-5 w-9 rounded-sm" />
-                  <USkeleton class="size-6 rounded-sm" />
-                  <USkeleton class="size-6 rounded-sm" />
+                  <USkeleton class="h-5 w-9 rounded-sm"/>
+                  <USkeleton class="size-6 rounded-sm"/>
+                  <USkeleton class="size-6 rounded-sm"/>
                 </div>
               </div>
             </div>
@@ -979,7 +979,7 @@ const tabs = computed<TabsItem[]>(() => [
                     role="button"
                     :aria-label="t('providers.dragToSort')"
                   >
-                    <UIcon name="i-lucide-grip-vertical" class="size-4" />
+                    <UIcon name="i-lucide-grip-vertical" class="size-4"/>
                   </div>
 
                   <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-xs">
@@ -1014,8 +1014,9 @@ const tabs = computed<TabsItem[]>(() => [
                       {{ formatTokens(m.maxContext) }}
                     </span>
 
-                    <span v-if="m.reasoning && m.reasoning !== 'DISABLE'" class="inline-flex items-center gap-0.5 text-primary">
-                      <UIcon name="i-lucide-brain" class="size-3" />
+                    <span v-if="m.reasoning && m.reasoning !== 'DISABLE'"
+                          class="inline-flex items-center gap-0.5 text-primary">
+                      <UIcon name="i-lucide-brain" class="size-3"/>
                       <span>{{ m.reasoning }}</span>
                     </span>
 
