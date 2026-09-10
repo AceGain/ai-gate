@@ -8,7 +8,7 @@ const props = withDefaults(defineProps<{
   /** 用于首字母 fallback 的名称 */
   name: string
   /** 展示尺寸 */
-  size?: 'sm' | 'lg' | 'xl'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
 }>(), {
   icon: '',
   size: 'sm'
@@ -25,16 +25,19 @@ const src = computed(() => brandIconUrl(props.icon, colorMode.value === 'dark'))
 const boxClass = computed(() => {
   if (props.size === 'xl') return 'size-14 rounded-sm'
   if (props.size === 'lg') return 'size-11 rounded-sm'
+  if (props.size === 'md') return 'size-10 rounded-sm'
   return 'size-8 rounded-sm'
 })
 const imgClass = computed(() => {
   if (props.size === 'xl') return 'size-8'
-  if (props.size === 'lg') return 'size-6'
+  if (props.size === 'lg') return 'size-7'
+  if (props.size === 'md') return 'size-6'
   return 'size-4.5'
 })
 const textClass = computed(() => {
   if (props.size === 'xl') return 'text-xl font-semibold'
   if (props.size === 'lg') return 'text-lg font-semibold'
+  if (props.size === 'md') return 'text-sm font-semibold'
   return 'text-xs font-semibold'
 })
 </script>

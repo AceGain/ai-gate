@@ -81,10 +81,10 @@ onBeforeUnmount(() => {
           <div
             v-for="i in 5"
             :key="i"
-            class="flex min-h-[56px] items-center gap-2.5 rounded-sm border border-default bg-default px-3 py-2"
+            class="flex min-h-[64px] items-center gap-3 rounded-sm border border-default bg-default px-3.5 py-3"
           >
             <USkeleton class="size-7 rounded-sm" />
-            <USkeleton class="size-8 rounded-sm" />
+            <USkeleton class="size-10 rounded-sm" />
             <div class="flex-1 space-y-1.5">
               <USkeleton class="h-4 w-32 rounded-sm" />
               <USkeleton class="h-3 w-48 rounded-sm" />
@@ -105,7 +105,7 @@ onBeforeUnmount(() => {
           <div
             v-for="p in providers"
             :key="p.id"
-            class="flex min-h-[56px] select-none items-center gap-2.5 rounded-sm border border-default bg-default px-3 py-2 transition-colors hover:border-primary/40 hover:bg-elevated/50"
+            class="flex min-h-[64px] select-none items-center gap-3 rounded-sm border border-default bg-default px-3.5 py-3 transition-colors hover:border-primary/40 hover:bg-elevated/50"
           >
             <!-- 拖拽手柄（扩大命中区，hover 高亮） -->
             <div
@@ -116,10 +116,10 @@ onBeforeUnmount(() => {
               <UIcon name="i-lucide-grip-vertical" class="size-4"/>
             </div>
 
-            <ProviderIcon :icon="p.icon" :name="p.name || p.code"/>
+            <ProviderIcon :icon="p.icon" :name="p.name || p.code" size="md"/>
 
             <!-- 图标右侧信息区（第一行名称，第二行备注，超长省略） -->
-            <div class="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
+            <div class="flex min-w-0 flex-1 flex-col justify-center gap-1">
               <span
                 class="truncate text-sm font-medium"
                 :class="p.enabled ? 'text-highlighted' : 'text-dimmed'"

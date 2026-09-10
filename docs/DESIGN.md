@@ -11,10 +11,10 @@
 AI Gate 是一款面向开发者与高级用户的 AI 网关产品，核心任务是高效率地聚合供应商、路由模型、分发密钥和监控调用。设计语言必须服务于**信息直达与操作效率**。
 
 ### 1.1 Mira 风格三大核心原则
-1. **高信息密度优先（Compact First）**：
-   - 杜绝过度留白、巨型卡片与装饰性插画；
-   - 控件尺寸普遍采用紧凑级（按钮/徽标 `xs`，输入框 `sm`，图标 `size-4`）；
-   - 列表行高控制在 `48px ~ 58px`，单屏能展现更多可操作数据。
+1. **高信息密度优先与内容驱动（Compact & Content-Driven Density）**：
+   - 杜绝无意义的装饰性留白与巨幅插画，追求紧凑、利落、直达的开发者工具质感；
+   - **内容决定高度，梯度保障韵律**：杜绝一刀切式的僵化像素限制。列表与卡片的高度应由其承载的内容丰富度（图标尺寸、文本行数、标签与状态指标）自然决定，并通过统一的 4px/8px 间距阶梯（`py-2` ~ `py-3.5`、`gap-2.5` ~ `gap-3.5`）保持视觉节奏；
+   - 控件尺寸遵循层级规律：常规快捷按钮默认 `xs`，模态框与重要表单控件采用 `sm`，操作图标采用 `size-4`。
 2. **严谨结构与利落边界（Crisp Borders & Micro-surfaces）**：
    - 使用极细分割线（1px `border-default`）和微层级背景（`bg-elevated`）建立层次，而非大面积弥散阴影；
    - 圆角采用 **Small Radius (`0.25rem` / 4px)**，呈现严谨、专业的桌面原生软件质感，拒绝松垮的大圆角。
@@ -60,6 +60,21 @@ AI Gate 是一款面向开发者与高级用户的 AI 网关产品，核心任�
 * 状态徽标（`<UBadge>`）：列表与标签中统一使用 `size="xs"` 或 `size="sm"`，默认使用 `variant="subtle"`。
 * 图标（`<UIcon>`）：常规操作图标统一 `class="size-4"`，微型图标 `class="size-3.5"`。
 
+### 2.4 内容驱动的行高与卡片密度梯度（Density Hierarchy）
+
+界面中的行高与卡片尺寸**严禁一刀切死板限制**，必须根据承载的内容复杂度与视觉主体自适应，划分为四个梯度：
+
+| 密度层级 | 参考高度 (min-h) | 典型场景 | 核心元素组合 | 间距与留白 |
+| :--- | :--- | :--- | :--- | :--- |
+| **L1: 紧凑数据行 (Compact Row)** | `36px ~ 44px` | 数据表格、密钥列表、纯文本明细、请求流日志 | 单行正文、微徽标（`size="xs"`）、快捷操作图标 | `py-1.5 ~ py-2` |
+| **L2: 标准条目/设置项 (Standard Item)** | `48px ~ 56px` | 偏好设置项、轻量开关列表、简易规则项 | 功能图标（`size-4` ~ `size-5`）、单行标题 + Switch 开关 | `py-2.5`、`gap-2.5` |
+| **L3: 实体/特征卡片 (Entity Card)** | `64px ~ 80px` | 供应商卡片、虚拟模型卡片、规则路由条目 | 品牌/实体图标（`size-10` ~ `size-11`，40~44px）、主副两行信息（名称+描述）、状态标签、操作组 | `py-3 ~ py-3.5`、`gap-3` |
+| **L4: 复合概览卡片 (Rich Composite)** | `80px+`（自适应） | 拓扑路由节点、指标监控卡片、模型降级链路 | 复杂多行信息、指标大字、迷你折线图、多状态指示器 | `p-4`、`gap-3.5` |
+
+> **核心原则**：
+> - **主体决定高度**：当存在 40px 的品牌图标或多行描述时，卡片必须提供舒适的上下边距（12px+），切忌为追求所谓的“绝对紧凑”而将内容硬挤在窄小高度内导致图标微缩变形；
+> - **弹性下限与防抖**：使用 `min-h-[...]` 作为弹性下限而非固定 `h-[...]`，在文本长短不一或折行时保持平滑自适应；加载骨架屏高度必须与真实卡片严格对齐。
+
 ---
 
 ## 3. 页面标准结构与布局规范
@@ -98,27 +113,30 @@ const { t } = useI18n()
 
 在 AI Gate 中新增页面时，必须选择以下三种范式之一进行构建，禁止自创杂乱排版。
 
-### 范式 A：高密度卡片/条目列表页（Card List Archetype）
-* **适用场景**：供应商列表（Providers）、预设路由规则列表、未来虚拟模型卡片列表。
-* **视觉特征**：一行一条独立卡片（高度约 56px），左侧拖拽手柄与图标，中部标题+描述（无多余徽标），右侧 Switch 状态与操作组。
-* **代码规范结构**：
+### 范式 A：卡片与条目列表页（Card / Item List Archetype）
+* **适用场景**：供应商列表（Providers）、预设路由规则列表、虚拟模型卡片列表等。
+* **设计逻辑**：
+  - 一行一条独立卡片，通过统一间距（`gap-2.5` ~ `gap-3`）平铺；
+  - **高度由层级自适应**：遵循 Section 2.4 密度梯度。轻量条目采用 L2（~48-56px），具有品牌实体的卡片采用 L3（~64-80px，40px 品牌图标 + 双行信息与可选徽章）；
+  - **模块清晰对齐**：左侧为主体区（拖拽手柄/品牌图标），中部为弹性信息区（标题、描述、标签），右侧为状态控制与操作组。
+* **代码规范结构（以 L3 实体卡片为例）**：
 ```vue
 <div class="flex flex-col gap-2.5">
   <div
     v-for="item in list"
     :key="item.id"
-    class="flex min-h-[56px] select-none items-center gap-2.5 rounded-sm border border-default bg-default px-3 py-2 transition-colors hover:border-primary/40 hover:bg-elevated/50"
+    class="flex min-h-[64px] select-none items-center gap-3 rounded-sm border border-default bg-default px-3.5 py-3 transition-colors hover:border-primary/40 hover:bg-elevated/50"
   >
     <!-- 1. 拖拽手柄（可选） -->
     <div class="drag-handle -ml-1 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm text-dimmed hover:bg-elevated hover:text-default">
       <UIcon name="i-lucide-grip-vertical" class="size-4" />
     </div>
 
-    <!-- 2. 图标 -->
-    <UIcon :name="item.icon" class="size-5 shrink-0 text-muted" />
+    <!-- 2. 供应商/品牌图标（size-10 / 40px） -->
+    <ProviderIcon :icon="item.icon" :name="item.name" size="md" />
 
     <!-- 3. 信息区 -->
-    <div class="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
+    <div class="flex min-w-0 flex-1 flex-col justify-center gap-1">
       <span class="truncate text-sm font-medium" :class="item.enabled ? 'text-highlighted' : 'text-dimmed'">
         {{ item.name }}
       </span>
@@ -240,7 +258,7 @@ const tabs = computed<TabsItem[]>(() => [
 - [ ] **1. 布局基座**：是否以 `<UDashboardPanel>` 为根且正确挂载 `<AppNavbar>`？
 - [ ] **2. 风格对齐**：是否属于三大范式（A卡片列表/B配置详情/C概览大盘）之一？
 - [ ] **3. 颜色 Token**：是否 100% 采用语义 Token（`border-default`, `bg-elevated`, `text-muted` 等），有无写死具象色？
-- [ ] **4. 紧凑密度**：按钮是否为 `size="xs"`，输入框是否为 `size="sm"`，图标是否为 `size-4`？
+- [ ] **4. 密度适配与层级合理**：是否依据密度梯度（L1~L4）合理配置控件与容器尺寸？操作按钮优先使用 `size="xs"`，关键表单控件使用 `size="sm"`，品牌主体图标（40~44px）与常规操作图标（`size-4`）层级分明，避免机械追求紧凑而挤压内容视觉主体。
 - [ ] **5. 圆角与字体**：全局圆角是否统一为 small (`rounded-sm`)？全站字体统一使用 Inter（严禁使用 `font-mono`）？
 - [ ] **6. 状态覆盖**：是否完整处理了数据加载中骨架、极简空态（`<UEmpty :title="t('common.empty')" variant="naked" />`，无图标与操作按钮）和操作后 `toast` 提示？
 - [ ] **7. 国际化同步**：页面上所有文字是否均使用 `t('...')` 并且在 `i18n/locales/zh-CN.json` 与 `en-US.json` 双语添加？
