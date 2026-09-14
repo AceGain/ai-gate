@@ -17,6 +17,13 @@ export default defineAppConfig({
     checkboxGroup: {defaultVariants: {size: 'sm'}},
     tabs: {defaultVariants: {size: 'xs'}},
     formField: {defaultVariants: {size: 'sm'}},
+    // 页面骨架：body 不滚动（裁切 + min-h-0 允许收缩），滚动统一交给页面内容容器（见 docs/DESIGN.md §3）
+    dashboardPanel: {
+      slots: {
+        root: 'min-h-0',
+        body: 'min-h-0 overflow-hidden p-0 sm:p-0 gap-0 sm:gap-0'
+      }
+    },
     modal: {
       slots: {
         content: 'bg-default divide-y divide-default flex flex-col focus:outline-none rounded-sm border border-default shadow-xl ring-0'
@@ -29,7 +36,7 @@ export default defineAppConfig({
         },
         overlay: {
           true: {
-            overlay: 'bg-black/40 backdrop-blur-xs'
+            overlay: 'bg-(--ui-overlay) backdrop-blur-xs'
           }
         }
       }

@@ -3,17 +3,19 @@ const {t} = useI18n()
 </script>
 
 <template>
-  <UDashboardPanel class="min-h-0" :ui="{ body: 'p-0 sm:p-0 gap-0 sm:gap-0' }">
+  <UDashboardPanel>
     <template #header>
       <AppNavbar/>
     </template>
 
     <template #body>
-      <div class="flex min-h-full items-center justify-center p-4">
-        <UEmpty
-          :title="t('common.empty')"
-          variant="naked"
-        />
+      <div class="h-full overflow-y-auto p-4">
+        <div class="flex min-h-full items-center justify-center">
+          <UEmpty
+            :title="t('common.empty')"
+            variant="naked"
+          />
+        </div>
       </div>
     </template>
   </UDashboardPanel>

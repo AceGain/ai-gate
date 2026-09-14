@@ -17,14 +17,14 @@ const {isDesktop, maximized, minimize, toggleMaximize, close} = useWindowControl
     </div>
 
     <!-- 窗口控制按钮：还原系统标题栏控件观感——贴住窗口右缘、占满标题栏高度、无圆角 -->
-    <!-- 配色对齐 Windows 11 原生标题栏：hover 为半透明黑白罩层（亮色 5% 黑 / 暗色 10% 白），关闭键为系统深红 #C42B1C -->
+    <!-- 配色对齐 Windows 11 原生标题栏，具象色集中为 --ui-titlebar-* Token（docs/DESIGN.md §1.3） -->
     <!-- -me-2 抵消 UHeader 容器的 px-2 内边距，使按钮贴住窗口右缘 -->
     <div v-if="isDesktop" class="-me-2 flex h-full items-stretch">
       <UButton
         variant="ghost"
         color="neutral"
         :aria-label="t('titlebar.minimize')"
-        class="h-full w-11 justify-center rounded-none text-highlighted transition-colors hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20"
+        class="h-full w-11 justify-center rounded-none text-highlighted transition-colors hover:bg-(--ui-titlebar-control-hover) active:bg-(--ui-titlebar-control-active)"
         @click="minimize"
       >
         <UIcon name="i-lucide-minus" class="size-3.5" />
@@ -33,7 +33,7 @@ const {isDesktop, maximized, minimize, toggleMaximize, close} = useWindowControl
         variant="ghost"
         color="neutral"
         :aria-label="t('titlebar.maximize')"
-        class="h-full w-11 justify-center rounded-none text-highlighted transition-colors hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20"
+        class="h-full w-11 justify-center rounded-none text-highlighted transition-colors hover:bg-(--ui-titlebar-control-hover) active:bg-(--ui-titlebar-control-active)"
         @click="toggleMaximize"
       >
         <UIcon :name="maximized ? 'i-lucide-copy' : 'i-lucide-square'" class="size-3.5" />
@@ -42,7 +42,7 @@ const {isDesktop, maximized, minimize, toggleMaximize, close} = useWindowControl
         variant="ghost"
         color="neutral"
         :aria-label="t('titlebar.close')"
-        class="h-full w-11 justify-center rounded-none text-highlighted transition-colors hover:bg-[#c42b1c] hover:text-white active:bg-[#b3271b]"
+        class="h-full w-11 justify-center rounded-none text-highlighted transition-colors hover:bg-(--ui-titlebar-close-hover) hover:text-(--ui-titlebar-close-foreground) active:bg-(--ui-titlebar-close-active)"
         @click="close"
       >
         <UIcon name="i-lucide-x" class="size-3.5" />

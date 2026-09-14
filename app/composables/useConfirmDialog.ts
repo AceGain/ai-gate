@@ -5,16 +5,17 @@ export interface ConfirmDialogOptions {
   description?: string
 }
 
-/** 通用确认框：Promise<boolean>，确认 resolve true */
+/** 通用确认框：Promise<boolean>，仅确认时为 true；Esc / 关闭 / 外部点击等取消路径统一归一为 false */
 export const useConfirmDialog = () => {
   const overlay = useOverlay()
 
-  return (options: ConfirmDialogOptions): Promise<boolean> => {
+  return async (options: ConfirmDialogOptions): Promise<boolean> => {
     const modal = overlay.create(ConfirmRemoveModal, {
       destroyOnClose: true,
       props: options
     })
 
-    return modal.open()
+    const result = await modal.open()
+    return result === true
   }
 }

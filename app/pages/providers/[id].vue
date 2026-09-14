@@ -379,6 +379,7 @@ watch(() => route.query.tab, (tab) => {
 const tabs = computed<TabsItem[]>(() => [
   {
     value: 'endpoints',
+    slot: 'endpoints',
     label: t('providerEndpoints.title'),
     icon: 'i-lucide-route',
     badge: endpoints.value.length > 0 ? {
@@ -390,6 +391,7 @@ const tabs = computed<TabsItem[]>(() => [
   },
   {
     value: 'keys',
+    slot: 'keys',
     label: t('providerKeys.title'),
     icon: 'i-lucide-key',
     badge: keys.value.length > 0 ? {
@@ -401,6 +403,7 @@ const tabs = computed<TabsItem[]>(() => [
   },
   {
     value: 'models',
+    slot: 'models',
     label: t('providerModels.title'),
     icon: 'i-lucide-sparkles',
     badge: models.value.length > 0 ? {
@@ -414,7 +417,7 @@ const tabs = computed<TabsItem[]>(() => [
 </script>
 
 <template>
-  <UDashboardPanel class="min-h-0" :ui="{ body: 'p-0 sm:p-0 gap-0 sm:gap-0' }">
+  <UDashboardPanel>
     <template #header>
       <AppNavbar :title="title">
         <template #title>
@@ -451,8 +454,8 @@ const tabs = computed<TabsItem[]>(() => [
     <template #body>
       <!-- 详情加载中骨架屏 -->
       <div v-if="loadingProvider && !provider" class="h-full overflow-y-auto p-4 sm:p-6">
-        <div class="mx-auto max-w-5xl space-y-4">
-          <div class="flex items-center justify-between gap-4 pb-1">
+        <div class="mx-auto max-w-5xl space-y-3">
+          <div class="flex items-center justify-between gap-4">
             <div class="flex items-center gap-3.5">
               <USkeleton class="size-11 rounded-sm"/>
               <div class="space-y-1.5">
@@ -473,9 +476,9 @@ const tabs = computed<TabsItem[]>(() => [
       </div>
 
       <div v-else-if="provider" class="h-full overflow-y-auto p-4 sm:p-6">
-        <div class="mx-auto max-w-5xl space-y-4">
+        <div class="mx-auto max-w-5xl space-y-3">
           <!-- 1. 顶部档案区：纯净自然留白分层，无冗余线条，契合页面通透扁平风格 -->
-          <div class="flex items-center justify-between gap-4 pb-1">
+          <div class="flex items-center justify-between gap-4">
             <!-- 左侧：图标 + 名称/编码 + 描述 -->
             <div class="flex min-w-0 items-center gap-3.5">
               <ProviderIcon :icon="provider.icon" :name="provider.name || provider.code" size="lg"/>
@@ -525,12 +528,12 @@ const tabs = computed<TabsItem[]>(() => [
             :items="tabs"
             variant="link"
             color="neutral"
-            :content="false"
             class="w-full"
             :ui="{
               list: 'border-b border-default',
               indicator: '-bottom-px h-0.5 bg-primary',
-              trigger: 'cursor-pointer'
+              trigger: 'cursor-pointer',
+              content: 'pt-4'
             }"
           >
             <!-- 右侧操作按钮通过 list-trailing 插槽与 Tab 同行对齐 -->
@@ -567,11 +570,9 @@ const tabs = computed<TabsItem[]>(() => [
                 </UButton>
               </div>
             </template>
-          </UTabs>
-
-          <!-- 3. 各 Tab 配置内容区域 -->
+          <!-- 3. 各 Tab 配置内容区域：组件内容插槽，由 Nuxt UI 生成 tabpanel 与 ARIA 关联 -->
           <!-- 1. 网络端点 Tab -->
-          <div v-if="activeTab === 'endpoints'">
+          <template #endpoints>
             <!-- 加载骨架 -->
             <div v-if="configLoading && !endpoints.length" class="divide-y divide-default/50">
               <div v-for="i in 3" :key="i" class="flex items-center justify-between py-2.5 px-2 gap-4">
@@ -612,7 +613,7 @@ const tabs = computed<TabsItem[]>(() => [
                       variant="ghost"
                       color="neutral"
                       size="xs"
-                      class="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      class="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                       :title="t('common.copy')"
                       :aria-label="t('common.copy')"
                       @click="handleCopy(baseEndpoint.path)"
@@ -666,7 +667,7 @@ const tabs = computed<TabsItem[]>(() => [
                       variant="ghost"
                       color="neutral"
                       size="xs"
-                      class="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      class="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                       :title="t('common.copy')"
                       :aria-label="t('common.copy')"
                       @click="handleCopy(splitUrl(baseEndpoint?.path, modelsEndpoint?.path).fullUrl)"
@@ -731,7 +732,7 @@ const tabs = computed<TabsItem[]>(() => [
                       variant="ghost"
                       color="neutral"
                       size="xs"
-                      class="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      class="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                       :title="t('common.copy')"
                       :aria-label="t('common.copy')"
                       @click="handleCopy(splitUrl(baseEndpoint?.path, ep.path).fullUrl)"
@@ -788,18 +789,18 @@ const tabs = computed<TabsItem[]>(() => [
                 <UEmpty :title="t('providerEndpoints.emptyProtocols')" variant="naked"/>
               </div>
             </div>
-          </div>
+          </template>
 
           <!-- 2. API 密钥 Tab -->
-          <div v-else-if="activeTab === 'keys'">
+          <template #keys>
             <!-- 加载骨架 -->
             <div v-if="configLoading && !keys.length" class="flex flex-col gap-2.5">
               <div
                 v-for="i in 3"
                 :key="i"
-                class="flex items-start justify-between gap-4 rounded-sm border border-default bg-default p-3.5"
+                class="flex items-center justify-between gap-4 rounded-sm border border-default bg-default p-3.5"
               >
-                <div class="flex flex-1 items-start gap-2.5">
+                <div class="flex flex-1 items-center gap-2.5">
                   <USkeleton class="size-7 rounded-sm"/>
                   <div class="flex-1 space-y-2">
                     <USkeleton class="h-4 w-40 rounded-sm"/>
@@ -819,14 +820,14 @@ const tabs = computed<TabsItem[]>(() => [
               <div
                 v-for="k in keys"
                 :key="k.id"
-                class="group flex items-start justify-between gap-4 rounded-sm border border-default bg-default p-3.5 transition-colors hover:border-primary/40 hover:bg-elevated/30"
+                class="group flex items-center justify-between gap-4 rounded-sm border border-default bg-default p-3.5 transition-colors hover:border-primary/40 hover:bg-elevated/30"
               >
                 <!-- 左侧信息区：拖拽手柄 + 纵向信息流（第一行名称/状态/过期，第二行密文与操作，第三行备注） -->
-                <div class="flex min-w-0 flex-1 items-start gap-2.5">
+                <div class="flex min-w-0 flex-1 items-center gap-2.5">
                   <div
-                    class="drag-handle -ml-1 mt-0.5 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm text-dimmed transition-colors hover:bg-elevated hover:text-default"
-                    role="button"
-                    :aria-label="t('providers.dragToSort')"
+                    class="drag-handle -ml-1 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm text-dimmed transition-colors hover:bg-elevated hover:text-default"
+                    aria-hidden="true"
+                    :title="t('providers.dragToSort')"
                   >
                     <UIcon name="i-lucide-grip-vertical" class="size-4"/>
                   </div>
@@ -908,7 +909,7 @@ const tabs = computed<TabsItem[]>(() => [
                 </div>
 
                 <!-- 右侧操作按钮：启用状态开关 + 编辑 + 删除 -->
-                <div class="flex shrink-0 items-center gap-1.5 pt-0.5">
+                <div class="flex shrink-0 items-center gap-1.5">
                   <USwitch
                     :model-value="k.enabled"
                     :aria-label="t('providers.toggleEnabled')"
@@ -941,10 +942,10 @@ const tabs = computed<TabsItem[]>(() => [
                 variant="naked"
               />
             </div>
-          </div>
+          </template>
 
           <!-- 3. 模型列表 Tab -->
-          <div v-else-if="activeTab === 'models'">
+          <template #models>
             <!-- 加载骨架 -->
             <div v-if="configLoading && !models.length" class="divide-y divide-default/50">
               <div
@@ -976,8 +977,8 @@ const tabs = computed<TabsItem[]>(() => [
                 <div class="flex min-w-0 flex-1 items-center gap-2.5">
                   <div
                     class="drag-handle flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm text-dimmed hover:bg-elevated hover:text-default"
-                    role="button"
-                    :aria-label="t('providers.dragToSort')"
+                    aria-hidden="true"
+                    :title="t('providers.dragToSort')"
                   >
                     <UIcon name="i-lucide-grip-vertical" class="size-4"/>
                   </div>
@@ -1062,16 +1063,19 @@ const tabs = computed<TabsItem[]>(() => [
                 variant="naked"
               />
             </div>
-          </div>
+          </template>
+          </UTabs>
         </div>
       </div>
 
       <!-- 供应商不存在 -->
-      <div v-else class="flex min-h-full items-center justify-center p-4">
-        <UEmpty
-          :title="t('common.empty')"
-          variant="naked"
-        />
+      <div v-else class="h-full overflow-y-auto p-4">
+        <div class="flex min-h-full items-center justify-center">
+          <UEmpty
+            :title="t('common.empty')"
+            variant="naked"
+          />
+        </div>
       </div>
     </template>
   </UDashboardPanel>

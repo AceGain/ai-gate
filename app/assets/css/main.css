@@ -10,4 +10,17 @@
   --ui-radius: 0.25rem;
   /* 窗口标题栏高度（UHeader 高度与 UMain 视口高度偏移共用此变量）：对齐 Windows 11 原生 32px */
   --ui-header-height: 2rem;
+  /* 平台 chrome 具象色白名单：标题栏控件系统观感（docs/DESIGN.md §1.3），组件只引用 Token */
+  --ui-titlebar-control-hover: rgb(0 0 0 / 0.05);
+  --ui-titlebar-control-active: rgb(0 0 0 / 0.1);
+  --ui-titlebar-close-hover: #c42b1c;
+  --ui-titlebar-close-active: #b3271b;
+  --ui-titlebar-close-foreground: #fff;
+  /* 全屏遮罩系统观感（模态/滑出共用） */
+  --ui-overlay: rgb(0 0 0 / 0.4);
+}
+
+.dark {
+  --ui-titlebar-control-hover: rgb(255 255 255 / 0.1);
+  --ui-titlebar-control-active: rgb(255 255 255 / 0.2);
 }

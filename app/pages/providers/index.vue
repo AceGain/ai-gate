@@ -40,8 +40,8 @@ const listEl = ref<HTMLElement | null>(null)
 useSortable(listEl, providers, {
   handle: '.drag-handle',
   animation: 150,
-  // Tauri WebView2 的原生 file-drop 处理会拦截 HTML5 drag 事件，导致拖拽完全无效；
-  // forceFallback 改用纯鼠标事件模拟拖拽，Web 与桌面端行为一致
+  // Tauri 内部拖放处理器启用时会替换 WebView2 的拖放实现并拦截 HTML5 drag（tauri.conf.json 的 dragDropEnabled）；
+  // 本项目已设 dragDropEnabled:false，保留 forceFallback 是为 Web/桌面行为一致的已验证策略，而非当前配置仍会被拦截
   forceFallback: true,
   // 拖拽跟随元素挂到 body：避免被列表的 overflow-y-auto 滚动容器裁剪
   fallbackOnBody: true,
@@ -65,7 +65,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <UDashboardPanel class="min-h-0" :ui="{ body: 'p-0 sm:p-0 gap-0 sm:gap-0' }">
+  <UDashboardPanel>
     <template #header>
       <AppNavbar>
         <template #right>
@@ -103,15 +103,15 @@ onBeforeUnmount(() => {
       <div v-else-if="providers.length" class="h-full overflow-y-auto p-4">
         <div ref="listEl" class="flex flex-col gap-2.5">
           <div
-            v-for="p in providers"
+            v-for="(p, index) in providers"
             :key="p.id"
             class="flex min-h-[64px] select-none items-center gap-3 rounded-sm border border-default bg-default px-3.5 py-3 transition-colors hover:border-primary/40 hover:bg-elevated/50"
           >
-            <!-- 拖拽手柄（扩大命中区，hover 高亮） -->
+            <!-- 拖拽手柄（扩大命中区，hover 高亮）：排序唯一入口，A11y 例外见 docs/DESIGN.md §6.3 -->
             <div
               class="drag-handle -ml-1 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm text-dimmed transition-colors hover:bg-elevated hover:text-default"
-              role="button"
-              :aria-label="t('providers.dragToSort')"
+              aria-hidden="true"
+              :title="t('providers.dragToSort')"
             >
               <UIcon name="i-lucide-grip-vertical" class="size-4"/>
             </div>
@@ -172,11 +172,13 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- 空态 -->
-      <div v-else class="flex min-h-full items-center justify-center p-4">
-        <UEmpty
-          :title="t('common.empty')"
-          variant="naked"
-        />
+      <div v-else class="h-full overflow-y-auto p-4">
+        <div class="flex min-h-full items-center justify-center">
+          <UEmpty
+            :title="t('common.empty')"
+            variant="naked"
+          />
+        </div>
       </div>
     </template>
   </UDashboardPanel>

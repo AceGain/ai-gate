@@ -19,7 +19,6 @@ const emits = defineEmits<{
     :title="props.title"
     :description="props.description"
     icon="i-lucide-trash-2"
-    :dismissible="false"
     :ui="{ footer: 'justify-end' }"
   >
     <template #footer>
