@@ -21,9 +21,7 @@ const df = computed(() => new DateFormatter(locale.value, {
 
 const form = reactive({
   name: '',
-  secret: '',
-  enabled: true,
-  description: ''
+  secret: ''
 })
 
 const expiresDate = shallowRef<CalendarDate | null>(null)
@@ -36,7 +34,6 @@ watch(open, (v) => {
   isCalendarOpen.value = false
   form.name = props.keyItem?.name ?? ''
   form.secret = props.keyItem?.secret ?? ''
-  form.enabled = props.keyItem?.enabled ?? true
   const rawDate = props.keyItem?.expiresTime ? props.keyItem.expiresTime.slice(0, 10) : ''
   if (rawDate) {
     try {
@@ -47,7 +44,6 @@ watch(open, (v) => {
   } else {
     expiresDate.value = null
   }
-  form.description = props.keyItem?.description ?? ''
   showErrors.value = false
 })
 
@@ -81,10 +77,12 @@ async function save() {
   const input: SysKeyInput = {
     name: form.name.trim(),
     secret: form.secret.trim(),
-    enabled: form.enabled,
+    // 新增默认启用；编辑时透传旧值（开关已移至列表行内）
+    enabled: props.keyItem?.enabled ?? true,
     status: props.keyItem?.status ?? 'ACTIVE',
     expiresTime: expiresDate.value ? expiresDate.value.toString() : null,
-    description: form.description.trim()
+    // 备注字段已下线：编辑时透传旧值，避免清空历史数据
+    description: props.keyItem?.description ?? ''
   }
   try {
     const saved = props.keyItem
@@ -188,20 +186,6 @@ async function save() {
           </UPopover>
         </UFormField>
 
-        <UFormField :label="t('providers.description')">
-          <UTextarea
-            v-model="form.description"
-            autoresize
-            :rows="2"
-            :placeholder="t('providers.descriptionPlaceholder')"
-            class="w-full"
-          />
-        </UFormField>
-
-        <div class="flex items-center justify-between rounded-sm border border-default p-3">
-          <span class="text-sm font-medium">{{ t('providers.enable') }}</span>
-          <USwitch v-model="form.enabled" :aria-label="t('providers.enable')" />
-        </div>
       </div>
     </template>
 

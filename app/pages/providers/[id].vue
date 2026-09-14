@@ -179,8 +179,8 @@ function toggleReveal(id: string) {
 }
 
 function maskSecret(secret: string): string {
-  if (secret.length <= 8) return '••••••••'
-  return `${secret.slice(0, 4)}••••••••${secret.slice(-4)}`
+  if (secret.length <= 16) return '················'
+  return `${secret.slice(0, 8)}················${secret.slice(-8)}`
 }
 
 async function handleCopy(text: string) {
@@ -457,7 +457,7 @@ const tabs = computed<TabsItem[]>(() => [
         <div class="mx-auto max-w-5xl space-y-3">
           <div class="flex items-center justify-between gap-4">
             <div class="flex items-center gap-3.5">
-              <USkeleton class="size-11 rounded-sm"/>
+              <USkeleton class="size-11.5 rounded-sm"/>
               <div class="space-y-1.5">
                 <USkeleton class="h-5 w-36 rounded-sm"/>
                 <USkeleton class="h-3.5 w-60 rounded-sm"/>
@@ -533,7 +533,7 @@ const tabs = computed<TabsItem[]>(() => [
               list: 'border-b border-default',
               indicator: '-bottom-px h-0.5 bg-primary',
               trigger: 'cursor-pointer',
-              content: 'pt-4'
+              content: 'pt-3'
             }"
           >
             <!-- 右侧操作按钮通过 list-trailing 插槽与 Tab 同行对齐 -->
@@ -794,20 +794,20 @@ const tabs = computed<TabsItem[]>(() => [
           <!-- 2. API 密钥 Tab -->
           <template #keys>
             <!-- 加载骨架 -->
-            <div v-if="configLoading && !keys.length" class="flex flex-col gap-2.5">
+            <div v-if="configLoading && !keys.length" class="flex flex-col gap-2">
               <div
                 v-for="i in 3"
                 :key="i"
-                class="flex items-center justify-between gap-4 rounded-sm border border-default bg-default p-3.5"
+                class="flex items-center justify-between gap-4 rounded-sm border border-default bg-default px-3 py-2.5"
               >
-                <div class="flex flex-1 items-center gap-2.5">
+                <div class="flex flex-1 items-center gap-2">
                   <USkeleton class="size-7 rounded-sm"/>
                   <div class="flex-1 space-y-2">
                     <USkeleton class="h-4 w-40 rounded-sm"/>
                     <USkeleton class="h-3 w-64 rounded-sm"/>
                   </div>
                 </div>
-                <div class="flex items-center gap-1.5">
+                <div class="flex items-center gap-1">
                   <USkeleton class="h-5 w-9 rounded-sm"/>
                   <USkeleton class="size-6 rounded-sm"/>
                   <USkeleton class="size-6 rounded-sm"/>
@@ -816,14 +816,14 @@ const tabs = computed<TabsItem[]>(() => [
             </div>
 
             <!-- 密钥列表：单层卡片结构，无多层嵌套，纵向分行清晰 -->
-            <div v-else-if="keys.length" ref="keyListEl" class="flex flex-col gap-2.5">
+            <div v-else-if="keys.length" ref="keyListEl" class="flex flex-col gap-2">
               <div
                 v-for="k in keys"
                 :key="k.id"
-                class="group flex items-center justify-between gap-4 rounded-sm border border-default bg-default p-3.5 transition-colors hover:border-primary/40 hover:bg-elevated/30"
+                class="group flex items-center justify-between gap-4 rounded-sm border border-default bg-default px-3 py-2.5 transition-colors hover:border-primary/40 hover:bg-elevated/30"
               >
-                <!-- 左侧信息区：拖拽手柄 + 纵向信息流（第一行名称/状态/过期，第二行密文与操作，第三行备注） -->
-                <div class="flex min-w-0 flex-1 items-center gap-2.5">
+                <!-- 左侧信息区：拖拽手柄 + 纵向信息流（第一行名称/状态/过期，第二行密文与操作） -->
+                <div class="flex min-w-0 flex-1 items-center gap-2">
                   <div
                     class="drag-handle -ml-1 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm text-dimmed transition-colors hover:bg-elevated hover:text-default"
                     aria-hidden="true"
@@ -832,7 +832,7 @@ const tabs = computed<TabsItem[]>(() => [
                     <UIcon name="i-lucide-grip-vertical" class="size-4"/>
                   </div>
 
-                  <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+                  <div class="flex min-w-0 flex-1 flex-col gap-1">
                     <!-- 第一行：名称 + 状态徽标 + 有效期 -->
                     <div class="flex flex-wrap items-center gap-2">
                       <span
@@ -896,20 +896,11 @@ const tabs = computed<TabsItem[]>(() => [
                         @click="handleCopyKey(k)"
                       />
                     </div>
-
-                    <!-- 第三行（选填）：备注说明 -->
-                    <p
-                      v-if="k.description"
-                      class="truncate text-xs text-muted"
-                      :title="k.description"
-                    >
-                      {{ k.description }}
-                    </p>
                   </div>
                 </div>
 
                 <!-- 右侧操作按钮：启用状态开关 + 编辑 + 删除 -->
-                <div class="flex shrink-0 items-center gap-1.5">
+                <div class="flex shrink-0 items-center gap-1">
                   <USwitch
                     :model-value="k.enabled"
                     :aria-label="t('providers.toggleEnabled')"
@@ -954,7 +945,7 @@ const tabs = computed<TabsItem[]>(() => [
                 class="flex items-center justify-between py-2 px-1 gap-2"
               >
                 <div class="flex flex-1 items-center gap-2.5">
-                  <USkeleton class="size-6 rounded-sm"/>
+                  <USkeleton class="size-7 rounded-sm"/>
                   <USkeleton class="h-4 w-28 rounded-sm"/>
                   <USkeleton class="h-4 w-16 rounded-sm"/>
                   <USkeleton class="h-4 w-12 rounded-sm"/>
