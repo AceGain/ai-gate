@@ -4,12 +4,14 @@
  */
 import {Hono} from 'hono'
 import {newId} from '../../../shared/sys-provider'
-import type {SysProviderInput} from '../../../shared/sys-provider'
+import type {SysProviderInput, SysProviderKeyInput, SysProviderProtocolEndpointInput} from '../../../shared/sys-provider'
+import {SYS_ENDPOINT_PROTOCOLS} from '../../../shared/sys-endpoint'
+import type {SysEndpointProtocol} from '../../../shared/sys-endpoint'
 import {getProvider, insertProvider, listProviders, removeProvider, reorderProviders, updateProvider} from '../store'
 
 export const providers = new Hono()
 
-/** 请求体解析与校验：code/name 必填，新增时 baseUrl 必填，sort 为非负整数 */
+/** 请求体解析与校验：code/name 必填，新增时 baseUrl 必填、protocolEndpoint/apiKey 可选，sort 为非负整数 */
 function parseProviderBody(raw: unknown, isCreate = false): {data?: SysProviderInput; error?: string} {
   const p = (raw ?? {}) as Partial<SysProviderInput>
   if (typeof p.code !== 'string' || !p.code.trim()) {
@@ -24,6 +26,33 @@ function parseProviderBody(raw: unknown, isCreate = false): {data?: SysProviderI
   if (p.sort !== undefined && (!Number.isSafeInteger(p.sort) || p.sort < 0)) {
     return {error: 'Invalid provider entry: sort must be a non-negative integer'}
   }
+
+  /** 创建模式下解析可选的初始协议端点与初始密钥（更新时忽略） */
+  let protocolEndpoint: SysProviderProtocolEndpointInput | undefined
+  let apiKey: SysProviderKeyInput | undefined
+  if (isCreate) {
+    if (p.protocolEndpoint !== undefined) {
+      const pe = p.protocolEndpoint
+      if (typeof pe?.protocol !== 'string' || !SYS_ENDPOINT_PROTOCOLS.includes(pe.protocol as SysEndpointProtocol)) {
+        return {error: `Invalid provider entry: protocolEndpoint.protocol must be one of ${SYS_ENDPOINT_PROTOCOLS.join(', ')}`}
+      }
+      if (typeof pe?.path !== 'string' || !pe.path.trim()) {
+        return {error: 'Invalid provider entry: missing protocolEndpoint.path'}
+      }
+      protocolEndpoint = {protocol: pe.protocol, path: pe.path.trim()}
+    }
+    if (p.apiKey !== undefined) {
+      const k = p.apiKey
+      if (typeof k?.name !== 'string' || !k.name.trim()) {
+        return {error: 'Invalid provider entry: missing apiKey.name'}
+      }
+      if (typeof k?.secret !== 'string' || !k.secret.trim()) {
+        return {error: 'Invalid provider entry: missing apiKey.secret'}
+      }
+      apiKey = {name: k.name.trim(), secret: k.secret.trim()}
+    }
+  }
+
   return {
     data: {
       code: p.code.trim(),
@@ -32,7 +61,9 @@ function parseProviderBody(raw: unknown, isCreate = false): {data?: SysProviderI
       enabled: p.enabled,
       description: p.description,
       sort: p.sort,
-      ...(p.baseUrl ? {baseUrl: p.baseUrl.trim()} : {})
+      ...(p.baseUrl ? {baseUrl: p.baseUrl.trim()} : {}),
+      ...(protocolEndpoint ? {protocolEndpoint} : {}),
+      ...(apiKey ? {apiKey} : {})
     }
   }
 }

@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import type {SysProvider, SysProviderInput} from '~/utils/providers'
+import type {SysEndpointProtocol, SysProvider, SysProviderInput} from '~/utils/providers'
+import {SYS_ENDPOINT_PROTOCOLS, SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS} from '~/utils/providers'
 import {defaultProviderIcon} from '~/utils/brandIcons'
 
 /**
  * 供应商新增/编辑弹窗：基本信息（图标、编码、名称、描述、启用）
- * 编码 code 为对外模型标识前缀；排序不在弹窗编辑，由列表拖拽调整
+ * 新增模式额外初始化协议端点（协议类型 + 端点地址，默认路径自动填充）与首个密钥；
+ * 编辑模式仅维护基本信息，端点/密钥在供应商详情页管理
  */
 const props = defineProps<{
   /** 编辑目标；null = 新增 */
@@ -24,6 +26,9 @@ const form = reactive({
   name: '',
   icon: defaultProviderIcon,
   baseUrl: '',
+  protocol: SYS_ENDPOINT_PROTOCOLS[0] as SysEndpointProtocol,
+  protocolPath: '',
+  secret: '',
   description: '',
   enabled: true
 })
@@ -41,10 +46,35 @@ watch(open, (v) => {
   form.name = props.provider?.name ?? ''
   form.icon = props.provider?.icon ?? defaultProviderIcon
   form.baseUrl = ''
+  form.protocol = SYS_ENDPOINT_PROTOCOLS[0]
+  form.protocolPath = SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS[SYS_ENDPOINT_PROTOCOLS[0]]
+  form.secret = ''
   form.description = props.provider?.description ?? ''
   form.enabled = props.provider?.enabled ?? true
   serverCodeError.value = ''
   showErrors.value = false
+})
+
+/** 协议类型选项（固定三种） */
+const protocolOptions = computed(() =>
+  SYS_ENDPOINT_PROTOCOLS.map(p => ({label: p, value: p}))
+)
+
+/** 端点地址占位符：当前协议的默认路径 */
+const protocolPathPlaceholder = computed(() =>
+  SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS[form.protocol]
+)
+
+/** 切换协议时，端点地址为空或仍是上一协议的默认路径则自动填充新协议默认路径 */
+watch(() => form.protocol, (newProto, oldProto) => {
+  const oldDefault = oldProto && oldProto in SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS
+    ? SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS[oldProto as SysEndpointProtocol]
+    : ''
+  if (!form.protocolPath || form.protocolPath === oldDefault) {
+    if (newProto in SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS) {
+      form.protocolPath = SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS[newProto as SysEndpointProtocol]
+    }
+  }
 })
 
 /** 编码格式：大小写字母/数字/中划线，字母或数字开头结尾（对外模型标识前缀） */
@@ -84,11 +114,35 @@ const baseUrlError = computed(() => {
   return baseUrlInvalidReason.value
 })
 
+/** 协议端点地址校验结果：仅新增模式下校验必填（协议类型由选择器保证有值） */
+const protocolPathInvalidReason = computed(() => {
+  if (props.provider) return undefined
+  return form.protocolPath.trim() ? undefined : t('providerEndpoints.pathRequired')
+})
+
+const protocolPathError = computed(() => {
+  if (!showErrors.value) return undefined
+  return protocolPathInvalidReason.value
+})
+
+/** 密钥校验结果：仅新增模式下校验必填 */
+const secretInvalidReason = computed(() => {
+  if (props.provider) return undefined
+  return form.secret.trim() ? undefined : t('providerKeys.secretRequired')
+})
+
+const secretError = computed(() => {
+  if (!showErrors.value) return undefined
+  return secretInvalidReason.value
+})
+
 const saving = ref(false)
 const canSave = computed(() =>
   !codeInvalidReason.value &&
   !!form.name.trim() &&
   !baseUrlInvalidReason.value &&
+  !protocolPathInvalidReason.value &&
+  !secretInvalidReason.value &&
   !saving.value
 )
 
@@ -105,7 +159,11 @@ async function save() {
     icon: form.icon,
     description: form.description.trim(),
     enabled: form.enabled,
-    ...(!props.provider ? {baseUrl: form.baseUrl.trim()} : {})
+    ...(!props.provider ? {
+      baseUrl: form.baseUrl.trim(),
+      protocolEndpoint: {protocol: form.protocol, path: form.protocolPath.trim()},
+      apiKey: {name: t('providers.defaultKeyName'), secret: form.secret.trim()}
+    } : {})
   }
   try {
     const saved = props.provider
@@ -169,6 +227,35 @@ async function save() {
             class="w-full"
           />
         </UFormField>
+
+        <template v-if="!props.provider">
+          <!-- 初始协议端点：协议类型 + 端点地址（默认路径自动填充） -->
+          <UFormField :label="t('providerEndpoints.protocol')">
+            <USelect
+              v-model="form.protocol"
+              :items="protocolOptions"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField :label="t('providerEndpoints.path')" :error="protocolPathError">
+            <UInput
+              v-model="form.protocolPath"
+              :placeholder="protocolPathPlaceholder"
+              class="w-full"
+            />
+          </UFormField>
+
+          <!-- 初始密钥：创建后可在供应商详情页管理 -->
+          <UFormField :label="t('providers.secret')" :error="secretError">
+            <UInput
+              v-model="form.secret"
+              type="password"
+              :placeholder="t('providerKeys.secretPlaceholder')"
+              class="w-full"
+            />
+          </UFormField>
+        </template>
 
         <UFormField :label="t('providers.description')">
           <UTextarea

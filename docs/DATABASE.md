@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS sys_provider (
 |---|---|---|---|
 | GET | `/api/providers` | 列表（按排序约定） | — |
 | GET | `/api/providers/:id` | 详情 | 404 不存在 |
-| POST | `/api/providers` | 新增；`id` 服务端生成，时间戳数据库生成；需传 `baseUrl`，事务内自动初始化默认 `base` 端点与 `/v1/models` 端点 | 400 参数缺失；409 `code` 重复 |
+| POST | `/api/providers` | 新增；`id` 服务端生成，时间戳数据库生成；需传 `baseUrl`，事务内自动初始化默认 `base` 端点与 `/v1/models` 端点；可选传 `protocolEndpoint`（`{protocol, path}`，初始协议端点，写入并设为默认）与 `apiKey`（`{name, secret}`，初始密钥），事务内一并写入 | 400 参数缺失；409 `code` 重复 |
 | PUT | `/api/providers/reorder` | 批量排序（列表拖拽后的持久化），body 为 `[{id, sort}]`，单事务执行；须注册在 `PUT /:id` 之前 | 400 格式非法 |
 | PUT | `/api/providers/:id` | 全量更新可写字段（`code`/`name`/`icon`/`enabled`/`description`/`sort`） | 400；404；409 |
 | DELETE | `/api/providers/:id` | 删除 | 404 |

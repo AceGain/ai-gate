@@ -31,7 +31,7 @@ export async function getProvider(id: string): Promise<SysProvider | null> {
   return row ?? null
 }
 
-/** 新增供应商：时间戳由数据库默认值生成；同时初始化默认 base 与 models 端点；code 重复抛出约束错误（由路由层转 409） */
+/** 新增供应商：时间戳由数据库默认值生成；同时初始化默认 base 与 models 端点；可选初始化协议端点（设为默认）与初始密钥；code 重复抛出约束错误（由路由层转 409） */
 export async function insertProvider(id: string, input: SysProviderInput): Promise<SysProvider> {
   await db.transaction(async (tx) => {
     await tx.insert(sysProvider)
@@ -64,6 +64,33 @@ export async function insertProvider(id: string, input: SysProviderInput): Promi
           protocol: '',
           path: '/v1/models',
           isDefault: false
+        })
+    }
+
+    if (input.protocolEndpoint) {
+      await tx.insert(sysEndpoint)
+        .values({
+          id: newId(),
+          providerId: id,
+          type: 'protocol',
+          protocol: input.protocolEndpoint.protocol,
+          path: input.protocolEndpoint.path,
+          isDefault: true
+        })
+    }
+
+    if (input.apiKey) {
+      await tx.insert(sysKey)
+        .values({
+          id: newId(),
+          providerId: id,
+          name: input.apiKey.name,
+          secret: input.apiKey.secret,
+          enabled: true,
+          status: 'ACTIVE',
+          expiresTime: null,
+          sort: 0,
+          description: ''
         })
     }
   })

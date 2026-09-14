@@ -3,7 +3,12 @@
  * 品牌图标相关（选项列表 / URL 解析）见 brandIcons.ts（@lobehub/icons 静态 SVG）
  */
 
-export type {SysProvider, SysProviderInput} from '../../shared/sys-provider'
+export type {
+  SysProvider,
+  SysProviderInput,
+  SysProviderProtocolEndpointInput,
+  SysProviderKeyInput
+} from '../../shared/sys-provider'
 export {
   SYS_ENDPOINT_PROTOCOLS,
   SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS

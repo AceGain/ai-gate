@@ -65,6 +65,8 @@
     "baseUrl": "Base URL",
     "baseUrlPlaceholder": "如 https://api.openai.com",
     "baseUrlRequired": "请输入 Base URL",
+    "secret": "密钥",
+    "defaultKeyName": "默认密钥",
     "description": "描述",
     "descriptionPlaceholder": "选填",
     "enable": "启用",
