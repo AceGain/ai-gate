@@ -57,7 +57,7 @@
     "code": "Code",
     "codePlaceholder": "Model ID prefix, e.g. agnes",
     "codeRequired": "Code is required",
-    "codeInvalid": "Code can only contain lowercase letters, digits and hyphens, starting and ending with a letter or digit",
+    "codeInvalid": "Code can only contain letters (upper or lower case), digits and hyphens, starting and ending with a letter or digit",
     "codeDuplicate": "Code already exists",
     "name": "Name",
     "namePlaceholder": "e.g. Agnes AI",

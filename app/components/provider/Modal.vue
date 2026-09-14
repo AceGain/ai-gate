@@ -47,8 +47,8 @@ watch(open, (v) => {
   showErrors.value = false
 })
 
-/** 编码格式：小写字母/数字/中划线，字母或数字开头结尾（对外模型标识前缀） */
-const CODE_PATTERN = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/
+/** 编码格式：大小写字母/数字/中划线，字母或数字开头结尾（对外模型标识前缀） */
+const CODE_PATTERN = /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/
 
 /** 编码实际校验结果（与错误展示解耦，供 canSave 使用） */
 const codeInvalidReason = computed(() => {
