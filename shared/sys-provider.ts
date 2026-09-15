@@ -22,10 +22,10 @@ export interface SysProvider {
   updateTime: string
 }
 
-/** 新增时指定的初始协议端点（由服务端在创建事务内写入 sys_endpoint 并设为默认） */
-export interface SysProviderProtocolEndpointInput {
-  /** 协议类型，取值见 shared/sys-endpoint.ts 的 SYS_ENDPOINT_PROTOCOLS */
-  protocol: string
+/** 新增时指定的初始生成端点（由服务端在创建事务内写入 sys_endpoint 并设为默认） */
+export interface SysProviderGenerateEndpointInput {
+  /** 生成类型，取值见 shared/sys-endpoint.ts 的 SYS_ENDPOINT_GENERATES */
+  generate: string
   /** 端点地址，如 /v1/chat/completions */
   path: string
 }
@@ -48,8 +48,8 @@ export interface SysProviderInput {
   sort?: number
   /** 新增时指定的基础端点 URL（由服务端写入 sys_endpoint 表） */
   baseUrl?: string
-  /** 新增时指定的初始协议端点（仅创建生效，更新时忽略） */
-  protocolEndpoint?: SysProviderProtocolEndpointInput
+  /** 新增时指定的初始生成端点（仅创建生效，更新时忽略） */
+  generateEndpoint?: SysProviderGenerateEndpointInput
   /** 新增时指定的初始密钥（仅创建生效，更新时忽略） */
   apiKey?: SysProviderKeyInput
 }

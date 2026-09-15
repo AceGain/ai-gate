@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type {SysEndpointProtocol, SysProvider, SysProviderInput} from '~/utils/providers'
-import {SYS_ENDPOINT_PROTOCOLS, SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS} from '~/utils/providers'
+import type {SysEndpointGenerate, SysProvider, SysProviderInput} from '~/utils/providers'
+import {SYS_ENDPOINT_GENERATES, SYS_ENDPOINT_GENERATE_DEFAULT_PATHS} from '~/utils/providers'
 import {defaultProviderIcon} from '~/utils/brandIcons'
 
 /**
  * 供应商新增/编辑弹窗：基本信息（图标、编码、名称、描述、启用）
- * 新增模式额外初始化协议端点（协议类型 + 端点地址，默认路径自动填充）与首个密钥；
+ * 新增模式额外初始化生成端点（生成类型 + 端点地址，默认路径自动填充）与首个密钥；
  * 编辑模式仅维护基本信息，端点/密钥在供应商详情页管理
  */
 const props = defineProps<{
@@ -26,8 +26,8 @@ const form = reactive({
   name: '',
   icon: defaultProviderIcon,
   baseUrl: '',
-  protocol: SYS_ENDPOINT_PROTOCOLS[0] as SysEndpointProtocol,
-  protocolPath: '',
+  generate: SYS_ENDPOINT_GENERATES[0] as SysEndpointGenerate,
+  generatePath: '',
   secret: '',
   description: '',
   enabled: true
@@ -46,8 +46,8 @@ watch(open, (v) => {
   form.name = props.provider?.name ?? ''
   form.icon = props.provider?.icon ?? defaultProviderIcon
   form.baseUrl = ''
-  form.protocol = SYS_ENDPOINT_PROTOCOLS[0]
-  form.protocolPath = SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS[SYS_ENDPOINT_PROTOCOLS[0]]
+  form.generate = SYS_ENDPOINT_GENERATES[0]
+  form.generatePath = SYS_ENDPOINT_GENERATE_DEFAULT_PATHS[SYS_ENDPOINT_GENERATES[0]]
   form.secret = ''
   form.description = props.provider?.description ?? ''
   form.enabled = props.provider?.enabled ?? true
@@ -55,24 +55,24 @@ watch(open, (v) => {
   showErrors.value = false
 })
 
-/** 协议类型选项（固定三种） */
-const protocolOptions = computed(() =>
-  SYS_ENDPOINT_PROTOCOLS.map(p => ({label: p, value: p}))
+/** 生成类型选项（固定三种） */
+const generateOptions = computed(() =>
+  SYS_ENDPOINT_GENERATES.map(p => ({label: p, value: p}))
 )
 
-/** 端点地址占位符：当前协议的默认路径 */
-const protocolPathPlaceholder = computed(() =>
-  SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS[form.protocol]
+/** 端点地址占位符：当前生成类型的默认路径 */
+const generatePathPlaceholder = computed(() =>
+  SYS_ENDPOINT_GENERATE_DEFAULT_PATHS[form.generate]
 )
 
-/** 切换协议时，端点地址为空或仍是上一协议的默认路径则自动填充新协议默认路径 */
-watch(() => form.protocol, (newProto, oldProto) => {
-  const oldDefault = oldProto && oldProto in SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS
-    ? SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS[oldProto as SysEndpointProtocol]
+/** 切换生成类型时，端点地址为空或仍是上一生成类型的默认路径则自动填充新生成类型默认路径 */
+watch(() => form.generate, (newGen, oldGen) => {
+  const oldDefault = oldGen && oldGen in SYS_ENDPOINT_GENERATE_DEFAULT_PATHS
+    ? SYS_ENDPOINT_GENERATE_DEFAULT_PATHS[oldGen as SysEndpointGenerate]
     : ''
-  if (!form.protocolPath || form.protocolPath === oldDefault) {
-    if (newProto in SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS) {
-      form.protocolPath = SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS[newProto as SysEndpointProtocol]
+  if (!form.generatePath || form.generatePath === oldDefault) {
+    if (newGen in SYS_ENDPOINT_GENERATE_DEFAULT_PATHS) {
+      form.generatePath = SYS_ENDPOINT_GENERATE_DEFAULT_PATHS[newGen as SysEndpointGenerate]
     }
   }
 })
@@ -114,15 +114,15 @@ const baseUrlError = computed(() => {
   return baseUrlInvalidReason.value
 })
 
-/** 协议端点地址校验结果：仅新增模式下校验必填（协议类型由选择器保证有值） */
-const protocolPathInvalidReason = computed(() => {
+/** 生成端点地址校验结果：仅新增模式下校验必填（生成类型由选择器保证有值） */
+const generatePathInvalidReason = computed(() => {
   if (props.provider) return undefined
-  return form.protocolPath.trim() ? undefined : t('providerEndpoints.pathRequired')
+  return form.generatePath.trim() ? undefined : t('providerEndpoints.pathRequired')
 })
 
-const protocolPathError = computed(() => {
+const generatePathError = computed(() => {
   if (!showErrors.value) return undefined
-  return protocolPathInvalidReason.value
+  return generatePathInvalidReason.value
 })
 
 /** 密钥校验结果：仅新增模式下校验必填 */
@@ -141,7 +141,7 @@ const canSave = computed(() =>
   !codeInvalidReason.value &&
   !!form.name.trim() &&
   !baseUrlInvalidReason.value &&
-  !protocolPathInvalidReason.value &&
+  !generatePathInvalidReason.value &&
   !secretInvalidReason.value &&
   !saving.value
 )
@@ -161,7 +161,7 @@ async function save() {
     enabled: form.enabled,
     ...(!props.provider ? {
       baseUrl: form.baseUrl.trim(),
-      protocolEndpoint: {protocol: form.protocol, path: form.protocolPath.trim()},
+      generateEndpoint: {generate: form.generate, path: form.generatePath.trim()},
       apiKey: {name: t('providers.defaultKeyName'), secret: form.secret.trim()}
     } : {})
   }
@@ -229,19 +229,19 @@ async function save() {
         </UFormField>
 
         <template v-if="!props.provider">
-          <!-- 初始协议端点：协议类型 + 端点地址（默认路径自动填充） -->
-          <UFormField :label="t('providerEndpoints.protocol')">
+          <!-- 初始生成端点：生成类型 + 端点地址（默认路径自动填充） -->
+          <UFormField :label="t('providerEndpoints.generate')">
             <USelect
-              v-model="form.protocol"
-              :items="protocolOptions"
+              v-model="form.generate"
+              :items="generateOptions"
               class="w-full"
             />
           </UFormField>
 
-          <UFormField :label="t('providerEndpoints.path')" :error="protocolPathError">
+          <UFormField :label="t('providerEndpoints.path')" :error="generatePathError">
             <UInput
-              v-model="form.protocolPath"
-              :placeholder="protocolPathPlaceholder"
+              v-model="form.generatePath"
+              :placeholder="generatePathPlaceholder"
               class="w-full"
             />
           </UFormField>

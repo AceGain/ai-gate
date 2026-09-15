@@ -29,7 +29,7 @@ const form = reactive({
   enabled: true,
   inputModalText: 'text',
   outputModalText: 'text',
-  protocolsText: '',
+  generatesText: '',
   maxContext: 128000,
   maxInput: 128000,
   maxOutput: 4096,
@@ -72,7 +72,7 @@ watch(open, (v) => {
   form.enabled = props.modelItem?.enabled ?? true
   form.inputModalText = props.modelItem ? props.modelItem.inputModal.join(', ') : 'text'
   form.outputModalText = props.modelItem ? props.modelItem.outputModal.join(', ') : 'text'
-  form.protocolsText = props.modelItem ? props.modelItem.protocols.join(', ') : ''
+  form.generatesText = props.modelItem ? props.modelItem.generates.join(', ') : ''
   form.maxContext = props.modelItem?.maxContext ?? 128000
   form.maxInput = props.modelItem?.maxInput ?? 128000
   form.maxOutput = props.modelItem?.maxOutput ?? 4096
@@ -111,7 +111,7 @@ async function save() {
     enabled: form.enabled,
     inputModal: parseTags(form.inputModalText),
     outputModal: parseTags(form.outputModalText),
-    protocols: parseTags(form.protocolsText),
+    generates: parseTags(form.generatesText),
     maxContext: Number(form.maxContext) || 0,
     maxInput: Number(form.maxInput) || 0,
     maxOutput: Number(form.maxOutput) || 0,
@@ -211,10 +211,10 @@ async function save() {
           </UFormField>
         </div>
 
-        <UFormField :label="t('providerModels.protocols')">
+        <UFormField :label="t('providerModels.generates')">
           <UInput
-            v-model="form.protocolsText"
-            :placeholder="t('providerModels.protocolsPlaceholder')"
+            v-model="form.generatesText"
+            :placeholder="t('providerModels.generatesPlaceholder')"
             class="w-full"
           />
         </UFormField>

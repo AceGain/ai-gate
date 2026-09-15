@@ -6,18 +6,18 @@
 export type {
   SysProvider,
   SysProviderInput,
-  SysProviderProtocolEndpointInput,
+  SysProviderGenerateEndpointInput,
   SysProviderKeyInput
 } from '../../shared/sys-provider'
 export {
-  SYS_ENDPOINT_PROTOCOLS,
-  SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS
+  SYS_ENDPOINT_GENERATES,
+  SYS_ENDPOINT_GENERATE_DEFAULT_PATHS
 } from '../../shared/sys-endpoint'
 export type {
   SysEndpoint,
   SysEndpointInput,
   SysEndpointType,
-  SysEndpointProtocol
+  SysEndpointGenerate
 } from '../../shared/sys-endpoint'
 export type {SysKey, SysKeyInput, SysKeyStatus} from '../../shared/sys-key'
 export type {

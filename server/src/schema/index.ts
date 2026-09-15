@@ -30,14 +30,14 @@ export const sysEndpoint = sqliteTable('sys_endpoint', {
   id: text('id').primaryKey(),
   providerId: text('provider_id').notNull().references(() => sysProvider.id, {onDelete: 'cascade'}),
   type: text('type').$type<SysEndpointType>().notNull(),
-  protocol: text('protocol').notNull().default(''),
+  generate: text('generate').notNull().default(''),
   path: text('path').notNull(),
   isDefault: integer('is_default', {mode: 'boolean'}).notNull().default(false),
   createTime: text('create_time').notNull().default(sql`CURRENT_TIMESTAMP`),
   updateTime: text('update_time').notNull().default(sql`CURRENT_TIMESTAMP`)
 }, (t) => [
   index('idx_endpoint_provider').on(t.providerId),
-  uniqueIndex('idx_endpoint_provider_type_protocol').on(t.providerId, t.type, t.protocol)
+  uniqueIndex('idx_endpoint_provider_type_generate').on(t.providerId, t.type, t.generate)
 ])
 
 /** 供应商密钥表 */
@@ -68,7 +68,7 @@ export const sysModel = sqliteTable('sys_model', {
   type: text('type').$type<SysModelType>().notNull(),
   inputModal: text('input_modal', {mode: 'json'}).$type<string[]>().notNull().default(sql`('["text"]')`),
   outputModal: text('output_modal', {mode: 'json'}).$type<string[]>().notNull().default(sql`('["text"]')`),
-  protocols: text('protocols', {mode: 'json'}).$type<string[]>().notNull().default(sql`('[]')`),
+  generates: text('generates', {mode: 'json'}).$type<string[]>().notNull().default(sql`('[]')`),
   maxContext: integer('max_context').notNull().default(0),
   maxInput: integer('max_input').notNull().default(0),
   maxOutput: integer('max_output').notNull().default(0),

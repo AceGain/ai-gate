@@ -28,8 +28,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "protocol": {
-          "name": "protocol",
+        "generate": {
+          "name": "generate",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -76,12 +76,12 @@
           ],
           "isUnique": false
         },
-        "idx_endpoint_provider_type_protocol": {
-          "name": "idx_endpoint_provider_type_protocol",
+        "idx_endpoint_provider_type_generate": {
+          "name": "idx_endpoint_provider_type_generate",
           "columns": [
             "provider_id",
             "type",
-            "protocol"
+            "generate"
           ],
           "isUnique": true
         }
@@ -387,8 +387,8 @@
           "autoincrement": false,
           "default": "('[\"text\"]')"
         },
-        "protocols": {
-          "name": "protocols",
+        "generates": {
+          "name": "generates",
           "type": "text",
           "primaryKey": false,
           "notNull": true,

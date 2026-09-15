@@ -17,7 +17,7 @@
 | 表名 | 说明 | 所属模块 |
 |---|---|---|
 | `sys_provider` | 供应商基础信息 | 供应商（`/providers`） |
-| `sys_endpoint` | 供应商端点配置（base/models/protocol 路径与协议） | 供应商配置 - 端点（`/providers/:id`） |
+| `sys_endpoint` | 供应商端点配置（base/models/generate 路径与生成类型） | 供应商配置 - 端点（`/providers/:id`） |
 | `sys_key` | 供应商 API 密钥（状态/过期/排序） | 供应商配置 - 密钥（`/providers/:id`） |
 | `sys_model` | 供应商模型（模态/上下文/推理档位等） | 供应商配置 - 模型（`/providers/:id`） |
 | `sys_key_model` | 供应商-密钥-模型速查关系 | 关联关系 |
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS sys_provider (
 |---|---|---|---|
 | GET | `/api/providers` | 列表（按排序约定） | — |
 | GET | `/api/providers/:id` | 详情 | 404 不存在 |
-| POST | `/api/providers` | 新增；`id` 服务端生成，时间戳数据库生成；需传 `baseUrl`，事务内自动初始化默认 `base` 端点与 `/v1/models` 端点；可选传 `protocolEndpoint`（`{protocol, path}`，初始协议端点，写入并设为默认）与 `apiKey`（`{name, secret}`，初始密钥），事务内一并写入 | 400 参数缺失；409 `code` 重复 |
+| POST | `/api/providers` | 新增；`id` 服务端生成，时间戳数据库生成；需传 `baseUrl`，事务内自动初始化默认 `base` 端点与 `/v1/models` 端点；可选传 `generateEndpoint`（`{generate, path}`，初始生成端点，写入并设为默认）与 `apiKey`（`{name, secret}`，初始密钥），事务内一并写入 | 400 参数缺失；409 `code` 重复 |
 | PUT | `/api/providers/reorder` | 批量排序（列表拖拽后的持久化），body 为 `[{id, sort}]`，单事务执行；须注册在 `PUT /:id` 之前 | 400 格式非法 |
 | PUT | `/api/providers/:id` | 全量更新可写字段（`code`/`name`/`icon`/`enabled`/`description`/`sort`） | 400；404；409 |
 | DELETE | `/api/providers/:id` | 删除 | 404 |
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS sys_provider (
 
 ## sys_endpoint 供应商端点
 
-管理供应商网络接入点（基础 URL、拉取模型列表 URL、各模型协议路径映射）。
+管理供应商网络接入点（基础 URL、拉取模型列表 URL、各生成端点路径映射）。
 
 ### DDL
 
@@ -96,8 +96,8 @@ CREATE TABLE IF NOT EXISTS sys_provider (
 CREATE TABLE IF NOT EXISTS sys_endpoint (
   id TEXT PRIMARY KEY, -- UUID
   provider_id TEXT NOT NULL REFERENCES sys_provider (id) ON DELETE CASCADE,
-  type TEXT NOT NULL CHECK (type IN ('base', 'models', 'protocol')), -- base、models、protocol
-  protocol TEXT NOT NULL DEFAULT '', -- 协议标识，如 Chat Completions、Responses、Messages
+  type TEXT NOT NULL, -- base、models、generate
+  generate TEXT NOT NULL DEFAULT '', -- 生成类型标识，如 Chat Completions、Responses、Messages
   path TEXT NOT NULL, -- 路径或完整URL，如 https://apihub.example.com、/v1/models、/v1/messages
   is_default BOOLEAN NOT NULL DEFAULT FALSE CHECK (is_default IN (TRUE, FALSE)),
   create_time TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -105,13 +105,13 @@ CREATE TABLE IF NOT EXISTS sys_endpoint (
 );
 
 CREATE INDEX IF NOT EXISTS idx_endpoint_provider ON sys_endpoint (provider_id);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_endpoint_provider_type_protocol ON sys_endpoint (provider_id, type, protocol);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_endpoint_provider_type_generate ON sys_endpoint (provider_id, type, generate);
 ```
 
 ### 约束说明
 
-同一供应商下 `(provider_id, type, protocol)` 具备唯一约束：
-- `type = 'protocol'` 端点按协议强唯一（同一供应商下每种 protocol 仅允许新增一个）；
+同一供应商下 `(provider_id, type, generate)` 具备唯一约束：
+- `type = 'generate'` 端点按生成类型强唯一（同一供应商下每种 generate 仅允许新增一个）；
 - `type = 'base'` 与 `type = 'models'` 各仅允许存在一条。
 
 ### 字段说明
@@ -120,8 +120,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_endpoint_provider_type_protocol ON sys_end
 |---|---|---|---|
 | `id` | TEXT | PRIMARY KEY | UUID，单条记录主键 |
 | `provider_id` | TEXT | NOT NULL REFERENCES `sys_provider(id)` ON DELETE CASCADE | 关联的供应商 ID |
-| `type` | TEXT | NOT NULL, CHECK (`type IN ('base', 'models', 'protocol')`) | 类型；`base`（基地址）、`models`（模型列表地址）、`protocol`（协议地址） |
-| `protocol` | TEXT | NOT NULL DEFAULT `''` | 协议名称（如 `Chat Completions`、`Responses`、`Messages`），base/models 类型为空字符串 |
+| `type` | TEXT | NOT NULL | 类型；`base`（基地址）、`models`（模型列表地址）、`generate`（生成地址） |
+| `generate` | TEXT | NOT NULL DEFAULT `''` | 生成类型名称（如 `Chat Completions`、`Responses`、`Messages`），base/models 类型为空字符串 |
 | `path` | TEXT | NOT NULL | 路径或完整 URL |
 | `is_default` | BOOLEAN | NOT NULL DEFAULT FALSE, CHECK (`is_default IN (TRUE, FALSE)`) | 是否默认端点 |
 | `create_time` | TEXT | NOT NULL DEFAULT CURRENT_TIMESTAMP | 创建时间（UTC，数据库维护） |
@@ -147,8 +147,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_endpoint_provider_type_protocol ON sys_end
 | 方法 | 路径 | 说明 | 错误 |
 |---|---|---|---|
 | GET | `/api/providers/:providerId/endpoints` | 列表（按排序约定） | 404 供应商不存在 |
-| POST | `/api/providers/:providerId/endpoints` | 新增端点 | 400 参数校验失败；409 同类协议端点已存在 |
-| PUT | `/api/providers/:providerId/endpoints/:id` | 修改端点 | 400；404；409 同类协议端点已存在 |
+| POST | `/api/providers/:providerId/endpoints` | 新增端点 | 400 参数校验失败；409 同类生成端点已存在 |
+| PUT | `/api/providers/:providerId/endpoints/:id` | 修改端点 | 400；404；409 同类生成端点已存在 |
 | DELETE | `/api/providers/:providerId/endpoints/:id` | 删除端点 | 404 |
 
 ---
@@ -221,7 +221,7 @@ CREATE INDEX IF NOT EXISTS idx_key_provider ON sys_key (provider_id, sort);
 
 ## sys_model 供应商模型
 
-管理供应商下属的具体模型及其模态、上下文限额、推理支持程度与协议。
+管理供应商下属的具体模型及其模态、上下文限额、推理支持程度与生成类型。
 
 ### DDL
 
@@ -238,7 +238,7 @@ CREATE TABLE IF NOT EXISTS sys_model (
   type TEXT NOT NULL CHECK (type IN ('GenText', 'GenImage', 'GenAudio', 'GenVideo', 'Embedding', 'Rerank')),
   input_modal TEXT NOT NULL DEFAULT '["text"]' CHECK (json_valid(input_modal)),
   output_modal TEXT NOT NULL DEFAULT '["text"]' CHECK (json_valid(output_modal)),
-  protocols TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(protocols)),
+  generates TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(generates)),
   max_context INTEGER NOT NULL DEFAULT 0,
   max_input INTEGER NOT NULL DEFAULT 0,
   max_output INTEGER NOT NULL DEFAULT 0,
@@ -268,7 +268,7 @@ CREATE INDEX IF NOT EXISTS idx_model_provider ON sys_model (provider_id, sort);
 | `type` | TEXT | NOT NULL, CHECK (`type IN ('GenText', 'GenImage', 'GenAudio', 'GenVideo', 'Embedding', 'Rerank')`) | 模型大类 |
 | `input_modal` | TEXT | NOT NULL DEFAULT `'["text"]'`, JSON 数组 | 输入模态，如 `["Text", "Image"]` |
 | `output_modal` | TEXT | NOT NULL DEFAULT `'["text"]'`, JSON 数组 | 输出模态，如 `["Text"]` |
-| `protocols` | TEXT | NOT NULL DEFAULT `'[]'`, JSON 数组 | 支持协议，如 `["Chat Completions"]` |
+| `generates` | TEXT | NOT NULL DEFAULT `'[]'`, JSON 数组 | 生成类型，如 `["Chat Completions"]` |
 | `max_context` | INTEGER | NOT NULL DEFAULT 0 | 最大上下文 tokens |
 | `max_input` | INTEGER | NOT NULL DEFAULT 0 | 最大输入 tokens |
 | `max_output` | INTEGER | NOT NULL DEFAULT 0 | 最大输出 tokens |
@@ -290,7 +290,7 @@ CREATE INDEX IF NOT EXISTS idx_model_provider ON sys_model (provider_id, sort);
 | `provider_id` | `providerId` |
 | `input_modal` | `inputModal`（DB 为 JSON 字符串，API 载荷序列化为 string[]） |
 | `output_modal` | `outputModal`（DB 为 JSON 字符串，API 载荷序列化为 string[]） |
-| `protocols` | `protocols`（DB 为 JSON 字符串，API 载荷序列化为 string[]） |
+| `generates` | `generates`（DB 为 JSON 字符串，API 载荷序列化为 string[]） |
 | `max_context` | `maxContext` |
 | `max_input` | `maxInput` |
 | `max_output` | `maxOutput` |

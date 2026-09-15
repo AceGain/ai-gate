@@ -3,7 +3,7 @@ import {useClipboard} from '@vueuse/core'
 import {useSortable} from '@vueuse/integrations/useSortable'
 import type {TabsItem} from '@nuxt/ui'
 import {
-  SYS_ENDPOINT_PROTOCOLS,
+  SYS_ENDPOINT_GENERATES,
   type SysEndpoint,
   type SysEndpointType,
   type SysKey,
@@ -75,14 +75,14 @@ function openEditProvider() {
 /* ---------------- 2. 端点操作与弹窗 ---------------- */
 const endpointModalOpen = ref(false)
 const editingEndpoint = ref<SysEndpoint | null>(null)
-const endpointModalType = ref<SysEndpointType>('protocol')
+const endpointModalType = ref<SysEndpointType>('generate')
 
 const baseEndpoint = computed(() => endpoints.value.find(e => e.type === 'base'))
 const modelsEndpoint = computed(() => endpoints.value.find(e => e.type === 'models'))
-const protocolEndpoints = computed(() => endpoints.value.filter(e => e.type === 'protocol'))
-const isAllProtocolsAdded = computed(() => {
-  const addedProtocols = new Set(protocolEndpoints.value.map(e => e.protocol))
-  return SYS_ENDPOINT_PROTOCOLS.every(p => addedProtocols.has(p))
+const generateEndpoints = computed(() => endpoints.value.filter(e => e.type === 'generate'))
+const isAllGeneratesAdded = computed(() => {
+  const addedGenerates = new Set(generateEndpoints.value.map(e => e.generate))
+  return SYS_ENDPOINT_GENERATES.every(p => addedGenerates.has(p))
 })
 
 function splitUrl(baseUrl?: string, path?: string): { basePart: string; pathPart: string; fullUrl: string } {
@@ -114,7 +114,7 @@ function splitUrl(baseUrl?: string, path?: string): { basePart: string; pathPart
 
 function openCreateEndpoint() {
   editingEndpoint.value = null
-  endpointModalType.value = 'protocol'
+  endpointModalType.value = 'generate'
   endpointModalOpen.value = true
 }
 
@@ -152,7 +152,7 @@ async function handleToggleDefault(ep: SysEndpoint) {
   try {
     await updateEndpoint(provider.value.id, ep.id, {
       type: ep.type,
-      protocol: ep.protocol,
+      generate: ep.generate,
       path: ep.path,
       isDefault: nextDefault
     })
@@ -304,7 +304,7 @@ async function handleToggleModelEnabled(m: SysModel, enabled: boolean) {
     type: m.type,
     inputModal: m.inputModal,
     outputModal: m.outputModal,
-    protocols: m.protocols,
+    generates: m.generates,
     maxContext: m.maxContext,
     maxInput: m.maxInput,
     maxOutput: m.maxOutput,
@@ -543,8 +543,8 @@ const tabs = computed<TabsItem[]>(() => [
                   icon="i-lucide-plus"
                   variant="ghost"
                   size="xs"
-                  :disabled="isAllProtocolsAdded"
-                  :title="isAllProtocolsAdded ? t('providerEndpoints.allProtocolsAdded') : t('providers.add')"
+                  :disabled="isAllGeneratesAdded"
+                  :title="isAllGeneratesAdded ? t('providerEndpoints.allGeneratesAdded') : t('providers.add')"
                   @click="openCreateEndpoint"
                 >
                   {{ t('providers.add') }}
@@ -687,18 +687,18 @@ const tabs = computed<TabsItem[]>(() => [
                 </div>
               </div>
 
-              <!-- 协议端点列表 -->
+              <!-- 生成端点列表 -->
               <div
-                v-for="ep in protocolEndpoints"
+                v-for="ep in generateEndpoints"
                 :key="ep.id"
                 class="group flex items-center justify-between py-2.5 px-2 hover:bg-elevated/20 transition-colors rounded-sm gap-4"
               >
                 <!-- 左侧两行信息：第一行标题，第二行全路径地址 -->
                 <div class="flex min-w-0 flex-1 flex-col gap-1">
-                  <!-- 第一行：标题（协议名称） + 默认徽章（仅针对 protocol 生效） -->
+                  <!-- 第一行：标题（生成类型） + 默认徽章（仅针对 generate 生效） -->
                   <div class="flex items-center gap-2">
                     <span class="text-sm font-semibold text-highlighted">
-                      {{ ep.protocol }}
+                      {{ ep.generate }}
                     </span>
                     <UBadge
                       v-if="ep.isDefault"
@@ -783,9 +783,9 @@ const tabs = computed<TabsItem[]>(() => [
                 </div>
               </div>
 
-              <!-- 协议端点为空时的极简空态 -->
-              <div v-if="!protocolEndpoints.length" class="py-8">
-                <UEmpty :title="t('providerEndpoints.emptyProtocols')" variant="naked"/>
+              <!-- 生成端点为空时的极简空态 -->
+              <div v-if="!generateEndpoints.length" class="py-8">
+                <UEmpty :title="t('providerEndpoints.emptyGenerates')" variant="naked"/>
               </div>
             </div>
           </template>

@@ -2,7 +2,7 @@ CREATE TABLE `sys_endpoint` (
 	`id` text PRIMARY KEY NOT NULL,
 	`provider_id` text NOT NULL,
 	`type` text NOT NULL,
-	`protocol` text DEFAULT '' NOT NULL,
+	`generate` text DEFAULT '' NOT NULL,
 	`path` text NOT NULL,
 	`is_default` integer DEFAULT false NOT NULL,
 	`create_time` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE `sys_endpoint` (
 );
 --> statement-breakpoint
 CREATE INDEX `idx_endpoint_provider` ON `sys_endpoint` (`provider_id`);--> statement-breakpoint
-CREATE UNIQUE INDEX `idx_endpoint_provider_type_protocol` ON `sys_endpoint` (`provider_id`,`type`,`protocol`);--> statement-breakpoint
+CREATE UNIQUE INDEX `idx_endpoint_provider_type_generate` ON `sys_endpoint` (`provider_id`,`type`,`generate`);--> statement-breakpoint
 CREATE TABLE `sys_key` (
 	`id` text PRIMARY KEY NOT NULL,
 	`provider_id` text NOT NULL,
@@ -50,7 +50,7 @@ CREATE TABLE `sys_model` (
 	`type` text NOT NULL,
 	`input_modal` text DEFAULT ('["text"]') NOT NULL,
 	`output_modal` text DEFAULT ('["text"]') NOT NULL,
-	`protocols` text DEFAULT ('[]') NOT NULL,
+	`generates` text DEFAULT ('[]') NOT NULL,
 	`max_context` integer DEFAULT 0 NOT NULL,
 	`max_input` integer DEFAULT 0 NOT NULL,
 	`max_output` integer DEFAULT 0 NOT NULL,

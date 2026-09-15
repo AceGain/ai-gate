@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {useClipboard} from '@vueuse/core'
-import type {SysEndpoint, SysEndpointInput, SysEndpointProtocol, SysEndpointType} from '~/utils/providers'
-import {SYS_ENDPOINT_PROTOCOLS, SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS} from '~/utils/providers'
+import type {SysEndpoint, SysEndpointInput, SysEndpointGenerate, SysEndpointType} from '~/utils/providers'
+import {SYS_ENDPOINT_GENERATES, SYS_ENDPOINT_GENERATE_DEFAULT_PATHS} from '~/utils/providers'
 
 const props = withDefaults(defineProps<{
   providerId: string
@@ -9,7 +9,7 @@ const props = withDefaults(defineProps<{
   defaultType?: SysEndpointType
   existingEndpoints?: SysEndpoint[]
 }>(), {
-  defaultType: 'protocol'
+  defaultType: 'generate'
 })
 
 const emit = defineEmits<{saved: [endpoint: SysEndpoint]}>()
@@ -22,12 +22,12 @@ const {createEndpoint, updateEndpoint, endpoints} = useProviderConfig()
 const {copy} = useClipboard()
 
 const targetType = computed<SysEndpointType>(() => {
-  return props.endpoint?.type ?? props.defaultType ?? 'protocol'
+  return props.endpoint?.type ?? props.defaultType ?? 'generate'
 })
 
 const form = reactive({
-  type: 'protocol' as SysEndpointType,
-  protocol: '',
+  type: 'generate' as SysEndpointType,
+  generate: '',
   path: '',
   isDefault: false
 })
@@ -41,28 +41,28 @@ const baseEndpoint = computed(() => {
   return eps.find(e => e.type === 'base')
 })
 
-/** 当前已配置的协议集合（排除当前正在编辑的端点） */
-const configuredProtocols = computed(() => {
+/** 当前已配置的生成类型集合（排除当前正在编辑的端点） */
+const configuredGenerates = computed(() => {
   const eps = props.existingEndpoints ?? endpoints.value
   return new Set(
     eps
-      .filter(e => e.type === 'protocol' && (!props.endpoint || e.id !== props.endpoint.id))
-      .map(e => e.protocol)
+      .filter(e => e.type === 'generate' && (!props.endpoint || e.id !== props.endpoint.id))
+      .map(e => e.generate)
   )
 })
 
-/** 尚未配置的协议列表 */
-const availableProtocols = computed(() => {
-  return SYS_ENDPOINT_PROTOCOLS.filter(p => !configuredProtocols.value.has(p))
+/** 尚未配置的生成类型列表 */
+const availableGenerates = computed(() => {
+  return SYS_ENDPOINT_GENERATES.filter(p => !configuredGenerates.value.has(p))
 })
 
-const protocolOptions = computed<{label: string; value: string}[]>(() => {
+const generateOptions = computed<{label: string; value: string}[]>(() => {
   if (props.endpoint) {
-    return [{label: props.endpoint.protocol, value: props.endpoint.protocol}]
+    return [{label: props.endpoint.generate, value: props.endpoint.generate}]
   }
-  const list: {label: string; value: string}[] = availableProtocols.value.map(p => ({label: p, value: p}))
-  if (form.protocol && !configuredProtocols.value.has(form.protocol) && !availableProtocols.value.includes(form.protocol as any)) {
-    list.unshift({label: form.protocol, value: form.protocol})
+  const list: {label: string; value: string}[] = availableGenerates.value.map(p => ({label: p, value: p}))
+  if (form.generate && !configuredGenerates.value.has(form.generate) && !availableGenerates.value.includes(form.generate as any)) {
+    list.unshift({label: form.generate, value: form.generate})
   }
   return list
 })
@@ -70,34 +70,34 @@ const protocolOptions = computed<{label: string; value: string}[]>(() => {
 watch(open, (v) => {
   if (!v) return
   form.type = targetType.value
-  const initialProtocol = props.endpoint?.protocol
-    || (form.type === 'protocol' ? (availableProtocols.value[0] ?? '') : '')
-  form.protocol = initialProtocol
-  const defaultPath = form.type === 'protocol' && form.protocol in SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS
-    ? SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS[form.protocol as SysEndpointProtocol]
+  const initialGenerate = props.endpoint?.generate
+    || (form.type === 'generate' ? (availableGenerates.value[0] ?? '') : '')
+  form.generate = initialGenerate
+  const defaultPath = form.type === 'generate' && form.generate in SYS_ENDPOINT_GENERATE_DEFAULT_PATHS
+    ? SYS_ENDPOINT_GENERATE_DEFAULT_PATHS[form.generate as SysEndpointGenerate]
     : ''
-  form.path = props.endpoint?.path || (form.type === 'protocol' ? defaultPath : '')
-  form.isDefault = form.type === 'protocol' ? (props.endpoint?.isDefault ?? false) : false
+  form.path = props.endpoint?.path || (form.type === 'generate' ? defaultPath : '')
+  form.isDefault = form.type === 'generate' ? (props.endpoint?.isDefault ?? false) : false
   showErrors.value = false
 })
 
-watch(() => form.protocol, (newProto, oldProto) => {
-  if (form.type !== 'protocol') return
-  const oldDefault = oldProto && oldProto in SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS
-    ? SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS[oldProto as SysEndpointProtocol]
+watch(() => form.generate, (newGen, oldGen) => {
+  if (form.type !== 'generate') return
+  const oldDefault = oldGen && oldGen in SYS_ENDPOINT_GENERATE_DEFAULT_PATHS
+    ? SYS_ENDPOINT_GENERATE_DEFAULT_PATHS[oldGen as SysEndpointGenerate]
     : ''
   if (!form.path || form.path === oldDefault) {
-    if (newProto && newProto in SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS) {
-      form.path = SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS[newProto as SysEndpointProtocol]
+    if (newGen && newGen in SYS_ENDPOINT_GENERATE_DEFAULT_PATHS) {
+      form.path = SYS_ENDPOINT_GENERATE_DEFAULT_PATHS[newGen as SysEndpointGenerate]
     }
   }
 })
 
-const protocolError = computed(() => {
-  if (form.type !== 'protocol') return undefined
-  if (showErrors.value && !form.protocol.trim()) return t('providerEndpoints.protocolRequired')
-  if (!props.endpoint && configuredProtocols.value.has(form.protocol.trim())) {
-    return t('providerEndpoints.protocolDuplicate')
+const generateError = computed(() => {
+  if (form.type !== 'generate') return undefined
+  if (showErrors.value && !form.generate.trim()) return t('providerEndpoints.generateRequired')
+  if (!props.endpoint && configuredGenerates.value.has(form.generate.trim())) {
+    return t('providerEndpoints.generateDuplicate')
   }
   return undefined
 })
@@ -109,9 +109,9 @@ const pathError = computed(() =>
 const canSave = computed(() => {
   if (saving.value) return false
   if (!form.path.trim()) return false
-  if (form.type === 'protocol') {
-    if (!form.protocol.trim()) return false
-    if (!props.endpoint && configuredProtocols.value.has(form.protocol.trim())) return false
+  if (form.type === 'generate') {
+    if (!form.generate.trim()) return false
+    if (!props.endpoint && configuredGenerates.value.has(form.generate.trim())) return false
   }
   return true
 })
@@ -125,15 +125,15 @@ const modalTitle = computed(() => {
 const endpointTypeDisplay = computed(() => {
   if (form.type === 'base') return 'Base URL'
   if (form.type === 'models') return 'Models'
-  if (form.type === 'protocol') return form.protocol || t('providerEndpoints.typeProtocol')
+  if (form.type === 'generate') return form.generate || t('providerEndpoints.typeGenerate')
   return form.type
 })
 
 const pathPlaceholder = computed(() => {
   if (form.type === 'base') return t('providers.baseUrlPlaceholder')
   if (form.type === 'models') return '/v1/models'
-  if (form.type === 'protocol' && form.protocol in SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS) {
-    return SYS_ENDPOINT_PROTOCOL_DEFAULT_PATHS[form.protocol as SysEndpointProtocol]
+  if (form.type === 'generate' && form.generate in SYS_ENDPOINT_GENERATE_DEFAULT_PATHS) {
+    return SYS_ENDPOINT_GENERATE_DEFAULT_PATHS[form.generate as SysEndpointGenerate]
   }
   return t('providerEndpoints.pathPlaceholder')
 })
@@ -189,7 +189,7 @@ async function save() {
   const isDefault = props.endpoint ? props.endpoint.isDefault : false
   const input: SysEndpointInput = {
     type: form.type,
-    protocol: form.type === 'protocol' ? form.protocol.trim() : '',
+    generate: form.type === 'generate' ? form.generate.trim() : '',
     path: form.path.trim(),
     isDefault
   }
@@ -218,18 +218,18 @@ async function save() {
   >
     <template #body>
       <div class="space-y-4">
-        <!-- 当没有可用协议时展示友好提示 -->
+        <!-- 当没有可用生成类型时展示友好提示 -->
         <UAlert
-          v-if="form.type === 'protocol' && !props.endpoint && availableProtocols.length === 0"
+          v-if="form.type === 'generate' && !props.endpoint && availableGenerates.length === 0"
           color="warning"
           variant="subtle"
-          :title="t('providerEndpoints.noProtocolsAvailable')"
+          :title="t('providerEndpoints.noGeneratesAvailable')"
         />
 
-        <!-- 端点类型：修改时只读不可操作；新增 protocol 时展示下拉选择 -->
+        <!-- 端点类型：修改时只读不可操作；新增 generate 时展示下拉选择 -->
         <UFormField
           :label="t('providerEndpoints.type')"
-          :error="!props.endpoint ? protocolError : undefined"
+          :error="!props.endpoint ? generateError : undefined"
         >
           <UInput
             v-if="props.endpoint"
@@ -239,10 +239,10 @@ async function save() {
           />
           <USelect
             v-else
-            v-model="form.protocol"
-            :items="protocolOptions"
-            :placeholder="t('providerEndpoints.protocolPlaceholder')"
-            :disabled="availableProtocols.length === 0"
+            v-model="form.generate"
+            :items="generateOptions"
+            :placeholder="t('providerEndpoints.generatePlaceholder')"
+            :disabled="availableGenerates.length === 0"
             class="w-full"
           />
         </UFormField>
@@ -252,7 +252,7 @@ async function save() {
           <UInput
             v-model="form.path"
             :placeholder="pathPlaceholder"
-            :disabled="form.type === 'protocol' && !props.endpoint && availableProtocols.length === 0"
+            :disabled="form.type === 'generate' && !props.endpoint && availableGenerates.length === 0"
             class="w-full"
           />
         </UFormField>
@@ -296,7 +296,7 @@ async function save() {
       <UButton
         icon="i-lucide-save"
         :loading="saving"
-        :disabled="form.type === 'protocol' && !props.endpoint && availableProtocols.length === 0"
+        :disabled="form.type === 'generate' && !props.endpoint && availableGenerates.length === 0"
         @click="save"
       >
         {{ t('providers.save') }}

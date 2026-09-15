@@ -26,7 +26,7 @@ export interface SysModel {
   type: SysModelType
   inputModal: string[]
   outputModal: string[]
-  protocols: string[]
+  generates: string[]
   maxContext: number
   maxInput: number
   maxOutput: number
@@ -47,7 +47,7 @@ export interface SysModelInput {
   type: SysModelType
   inputModal?: string[]
   outputModal?: string[]
-  protocols?: string[]
+  generates?: string[]
   maxContext?: number
   maxInput?: number
   maxOutput?: number

@@ -3,9 +3,9 @@
  */
 import {Hono} from 'hono'
 import {newId} from '../../../shared/sys-provider'
-import {SYS_ENDPOINT_PROTOCOLS} from '../../../shared/sys-endpoint'
-import type {SysEndpointInput, SysEndpointProtocol, SysEndpointType} from '../../../shared/sys-endpoint'
-import {getEndpoint, getEndpointByProtocol, insertEndpoint, listEndpoints, removeEndpoint, updateEndpoint} from '../store'
+import {SYS_ENDPOINT_GENERATES} from '../../../shared/sys-endpoint'
+import type {SysEndpointInput, SysEndpointGenerate, SysEndpointType} from '../../../shared/sys-endpoint'
+import {getEndpoint, getEndpointByGenerate, insertEndpoint, listEndpoints, removeEndpoint, updateEndpoint} from '../store'
 
 export const endpoints = new Hono()
 
@@ -25,26 +25,26 @@ function isUniqueViolation(err: unknown): boolean {
 
 function parseEndpointBody(raw: unknown): {data?: SysEndpointInput; error?: string} {
   const p = (raw ?? {}) as Partial<SysEndpointInput>
-  if (!p.type || !['base', 'models', 'protocol'].includes(p.type)) {
-    return {error: 'Invalid endpoint: type must be base, models, or protocol'}
+  if (!p.type || !['base', 'models', 'generate'].includes(p.type)) {
+    return {error: 'Invalid endpoint: type must be base, models, or generate'}
   }
   if (typeof p.path !== 'string' || !p.path.trim()) {
     return {error: 'Invalid endpoint: missing path'}
   }
-  if (p.type === 'protocol') {
-    if (!p.protocol || typeof p.protocol !== 'string' || !p.protocol.trim()) {
-      return {error: 'Invalid endpoint: missing protocol'}
+  if (p.type === 'generate') {
+    if (!p.generate || typeof p.generate !== 'string' || !p.generate.trim()) {
+      return {error: 'Invalid endpoint: missing generate'}
     }
-    if (!SYS_ENDPOINT_PROTOCOLS.includes(p.protocol as SysEndpointProtocol)) {
-      return {error: `Invalid protocol: must be one of ${SYS_ENDPOINT_PROTOCOLS.join(', ')}`}
+    if (!SYS_ENDPOINT_GENERATES.includes(p.generate as SysEndpointGenerate)) {
+      return {error: `Invalid generate: must be one of ${SYS_ENDPOINT_GENERATES.join(', ')}`}
     }
   }
   return {
     data: {
       type: p.type as SysEndpointType,
-      protocol: p.type === 'protocol' ? (p.protocol as string).trim() : '',
+      generate: p.type === 'generate' ? (p.generate as string).trim() : '',
       path: p.path.trim(),
-      isDefault: p.type === 'protocol' && !!p.isDefault
+      isDefault: p.type === 'generate' && !!p.isDefault
     }
   }
 }
@@ -55,17 +55,17 @@ endpoints.get('/providers/:providerId/endpoints', async (c) => {
   return c.json(await listEndpoints(providerId))
 })
 
-/** 新增：同 providerId 下每种 protocol 仅允许新增一个 */
+/** 新增：同 providerId 下每种 generate 仅允许新增一个 */
 endpoints.post('/providers/:providerId/endpoints', async (c) => {
   const providerId = c.req.param('providerId')
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseEndpointBody(body)
   if (!data) return c.json({error: error!}, 400)
 
-  if (data.type === 'protocol') {
-    const existing = await getEndpointByProtocol(providerId, data.protocol ?? '')
+  if (data.type === 'generate') {
+    const existing = await getEndpointByGenerate(providerId, data.generate ?? '')
     if (existing) {
-      return c.json({error: `Endpoint for protocol "${data.protocol}" already exists`}, 409)
+      return c.json({error: `Endpoint for generate "${data.generate}" already exists`}, 409)
     }
   }
 
@@ -75,7 +75,7 @@ endpoints.post('/providers/:providerId/endpoints', async (c) => {
   } catch (err: unknown) {
     if (isUniqueViolation(err)) {
       return c.json({
-        error: `Endpoint for ${data.type === 'protocol' ? `protocol "${data.protocol}"` : data.type} already exists`
+        error: `Endpoint for ${data.type === 'generate' ? `generate "${data.generate}"` : data.type} already exists`
       }, 409)
     }
     throw err
@@ -92,10 +92,10 @@ endpoints.put('/providers/:providerId/endpoints/:id', async (c) => {
   const {data, error} = parseEndpointBody(body)
   if (!data) return c.json({error: error!}, 400)
 
-  if (data.type === 'protocol') {
-    const existingSameProto = await getEndpointByProtocol(existingEp.providerId, data.protocol ?? '')
-    if (existingSameProto && existingSameProto.id !== id) {
-      return c.json({error: `Endpoint for protocol "${data.protocol}" already exists`}, 409)
+  if (data.type === 'generate') {
+    const existingSameGen = await getEndpointByGenerate(existingEp.providerId, data.generate ?? '')
+    if (existingSameGen && existingSameGen.id !== id) {
+      return c.json({error: `Endpoint for generate "${data.generate}" already exists`}, 409)
     }
   }
 
@@ -106,7 +106,7 @@ endpoints.put('/providers/:providerId/endpoints/:id', async (c) => {
   } catch (err: unknown) {
     if (isUniqueViolation(err)) {
       return c.json({
-        error: `Endpoint for ${data.type === 'protocol' ? `protocol "${data.protocol}"` : data.type} already exists`
+        error: `Endpoint for ${data.type === 'generate' ? `generate "${data.generate}"` : data.type} already exists`
       }, 409)
     }
     throw err

@@ -31,7 +31,7 @@ export async function getProvider(id: string): Promise<SysProvider | null> {
   return row ?? null
 }
 
-/** 新增供应商：时间戳由数据库默认值生成；同时初始化默认 base 与 models 端点；可选初始化协议端点（设为默认）与初始密钥；code 重复抛出约束错误（由路由层转 409） */
+/** 新增供应商：时间戳由数据库默认值生成；同时初始化默认 base 与 models 端点；可选初始化生成端点（设为默认）与初始密钥；code 重复抛出约束错误（由路由层转 409） */
 export async function insertProvider(id: string, input: SysProviderInput): Promise<SysProvider> {
   await db.transaction(async (tx) => {
     await tx.insert(sysProvider)
@@ -51,7 +51,7 @@ export async function insertProvider(id: string, input: SysProviderInput): Promi
           id: newId(),
           providerId: id,
           type: 'base',
-          protocol: '',
+          generate: '',
           path: input.baseUrl,
           isDefault: false
         })
@@ -61,20 +61,20 @@ export async function insertProvider(id: string, input: SysProviderInput): Promi
           id: newId(),
           providerId: id,
           type: 'models',
-          protocol: '',
+          generate: '',
           path: '/v1/models',
           isDefault: false
         })
     }
 
-    if (input.protocolEndpoint) {
+    if (input.generateEndpoint) {
       await tx.insert(sysEndpoint)
         .values({
           id: newId(),
           providerId: id,
-          type: 'protocol',
-          protocol: input.protocolEndpoint.protocol,
-          path: input.protocolEndpoint.path,
+          type: 'generate',
+          generate: input.generateEndpoint.generate,
+          path: input.generateEndpoint.path,
           isDefault: true
         })
     }
@@ -153,35 +153,35 @@ export async function getEndpoint(id: string): Promise<SysEndpoint | null> {
   return row ?? null
 }
 
-/** 按 providerId 和 protocol 查询 protocol 端点 */
-export async function getEndpointByProtocol(providerId: string, protocol: string): Promise<SysEndpoint | null> {
+/** 按 providerId 和 generate 查询 generate 端点 */
+export async function getEndpointByGenerate(providerId: string, generate: string): Promise<SysEndpoint | null> {
   const row = await db.select()
     .from(sysEndpoint)
     .where(
       and(
         eq(sysEndpoint.providerId, providerId),
-        eq(sysEndpoint.type, 'protocol'),
-        eq(sysEndpoint.protocol, protocol)
+        eq(sysEndpoint.type, 'generate'),
+        eq(sysEndpoint.generate, generate)
       )
     )
     .get()
   return row ?? null
 }
 
-/** 新增端点（default 仅对 protocol 类型生效，原子事务内将同 provider 其它 protocol 端点取消默认） */
+/** 新增端点（default 仅对 generate 类型生效，原子事务内将同 provider 其它 generate 端点取消默认） */
 export async function insertEndpoint(id: string, providerId: string, input: SysEndpointInput): Promise<SysEndpoint> {
-  const isDefault = input.type === 'protocol' && !!input.isDefault
+  const isDefault = input.type === 'generate' && !!input.isDefault
   if (isDefault) {
     await db.transaction(async (tx) => {
       await tx.update(sysEndpoint)
         .set({isDefault: false, updateTime: sql`CURRENT_TIMESTAMP`})
-        .where(and(eq(sysEndpoint.providerId, providerId), eq(sysEndpoint.type, 'protocol')))
+        .where(and(eq(sysEndpoint.providerId, providerId), eq(sysEndpoint.type, 'generate')))
       await tx.insert(sysEndpoint)
         .values({
           id,
           providerId,
           type: input.type,
-          protocol: input.protocol ?? '',
+          generate: input.generate ?? '',
           path: input.path,
           isDefault: true
         })
@@ -192,7 +192,7 @@ export async function insertEndpoint(id: string, providerId: string, input: SysE
         id,
         providerId,
         type: input.type,
-        protocol: input.protocol ?? '',
+        generate: input.generate ?? '',
         path: input.path,
         isDefault: false
       })
@@ -200,12 +200,12 @@ export async function insertEndpoint(id: string, providerId: string, input: SysE
   return (await getEndpoint(id))!
 }
 
-/** 更新端点（default 仅对 protocol 类型生效，原子事务维护默认互斥） */
+/** 更新端点（default 仅对 generate 类型生效，原子事务维护默认互斥） */
 export async function updateEndpoint(id: string, input: SysEndpointInput): Promise<SysEndpoint | null> {
   const existing = await getEndpoint(id)
   if (!existing) return null
 
-  const isDefault = input.type === 'protocol' && !!input.isDefault
+  const isDefault = input.type === 'generate' && !!input.isDefault
   let rowsAffected = 0
   if (isDefault) {
     await db.transaction(async (tx) => {
@@ -214,14 +214,14 @@ export async function updateEndpoint(id: string, input: SysEndpointInput): Promi
         .where(
           and(
             eq(sysEndpoint.providerId, existing.providerId),
-            eq(sysEndpoint.type, 'protocol'),
+            eq(sysEndpoint.type, 'generate'),
             ne(sysEndpoint.id, id)
           )
         )
       const res = await tx.update(sysEndpoint)
         .set({
           type: input.type,
-          protocol: input.protocol ?? '',
+          generate: input.generate ?? '',
           path: input.path,
           isDefault: true,
           updateTime: sql`CURRENT_TIMESTAMP`
@@ -233,7 +233,7 @@ export async function updateEndpoint(id: string, input: SysEndpointInput): Promi
     const res = await db.update(sysEndpoint)
       .set({
         type: input.type,
-        protocol: input.protocol ?? '',
+        generate: input.generate ?? '',
         path: input.path,
         isDefault: false,
         updateTime: sql`CURRENT_TIMESTAMP`
@@ -359,7 +359,7 @@ export async function insertModel(id: string, providerId: string, input: SysMode
       type: input.type,
       inputModal: input.inputModal ?? ['text'],
       outputModal: input.outputModal ?? ['text'],
-      protocols: input.protocols ?? [],
+      generates: input.generates ?? [],
       maxContext: input.maxContext ?? 0,
       maxInput: input.maxInput ?? 0,
       maxOutput: input.maxOutput ?? 0,
@@ -382,7 +382,7 @@ export async function updateModel(id: string, input: SysModelInput): Promise<Sys
     type: input.type,
     inputModal: input.inputModal ?? ['text'],
     outputModal: input.outputModal ?? ['text'],
-    protocols: input.protocols ?? [],
+    generates: input.generates ?? [],
     maxContext: input.maxContext ?? 0,
     maxInput: input.maxInput ?? 0,
     maxOutput: input.maxOutput ?? 0,

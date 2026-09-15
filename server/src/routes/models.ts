@@ -42,7 +42,7 @@ function parseModelBody(raw: unknown): {data?: SysModelInput; error?: string} {
       type: p.type as SysModelType,
       inputModal: Array.isArray(p.inputModal) ? p.inputModal : ['text'],
       outputModal: Array.isArray(p.outputModal) ? p.outputModal : ['text'],
-      protocols: Array.isArray(p.protocols) ? p.protocols : [],
+      generates: Array.isArray(p.generates) ? p.generates : [],
       maxContext: typeof p.maxContext === 'number' && p.maxContext >= 0 ? p.maxContext : 0,
       maxInput: typeof p.maxInput === 'number' && p.maxInput >= 0 ? p.maxInput : 0,
       maxOutput: typeof p.maxOutput === 'number' && p.maxOutput >= 0 ? p.maxOutput : 0,

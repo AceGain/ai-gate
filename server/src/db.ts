@@ -38,12 +38,12 @@ try {
   throw err
 }
 
-// 历史协议名称平滑迁移：去除 OpenAI/ 与 Anthropic/ 前缀
+// 历史生成类型名称平滑迁移：去除 OpenAI/ 与 Anthropic/ 前缀
 try {
-  await client.execute(`UPDATE sys_endpoint SET protocol = 'Chat Completions' WHERE protocol = 'OpenAI/Chat Completions'`)
-  await client.execute(`UPDATE sys_endpoint SET protocol = 'Responses' WHERE protocol = 'OpenAI/Responses'`)
-  await client.execute(`UPDATE sys_endpoint SET protocol = 'Messages' WHERE protocol = 'Anthropic/Messages'`)
+  await client.execute(`UPDATE sys_endpoint SET \`generate\` = 'Chat Completions' WHERE \`generate\` = 'OpenAI/Chat Completions'`)
+  await client.execute(`UPDATE sys_endpoint SET \`generate\` = 'Responses' WHERE \`generate\` = 'OpenAI/Responses'`)
+  await client.execute(`UPDATE sys_endpoint SET \`generate\` = 'Messages' WHERE \`generate\` = 'Anthropic/Messages'`)
 } catch (err) {
-  console.warn('[ai-gate] failed to normalize legacy protocol names:', err)
+  console.warn('[ai-gate] failed to normalize legacy generate names:', err)
 }
 
