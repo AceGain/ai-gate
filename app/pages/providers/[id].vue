@@ -247,8 +247,7 @@ async function handleToggleKeyEnabled(k: SysKey, enabled: boolean) {
     enabled,
     status: k.status,
     expiresTime: k.expiresTime,
-    sort: k.sort,
-    description: k.description
+    sort: k.sort
   })
 }
 

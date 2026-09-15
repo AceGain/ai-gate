@@ -23,8 +23,7 @@ function parseKeyBody(raw: unknown): {data?: SysKeyInput; error?: string} {
       enabled: p.enabled !== false,
       status: (p.status === 'INVALID' ? 'INVALID' : 'ACTIVE') as SysKeyStatus,
       expiresTime: typeof p.expiresTime === 'string' && p.expiresTime.trim() ? p.expiresTime.trim() : null,
-      sort: typeof p.sort === 'number' && Number.isSafeInteger(p.sort) ? p.sort : 0,
-      description: typeof p.description === 'string' ? p.description.trim() : ''
+      sort: typeof p.sort === 'number' && Number.isSafeInteger(p.sort) ? p.sort : 0
     }
   }
 }

@@ -170,7 +170,6 @@ CREATE TABLE IF NOT EXISTS sys_key (
   status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'INVALID')),
   expires_time TEXT, -- NULL=永久，或 'YYYY-MM-DD HH:MM:SS'
   sort INTEGER NOT NULL DEFAULT 0,
-  description TEXT NOT NULL DEFAULT '',
   create_time TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   update_time TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -190,7 +189,6 @@ CREATE INDEX IF NOT EXISTS idx_key_provider ON sys_key (provider_id, sort);
 | `status` | TEXT | NOT NULL DEFAULT 'ACTIVE', CHECK (`status IN ('ACTIVE', 'INVALID')`) | 状态：`ACTIVE`（可用）/ `INVALID`（失效） |
 | `expires_time` | TEXT | NULL（永久）或时间字符串 | 过期时间（不含 EXPIRED 状态枚举） |
 | `sort` | INTEGER | NOT NULL DEFAULT 0 | 排序值，升序 |
-| `description` | TEXT | NOT NULL DEFAULT `''` | 描述 |
 | `create_time` | TEXT | NOT NULL DEFAULT CURRENT_TIMESTAMP | 创建时间 |
 | `update_time` | TEXT | NOT NULL DEFAULT CURRENT_TIMESTAMP | 更新时间 |
 

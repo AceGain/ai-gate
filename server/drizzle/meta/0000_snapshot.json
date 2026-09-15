@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "f70c4d24-d7e8-4717-b0be-d0cd7eebd5f4",
+  "id": "e4bdac99-2fdd-4fab-958e-421d7f8507c4",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "sys_endpoint": {
@@ -75,6 +75,15 @@
             "provider_id"
           ],
           "isUnique": false
+        },
+        "idx_endpoint_provider_type_protocol": {
+          "name": "idx_endpoint_provider_type_protocol",
+          "columns": [
+            "provider_id",
+            "type",
+            "protocol"
+          ],
+          "isUnique": true
         }
       },
       "foreignKeys": {
@@ -157,14 +166,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": 0
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "''"
         },
         "create_time": {
           "name": "create_time",

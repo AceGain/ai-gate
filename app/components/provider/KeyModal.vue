@@ -80,9 +80,7 @@ async function save() {
     // 新增默认启用；编辑时透传旧值（开关已移至列表行内）
     enabled: props.keyItem?.enabled ?? true,
     status: props.keyItem?.status ?? 'ACTIVE',
-    expiresTime: expiresDate.value ? expiresDate.value.toString() : null,
-    // 备注字段已下线：编辑时透传旧值，避免清空历史数据
-    description: props.keyItem?.description ?? ''
+    expiresTime: expiresDate.value ? expiresDate.value.toString() : null
   }
   try {
     const saved = props.keyItem

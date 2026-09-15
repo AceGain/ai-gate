@@ -89,8 +89,7 @@ export async function insertProvider(id: string, input: SysProviderInput): Promi
           enabled: true,
           status: 'ACTIVE',
           expiresTime: null,
-          sort: 0,
-          description: ''
+          sort: 0
         })
     }
   })
@@ -284,8 +283,7 @@ export async function insertKey(id: string, providerId: string, input: SysKeyInp
       enabled: input.enabled !== false,
       status: input.status ?? 'ACTIVE',
       expiresTime: input.expiresTime ?? null,
-      sort: input.sort ?? 0,
-      description: input.description ?? ''
+      sort: input.sort ?? 0
     })
   return (await getKey(id))!
 }
@@ -298,7 +296,6 @@ export async function updateKey(id: string, input: SysKeyInput): Promise<SysKey 
     enabled: input.enabled !== false,
     status: input.status ?? 'ACTIVE',
     expiresTime: input.expiresTime ?? null,
-    description: input.description ?? '',
     updateTime: sql`CURRENT_TIMESTAMP`
   }
   if (input.sort !== undefined) {

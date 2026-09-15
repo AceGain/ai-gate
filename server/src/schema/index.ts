@@ -50,7 +50,6 @@ export const sysKey = sqliteTable('sys_key', {
   status: text('status').$type<SysKeyStatus>().notNull().default('ACTIVE'),
   expiresTime: text('expires_time'),
   sort: integer('sort').notNull().default(0),
-  description: text('description').notNull().default(''),
   createTime: text('create_time').notNull().default(sql`CURRENT_TIMESTAMP`),
   updateTime: text('update_time').notNull().default(sql`CURRENT_TIMESTAMP`)
 }, (t) => [

@@ -14,7 +14,6 @@ export interface SysKey {
   status: SysKeyStatus
   expiresTime: string | null
   sort: number
-  description: string
   createTime: string
   updateTime: string
 }
@@ -26,5 +25,4 @@ export interface SysKeyInput {
   status?: SysKeyStatus
   expiresTime?: string | null
   sort?: number
-  description?: string
 }

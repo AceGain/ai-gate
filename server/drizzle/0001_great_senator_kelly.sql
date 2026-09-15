@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX `idx_endpoint_provider_type_protocol` ON `sys_endpoint` (`provider_id`,`type`,`protocol`);
