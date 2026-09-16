@@ -458,28 +458,25 @@ async function save() {
                 <!-- 3. 支持生成端点列表（展示完整路径） -->
                 <UFormField :label="t('providerModels.generates')">
                   <div v-if="generateEndpointList.length" class="space-y-2 pt-0.5">
-                    <div
+                    <!-- UCheckbox card 变体：根节点渲染为原生 label，整卡可点、Space 键盘切换、焦点环与选中态由主题自带 -->
+                    <UCheckbox
                       v-for="ep in generateEndpointList"
                       :key="ep.id"
-                      class="flex items-center gap-3 p-3 rounded-sm border transition-colors cursor-pointer select-none"
-                      :class="form.generates.includes(ep.type)
-                        ? 'border-primary/50 bg-elevated/40'
-                        : 'border-default bg-default hover:bg-elevated/20'"
-                      @click="toggleGenerate(ep.type)"
+                      :model-value="form.generates.includes(ep.type)"
+                      variant="card"
+                      :ui="{
+                        root: 'cursor-pointer select-none items-center rounded-sm p-3',
+                        label: 'text-xs font-semibold',
+                        description: 'mt-1 truncate text-xs font-mono'
+                      }"
+                      @update:model-value="() => toggleGenerate(ep.type)"
                     >
-                      <UCheckbox
-                        :model-value="form.generates.includes(ep.type)"
-                        :aria-label="ep.type"
-                        class="pointer-events-none"
-                      />
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2">
-                          <span
-                            class="text-xs font-semibold"
-                            :class="form.generates.includes(ep.type) ? 'text-highlighted' : 'text-default'"
-                          >
-                            {{ ep.type }}
-                          </span>
+                      <template #label>
+                        <span
+                          class="flex items-center gap-2"
+                          :class="form.generates.includes(ep.type) ? 'text-highlighted' : 'text-default'"
+                        >
+                          {{ ep.type }}
                           <UBadge
                             v-if="ep.isDefault"
                             size="xs"
@@ -489,12 +486,15 @@ async function save() {
                           >
                             {{ t('providerEndpoints.defaultBadge') }}
                           </UBadge>
-                        </div>
-                        <div class="mt-1 truncate text-xs text-muted font-mono select-all" :title="ep.fullUrl">
+                        </span>
+                      </template>
+
+                      <template #description>
+                        <span class="select-all" :title="ep.fullUrl">
                           {{ ep.fullUrl || t('common.empty') }}
-                        </div>
-                      </div>
-                    </div>
+                        </span>
+                      </template>
+                    </UCheckbox>
                   </div>
                   <div
                     v-else
