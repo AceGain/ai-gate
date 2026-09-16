@@ -117,48 +117,47 @@ async function save() {
           :label="t('providerKeys.expiresTime')"
           :help="t('providerKeys.permanentHint')"
         >
-          <UPopover
-            v-model:open="isCalendarOpen"
-            :content="{ side: 'bottom', align: 'start', sideOffset: 4 }"
-            class="w-full"
-          >
-            <UButton
-              color="neutral"
-              variant="outline"
-              size="sm"
-              icon="i-lucide-calendar"
-              class="group w-full justify-start font-normal"
-              :class="expiresDate ? 'text-highlighted' : 'text-dimmed'"
+          <!-- 清除按钮与日历触发器平级（button 不可嵌套 button），绝对定位叠于触发器右缘，悬浮/自身聚焦时显示 -->
+          <div class="group relative w-full">
+            <UPopover
+              v-model:open="isCalendarOpen"
+              :content="{ side: 'bottom', align: 'start', sideOffset: 4 }"
+              class="w-full"
             >
-              <span class="truncate">
-                {{ expiresDate ? df.format(expiresDate.toDate(getLocalTimeZone())) : t('providerKeys.expiresSelectPlaceholder') }}
-              </span>
-
-              <template #trailing>
-                <span
-                  v-if="expiresDate"
-                  role="button"
-                  tabindex="0"
-                  class="ms-auto -me-1 inline-flex items-center justify-center size-5 rounded-sm text-dimmed hover:text-default hover:bg-elevated cursor-pointer opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-                  :aria-label="t('providerKeys.clearExpires')"
-                  @click.stop="expiresDate = null"
-                  @keydown.enter.stop="expiresDate = null"
-                  @keydown.space.stop="expiresDate = null"
-                >
-                  <UIcon name="i-lucide-circle-x" class="size-4" />
-                </span>
-              </template>
-            </UButton>
-
-            <template #content="{ close }">
-              <UCalendar
-                v-model="expiresDate"
+              <UButton
+                color="neutral"
+                variant="outline"
                 size="sm"
-                class="p-2"
-                @update:model-value="() => close()"
-              />
-            </template>
-          </UPopover>
+                icon="i-lucide-calendar"
+                class="w-full justify-start font-normal"
+                :class="expiresDate ? 'text-highlighted pe-8' : 'text-dimmed'"
+              >
+                <span class="truncate">
+                  {{ expiresDate ? df.format(expiresDate.toDate(getLocalTimeZone())) : t('providerKeys.expiresSelectPlaceholder') }}
+                </span>
+              </UButton>
+
+              <template #content="{ close }">
+                <UCalendar
+                  v-model="expiresDate"
+                  size="sm"
+                  class="p-2"
+                  @update:model-value="() => close()"
+                />
+              </template>
+            </UPopover>
+
+            <UButton
+              v-if="expiresDate"
+              icon="i-lucide-circle-x"
+              variant="ghost"
+              color="neutral"
+              size="xs"
+              class="absolute end-1 top-1/2 -translate-y-1/2 cursor-pointer opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+              :aria-label="t('providerKeys.clearExpires')"
+              @click="expiresDate = null"
+            />
+          </div>
         </UFormField>
 
       </div>
