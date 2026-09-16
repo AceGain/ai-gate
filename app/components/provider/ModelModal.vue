@@ -52,13 +52,13 @@ const form = reactive({
 const showErrors = ref(false)
 const saving = ref(false)
 
-const typeOptions = computed<{label: string, value: SysModelType}[]>(() => [
-  {label: t('providerModels.typeGenText'), value: 'GenText'},
-  {label: t('providerModels.typeGenImage'), value: 'GenImage'},
-  {label: t('providerModels.typeGenAudio'), value: 'GenAudio'},
-  {label: t('providerModels.typeGenVideo'), value: 'GenVideo'},
-  {label: t('providerModels.typeEmbedding'), value: 'Embedding'},
-  {label: t('providerModels.typeRerank'), value: 'Rerank'}
+const typeOptions = computed<{label: string, value: SysModelType, icon: string}[]>(() => [
+  {label: t('providerModels.typeGenText'), value: 'GenText', icon: 'i-lucide-type'},
+  {label: t('providerModels.typeGenImage'), value: 'GenImage', icon: 'i-lucide-image'},
+  {label: t('providerModels.typeGenVideo'), value: 'GenVideo', icon: 'i-lucide-video'},
+  {label: t('providerModels.typeGenAudio'), value: 'GenAudio', icon: 'i-lucide-music'},
+  {label: t('providerModels.typeEmbedding'), value: 'Embedding', icon: 'i-lucide-binary'},
+  {label: t('providerModels.typeRerank'), value: 'Rerank', icon: 'i-lucide-arrow-up-down'}
 ])
 
 const reasoningOptions = computed(() => [
@@ -265,11 +265,20 @@ async function save() {
           </UFormField>
 
           <UFormField :label="t('providerModels.type')">
-            <USelect
-              v-model="form.type"
-              :items="typeOptions"
-              class="w-full"
-            />
+            <div class="flex flex-wrap items-center gap-1.5">
+              <UButton
+                v-for="item in typeOptions"
+                :key="item.value"
+                type="button"
+                :icon="item.icon"
+                :label="item.label"
+                size="xs"
+                :variant="form.type === item.value ? 'subtle' : 'outline'"
+                :color="form.type === item.value ? 'primary' : 'neutral'"
+                class="cursor-pointer select-none"
+                @click="form.type = item.value"
+              />
+            </div>
           </UFormField>
 
           <UFormField :label="t('providers.description')">
@@ -284,18 +293,28 @@ async function save() {
         </div>
 
         <!-- 额外配置：模态、Token限制、推理、生成端点等可选扩展 -->
-        <div class="border-t border-default pt-3">
+        <div class="pt-1">
           <UCollapsible v-model:open="isAdvancedOpen" :unmount-on-hide="false" class="w-full">
             <UButton
               color="neutral"
-              variant="subtle"
+              variant="ghost"
               block
-              class="justify-between px-3 py-2 cursor-pointer"
+              class="group justify-between px-0 py-2 border-b border-default cursor-pointer transition-colors rounded-none hover:bg-transparent"
               :trailing-icon="isAdvancedOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+              :ui="{
+                trailingIcon: isAdvancedOpen ? 'text-primary' : 'text-muted group-hover:text-default'
+              }"
             >
               <div class="flex items-center gap-2">
-                <UIcon name="i-lucide-sliders-horizontal" class="size-4 text-primary" />
-                <span class="text-xs font-semibold text-highlighted">
+                <UIcon
+                  name="i-lucide-sliders-horizontal"
+                  class="size-4 transition-colors"
+                  :class="isAdvancedOpen ? 'text-primary' : 'text-muted group-hover:text-default'"
+                />
+                <span
+                  class="text-xs font-normal transition-colors"
+                  :class="isAdvancedOpen ? 'text-highlighted' : 'text-default group-hover:text-highlighted'"
+                >
                   {{ t('providerModels.advancedConfig') }}
                 </span>
               </div>
@@ -322,80 +341,83 @@ async function save() {
                   />
                 </UFormField>
 
-                <!-- 2. Token 限制与快捷输入（纯单列垂直排列） -->
+                <!-- 2. Token 限制与快捷输入（标题行右侧预设按钮） -->
                 <!-- 上下文 -->
                 <UFormField :label="t('providerModels.maxContext')">
-                  <div class="space-y-1.5">
-                    <UInput
-                      v-model.number="form.maxContext"
-                      type="number"
-                      :placeholder="t('providerModels.tokenPlaceholder')"
-                      class="w-full"
-                    />
-                    <div class="flex flex-wrap items-center gap-1.5">
+                  <template #hint>
+                    <div class="flex items-center gap-1">
                       <UButton
                         v-for="p in contextPresets"
                         :key="p.value"
+                        type="button"
                         size="xs"
                         :variant="form.maxContext === p.value ? 'subtle' : 'ghost'"
                         :color="form.maxContext === p.value ? 'primary' : 'neutral'"
-                        class="px-2 py-0.5 text-xs font-mono cursor-pointer"
+                        class="px-1.5 py-0.5 text-xs font-mono cursor-pointer"
                         @click="form.maxContext = form.maxContext === p.value ? null : p.value"
                       >
                         {{ p.label }}
                       </UButton>
                     </div>
-                  </div>
+                  </template>
+                  <UInput
+                    v-model.number="form.maxContext"
+                    type="number"
+                    :placeholder="t('providerModels.tokenPlaceholder')"
+                    class="w-full"
+                  />
                 </UFormField>
 
                 <!-- 最大输入 -->
                 <UFormField :label="t('providerModels.maxInput')">
-                  <div class="space-y-1.5">
-                    <UInput
-                      v-model.number="form.maxInput"
-                      type="number"
-                      :placeholder="t('providerModels.tokenPlaceholder')"
-                      class="w-full"
-                    />
-                    <div class="flex flex-wrap items-center gap-1.5">
+                  <template #hint>
+                    <div class="flex items-center gap-1">
                       <UButton
                         v-for="p in inputPresets"
                         :key="p.value"
+                        type="button"
                         size="xs"
                         :variant="form.maxInput === p.value ? 'subtle' : 'ghost'"
                         :color="form.maxInput === p.value ? 'primary' : 'neutral'"
-                        class="px-2 py-0.5 text-xs font-mono cursor-pointer"
+                        class="px-1.5 py-0.5 text-xs font-mono cursor-pointer"
                         @click="form.maxInput = form.maxInput === p.value ? null : p.value"
                       >
                         {{ p.label }}
                       </UButton>
                     </div>
-                  </div>
+                  </template>
+                  <UInput
+                    v-model.number="form.maxInput"
+                    type="number"
+                    :placeholder="t('providerModels.tokenPlaceholder')"
+                    class="w-full"
+                  />
                 </UFormField>
 
                 <!-- 最大输出 -->
                 <UFormField :label="t('providerModels.maxOutput')">
-                  <div class="space-y-1.5">
-                    <UInput
-                      v-model.number="form.maxOutput"
-                      type="number"
-                      :placeholder="t('providerModels.tokenPlaceholder')"
-                      class="w-full"
-                    />
-                    <div class="flex flex-wrap items-center gap-1.5">
+                  <template #hint>
+                    <div class="flex items-center gap-1">
                       <UButton
                         v-for="p in outputPresets"
                         :key="p.value"
+                        type="button"
                         size="xs"
                         :variant="form.maxOutput === p.value ? 'subtle' : 'ghost'"
                         :color="form.maxOutput === p.value ? 'primary' : 'neutral'"
-                        class="px-2 py-0.5 text-xs font-mono cursor-pointer"
+                        class="px-1.5 py-0.5 text-xs font-mono cursor-pointer"
                         @click="form.maxOutput = form.maxOutput === p.value ? null : p.value"
                       >
                         {{ p.label }}
                       </UButton>
                     </div>
-                  </div>
+                  </template>
+                  <UInput
+                    v-model.number="form.maxOutput"
+                    type="number"
+                    :placeholder="t('providerModels.tokenPlaceholder')"
+                    class="w-full"
+                  />
                 </UFormField>
 
                 <!-- 推理模式 -->
