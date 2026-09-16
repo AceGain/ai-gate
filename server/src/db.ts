@@ -38,7 +38,7 @@ try {
   throw err
 }
 
-// 历史生成类型名称平滑迁移：去除 OpenAI/ 与 Anthropic/ 前缀
+// 历史生成端点类型名称平滑迁移：去除 OpenAI/ 与 Anthropic/ 前缀
 try {
   await client.execute(`UPDATE sys_endpoint SET \`generate\` = 'Chat Completions' WHERE \`generate\` = 'OpenAI/Chat Completions'`)
   await client.execute(`UPDATE sys_endpoint SET \`generate\` = 'Responses' WHERE \`generate\` = 'OpenAI/Responses'`)

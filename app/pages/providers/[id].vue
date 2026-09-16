@@ -695,7 +695,7 @@ const tabs = computed<TabsItem[]>(() => [
               >
                 <!-- 左侧两行信息：第一行标题，第二行全路径地址 -->
                 <div class="flex min-w-0 flex-1 flex-col gap-1">
-                  <!-- 第一行：标题（生成类型） + 默认徽章（仅针对 generate 生效） -->
+                  <!-- 第一行：标题（端点类型） + 默认徽章（仅针对 generate 生效） -->
                   <div class="flex items-center gap-2">
                     <span class="text-sm font-semibold text-highlighted">
                       {{ ep.generate }}

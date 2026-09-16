@@ -94,7 +94,7 @@ erDiagram
 | 表名 | 实体名称 | 说明 |
 |---|---|---|
 | `sys_provider` | 供应商 | 记录 AI 供应商基础元数据及全局配置 |
-| `sys_endpoint` | 供应商端点 | 记录供应商网络接入点（基地址、模型列表拉取、生成类型路径） |
+| `sys_endpoint` | 供应商端点 | 记录供应商网络接入点（基地址、模型列表、生成路径） |
 | `sys_key` | 供应商密钥 | 记录供应商关联的 API Key 凭证及有效状态 |
 | `sys_model` | 供应商模型 | 记录供应商支持的模型参数、模态、上下文限额及能力特征 |
 | `sys_key_model` | 密钥-模型关联 | 记录密钥与可用模型之间的多对多授权关系 |
@@ -172,7 +172,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_endpoint_provider_type_generate ON sys_end
 | `id` | TEXT | PRIMARY KEY | UUID 主键 |
 | `provider_id` | TEXT | NOT NULL REFERENCES `sys_provider(id)` ON DELETE CASCADE | 外键，关联供应商 ID |
 | `type` | TEXT | NOT NULL | 端点类型：`base`（基地址）、`models`（模型列表地址）、`generate`（生成地址） |
-| `generate` | TEXT | NOT NULL DEFAULT `''` | 生成类型标识（如 `Chat Completions`、`Responses`、`Messages`；base/models 类型为空） |
+| `generate` | TEXT | NOT NULL DEFAULT `''` | 生成端点类型标识（如 `Chat Completions`、`Responses`、`Messages`；base/models 类型为空） |
 | `path` | TEXT | NOT NULL | 端点路径或完整 URL（如 `/v1/chat/completions`、`https://api.openai.com`） |
 | `is_default` | INTEGER | NOT NULL DEFAULT 0 | 是否为默认端点（0: 否, 1: 是） |
 | `create_time` | TEXT | NOT NULL DEFAULT CURRENT_TIMESTAMP | 创建时间（UTC） |
@@ -281,7 +281,7 @@ CREATE INDEX IF NOT EXISTS idx_model_provider ON sys_model (provider_id, sort);
 | `type` | TEXT | NOT NULL | 模型类别枚举：`GenText`、`GenImage`、`GenAudio`、`GenVideo`、`Embedding`、`Rerank` |
 | `input_modal` | TEXT | NOT NULL DEFAULT `'["text"]'` | 输入模态列表，JSON 数组（如 `["text", "image"]`） |
 | `output_modal` | TEXT | NOT NULL DEFAULT `'["text"]'` | 输出模态列表，JSON 数组（如 `["text"]`） |
-| `generates` | TEXT | NOT NULL DEFAULT `'[]'` | 支持的生成类型列表，JSON 数组（如 `["Chat Completions"]`） |
+| `generates` | TEXT | NOT NULL DEFAULT `'[]'` | 支持的生成端点类型列表，JSON 数组（如 `["Chat Completions"]`） |
 | `max_context` | INTEGER | NOT NULL DEFAULT 0 | 最大上下文 Tokens |
 | `max_input` | INTEGER | NOT NULL DEFAULT 0 | 最大输入 Tokens |
 | `max_output` | INTEGER | NOT NULL DEFAULT 0 | 最大输出 Tokens |

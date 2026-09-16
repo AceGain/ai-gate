@@ -24,7 +24,7 @@ export interface SysProvider {
 
 /** 新增时指定的初始生成端点（由服务端在创建事务内写入 sys_endpoint 并设为默认） */
 export interface SysProviderGenerateEndpointInput {
-  /** 生成类型，取值见 shared/sys-endpoint.ts 的 SYS_ENDPOINT_GENERATES */
+  /** 生成端点类型，取值见 shared/sys-endpoint.ts 的 SYS_ENDPOINT_GENERATES */
   generate: string
   /** 端点地址，如 /v1/chat/completions */
   path: string

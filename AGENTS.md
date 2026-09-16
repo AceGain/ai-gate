@@ -33,7 +33,7 @@ pnpm db:studio          # 启动 Drizzle Studio 可视化管理 SQLite 数据库
 
 - `app/` — Nuxt 4 目录结构（pages/ components/ composables/ layouts/ utils/），非旧版根目录结构
 
-- `shared/` — 前后端共用的纯 TS 模块（供应商类型/生成类型元数据/预置供应商），不得引入 Nuxt 或浏览器特有 API
+- `shared/` — 前后端共用的纯 TS 模块（供应商类型/端点类型元数据/预置供应商），不得引入 Nuxt 或浏览器特有 API
 
 - `server/` — Hono 后端（src/schema/ 单源 Schema、drizzle/ SQL 迁移、src/routes 管理 API、src/store.ts 持久化）；生产形态直接服务 `dist/`
 

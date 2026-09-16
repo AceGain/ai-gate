@@ -5,7 +5,7 @@
 
 export type SysEndpointType = 'base' | 'models' | 'generate'
 
-/** 固定支持的生成类型 */
+/** 固定支持的端点类型（generate 类别） */
 export const SYS_ENDPOINT_GENERATES = [
   'Chat Completions',
   'Responses',
@@ -14,7 +14,7 @@ export const SYS_ENDPOINT_GENERATES = [
 
 export type SysEndpointGenerate = (typeof SYS_ENDPOINT_GENERATES)[number]
 
-/** 各生成类型对应的默认路径 */
+/** 各生成端点类型对应的默认路径 */
 export const SYS_ENDPOINT_GENERATE_DEFAULT_PATHS: Record<SysEndpointGenerate, string> = {
   'Chat Completions': '/v1/chat/completions',
   'Responses': '/v1/responses',

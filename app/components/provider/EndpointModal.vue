@@ -41,7 +41,7 @@ const baseEndpoint = computed(() => {
   return eps.find(e => e.type === 'base')
 })
 
-/** 当前已配置的生成类型集合（排除当前正在编辑的端点） */
+/** 当前已配置的生成端点类型集合（排除当前正在编辑的端点） */
 const configuredGenerates = computed(() => {
   const eps = props.existingEndpoints ?? endpoints.value
   return new Set(
@@ -51,7 +51,7 @@ const configuredGenerates = computed(() => {
   )
 })
 
-/** 尚未配置的生成类型列表 */
+/** 尚未配置的生成端点类型列表 */
 const availableGenerates = computed(() => {
   return SYS_ENDPOINT_GENERATES.filter(p => !configuredGenerates.value.has(p))
 })
@@ -218,7 +218,7 @@ async function save() {
   >
     <template #body>
       <div class="space-y-4">
-        <!-- 当没有可用生成类型时展示友好提示 -->
+        <!-- 当没有可用生成端点类型时展示友好提示 -->
         <UAlert
           v-if="form.type === 'generate' && !props.endpoint && availableGenerates.length === 0"
           color="warning"

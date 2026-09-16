@@ -5,7 +5,7 @@ import {defaultProviderIcon} from '~/utils/brandIcons'
 
 /**
  * 供应商新增/编辑弹窗：基本信息（图标、编码、名称、描述、启用）
- * 新增模式额外初始化生成端点（生成类型 + 端点地址，默认路径自动填充）与首个密钥；
+ * 新增模式额外初始化端点（端点类型 + 端点地址，默认路径自动填充）与首个密钥；
  * 编辑模式仅维护基本信息，端点/密钥在供应商详情页管理
  */
 const props = defineProps<{
@@ -55,17 +55,17 @@ watch(open, (v) => {
   showErrors.value = false
 })
 
-/** 生成类型选项（固定三种） */
+/** 生成端点类型选项（固定三种） */
 const generateOptions = computed(() =>
   SYS_ENDPOINT_GENERATES.map(p => ({label: p, value: p}))
 )
 
-/** 端点地址占位符：当前生成类型的默认路径 */
+/** 端点地址占位符：当前生成端点类型的默认路径 */
 const generatePathPlaceholder = computed(() =>
   SYS_ENDPOINT_GENERATE_DEFAULT_PATHS[form.generate]
 )
 
-/** 切换生成类型时，端点地址为空或仍是上一生成类型的默认路径则自动填充新生成类型默认路径 */
+/** 切换生成端点类型时，端点地址为空或仍是上一生成端点类型的默认路径则自动填充新生成端点类型默认路径 */
 watch(() => form.generate, (newGen, oldGen) => {
   const oldDefault = oldGen && oldGen in SYS_ENDPOINT_GENERATE_DEFAULT_PATHS
     ? SYS_ENDPOINT_GENERATE_DEFAULT_PATHS[oldGen as SysEndpointGenerate]
@@ -114,7 +114,7 @@ const baseUrlError = computed(() => {
   return baseUrlInvalidReason.value
 })
 
-/** 生成端点地址校验结果：仅新增模式下校验必填（生成类型由选择器保证有值） */
+/** 生成端点地址校验结果：仅新增模式下校验必填（生成端点类型由选择器保证有值） */
 const generatePathInvalidReason = computed(() => {
   if (props.provider) return undefined
   return form.generatePath.trim() ? undefined : t('providerEndpoints.pathRequired')
@@ -229,8 +229,8 @@ async function save() {
         </UFormField>
 
         <template v-if="!props.provider">
-          <!-- 初始生成端点：生成类型 + 端点地址（默认路径自动填充） -->
-          <UFormField :label="t('providerEndpoints.generate')">
+          <!-- 初始生成端点：生成端点类型 + 端点地址（默认路径自动填充） -->
+          <UFormField :label="t('providerEndpoints.type')">
             <USelect
               v-model="form.generate"
               :items="generateOptions"
