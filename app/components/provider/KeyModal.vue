@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {CalendarDate, parseDate, DateFormatter, getLocalTimeZone, today} from '@internationalized/date'
+import {CalendarDate, parseDate, DateFormatter, getLocalTimeZone} from '@internationalized/date'
 import type {SysKey, SysKeyInput} from '~/utils/providers'
 
 const props = defineProps<{
@@ -46,16 +46,6 @@ watch(open, (v) => {
   }
   showErrors.value = false
 })
-
-function setToday(close?: () => void) {
-  expiresDate.value = today(getLocalTimeZone())
-  close?.()
-}
-
-function clearDate(close?: () => void) {
-  expiresDate.value = null
-  close?.()
-}
 
 const nameError = computed(() =>
   showErrors.value && !form.name.trim() ? t('providerKeys.nameRequired') : undefined
@@ -130,7 +120,6 @@ async function save() {
           <UPopover
             v-model:open="isCalendarOpen"
             :content="{ side: 'bottom', align: 'start', sideOffset: 4 }"
-            :ui="{ content: 'divide-y divide-default overflow-hidden p-0' }"
             class="w-full"
           >
             <UButton
@@ -138,7 +127,7 @@ async function save() {
               variant="outline"
               size="sm"
               icon="i-lucide-calendar"
-              class="w-full justify-start font-normal"
+              class="group w-full justify-start font-normal"
               :class="expiresDate ? 'text-highlighted' : 'text-dimmed'"
             >
               <span class="truncate">
@@ -150,9 +139,8 @@ async function save() {
                   v-if="expiresDate"
                   role="button"
                   tabindex="0"
-                  class="ms-auto -me-1 inline-flex items-center justify-center size-5 rounded-sm text-dimmed hover:text-default hover:bg-elevated cursor-pointer transition-colors"
+                  class="ms-auto -me-1 inline-flex items-center justify-center size-5 rounded-sm text-dimmed hover:text-default hover:bg-elevated cursor-pointer opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                   :aria-label="t('providerKeys.clearExpires')"
-                  :title="t('providerKeys.clearExpires')"
                   @click.stop="expiresDate = null"
                   @keydown.enter.stop="expiresDate = null"
                   @keydown.space.stop="expiresDate = null"
@@ -163,51 +151,12 @@ async function save() {
             </UButton>
 
             <template #content="{ close }">
-              <div class="flex flex-col divide-y divide-default">
-                <!-- 头部：标题与状态提示 -->
-                <div class="flex items-center justify-between px-3 py-2 text-xs">
-                  <span class="font-medium text-highlighted">{{ t('providerKeys.expiresTime') }}</span>
-                  <span v-if="expiresDate" class="text-xs text-muted">
-                    {{ df.format(expiresDate.toDate(getLocalTimeZone())) }}
-                  </span>
-                  <span v-else class="text-xs text-dimmed">
-                    {{ t('providerKeys.permanentHint') }}
-                  </span>
-                </div>
-
-                <!-- 主体：日历选择器 -->
-                <div class="p-2.5">
-                  <UCalendar
-                    v-model="expiresDate"
-                    size="sm"
-                    @update:model-value="() => close()"
-                  />
-                </div>
-
-                <!-- 底部：操作栏 -->
-                <div class="flex items-center justify-between px-2.5 py-1.5 bg-elevated/40 text-xs">
-                  <UButton
-                    size="xs"
-                    color="neutral"
-                    variant="ghost"
-                    icon="i-lucide-calendar-clock"
-                    :label="t('common.today')"
-                    @click="setToday(close)"
-                  />
-                  <UButton
-                    v-if="expiresDate"
-                    size="xs"
-                    color="neutral"
-                    variant="ghost"
-                    icon="i-lucide-circle-x"
-                    :label="t('providerKeys.clearExpires')"
-                    @click="clearDate(close)"
-                  />
-                  <span v-else class="text-xs text-dimmed px-2">
-                    {{ t('providerKeys.permanentHint') }}
-                  </span>
-                </div>
-              </div>
+              <UCalendar
+                v-model="expiresDate"
+                size="sm"
+                class="p-2"
+                @update:model-value="() => close()"
+              />
             </template>
           </UPopover>
         </UFormField>
