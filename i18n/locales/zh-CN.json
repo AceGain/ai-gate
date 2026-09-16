@@ -40,8 +40,8 @@
   "providers": {
     "title": "供应商",
     "configTitle": "供应商配置",
-    "enabled": "已启用",
-    "disabled": "已停用",
+    "enabled": "启用",
+    "disabled": "停用",
     "add": "新增",
     "newTitle": "新增供应商",
     "editTitle": "修改供应商",

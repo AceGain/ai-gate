@@ -458,13 +458,15 @@ const tabs = computed<TabsItem[]>(() => [
             <div class="flex items-center gap-3.5">
               <USkeleton class="size-11.5 rounded-sm"/>
               <div class="space-y-1.5">
-                <USkeleton class="h-5 w-36 rounded-sm"/>
+                <div class="flex items-center gap-1.5">
+                  <USkeleton class="h-5 w-36 rounded-sm"/>
+                  <USkeleton class="size-6 rounded-sm"/>
+                </div>
                 <USkeleton class="h-3.5 w-60 rounded-sm"/>
               </div>
             </div>
-            <div class="flex items-center gap-2.5">
-              <USkeleton class="h-6 w-24 rounded-sm"/>
-              <USkeleton class="size-7 rounded-sm"/>
+            <div class="flex items-center">
+              <USkeleton class="h-6 w-20 rounded-sm"/>
             </div>
           </div>
           <USkeleton class="h-9 w-full rounded-sm"/>
@@ -482,22 +484,30 @@ const tabs = computed<TabsItem[]>(() => [
             <div class="flex min-w-0 items-center gap-3.5">
               <ProviderIcon :icon="provider.icon" :name="provider.name || provider.code" size="lg"/>
               <div class="flex min-w-0 flex-col gap-0.5">
-                <h1 class="truncate text-base font-bold text-highlighted">
-                  {{ provider.name || provider.code }}
-                </h1>
+                <div class="flex items-center gap-1.5">
+                  <h1 class="truncate text-base font-bold text-highlighted">
+                    {{ provider.name || provider.code }}
+                  </h1>
+                  <UButton
+                    icon="i-lucide-square-pen"
+                    variant="ghost"
+                    color="neutral"
+                    size="xs"
+                    class="shrink-0"
+                    :aria-label="t('providers.edit')"
+                    :title="t('providers.edit')"
+                    @click="openEditProvider"
+                  />
+                </div>
                 <p v-if="provider.description" class="truncate text-xs text-muted" :title="provider.description">
                   {{ provider.description }}
                 </p>
               </div>
             </div>
 
-            <!-- 右侧：启用状态开关 + 编辑按钮 -->
-            <div class="flex shrink-0 items-center gap-2.5">
+            <!-- 右侧：启用状态开关 -->
+            <div class="flex shrink-0 items-center">
               <div class="flex items-center gap-1.5 rounded-sm border border-default bg-elevated/50 px-2 py-1 text-xs">
-                <span
-                  class="size-1.5 rounded-full"
-                  :class="provider.enabled ? 'bg-success' : 'bg-neutral'"
-                />
                 <span class="text-muted">
                   {{ provider.enabled ? t('providers.enabled') : t('providers.disabled') }}
                 </span>
@@ -508,16 +518,6 @@ const tabs = computed<TabsItem[]>(() => [
                   @update:model-value="v => toggleProvider(provider!, !!v)"
                 />
               </div>
-
-              <UButton
-                icon="i-lucide-square-pen"
-                variant="ghost"
-                color="neutral"
-                size="xs"
-                @click="openEditProvider"
-              >
-                {{ t('providers.edit') }}
-              </UButton>
             </div>
           </div>
 
