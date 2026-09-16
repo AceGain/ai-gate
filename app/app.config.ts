@@ -5,7 +5,14 @@ export default defineAppConfig({
       neutral: 'zinc'
     },
     // 全局基准：按钮/徽标等紧凑元素为 xs，表单控件（输入框、单选/复选、开关、下拉）为 sm 避免变形
-    button: {defaultVariants: {size: 'xs'}},
+    button: {
+      defaultVariants: {size: 'xs'},
+      variants: {
+        square: {
+          true: 'justify-center'
+        }
+      }
+    },
     input: {defaultVariants: {size: 'sm'}},
     textarea: {defaultVariants: {size: 'sm'}},
     inputNumber: {defaultVariants: {size: 'sm'}},
@@ -17,6 +24,12 @@ export default defineAppConfig({
     checkboxGroup: {defaultVariants: {size: 'sm'}},
     tabs: {defaultVariants: {size: 'xs'}},
     formField: {defaultVariants: {size: 'sm'}},
+    calendar: {defaultVariants: {size: 'sm'}},
+    popover: {
+      slots: {
+        content: 'bg-default shadow-xl rounded-sm border border-default ring-0 focus:outline-none pointer-events-auto'
+      }
+    },
     // 页面骨架：body 不滚动（裁切 + min-h-0 允许收缩），滚动统一交给页面内容容器（见 docs/DESIGN.md §3）
     dashboardPanel: {
       slots: {
