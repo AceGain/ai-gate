@@ -117,7 +117,7 @@
     "title": "密钥",
     "editTitle": "编辑密钥",
     "newTitle": "新增密钥",
-    "name": "名称",
+    "name": "密钥名称",
     "namePlaceholder": "如 生产主 Key",
     "nameRequired": "请输入密钥名称",
     "secret": "密钥内容",

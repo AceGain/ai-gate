@@ -200,7 +200,7 @@ async function save() {
           <ProviderIconPicker v-model="form.icon" :name="form.name"/>
         </div>
 
-        <UFormField :label="t('providers.code')" :error="codeError">
+        <UFormField :label="t('providers.code')" required :error="codeError">
           <UInput
             v-model="form.code"
             :placeholder="t('providers.codePlaceholder')"
@@ -208,7 +208,7 @@ async function save() {
           />
         </UFormField>
 
-        <UFormField :label="t('providers.name')" :error="nameError">
+        <UFormField :label="t('providers.name')" required :error="nameError">
           <UInput
             v-model="form.name"
             :placeholder="t('providers.namePlaceholder')"
@@ -219,6 +219,7 @@ async function save() {
         <UFormField
           v-if="!props.provider"
           :label="t('providers.baseUrl')"
+          required
           :error="baseUrlError"
         >
           <UInput
@@ -238,7 +239,7 @@ async function save() {
             />
           </UFormField>
 
-          <UFormField :label="t('providerEndpoints.path')" :error="generatePathError">
+          <UFormField :label="t('providerEndpoints.path')" required :error="generatePathError">
             <UInput
               v-model="form.generatePath"
               :placeholder="generatePathPlaceholder"
@@ -247,7 +248,7 @@ async function save() {
           </UFormField>
 
           <!-- 初始密钥：创建后可在供应商详情页管理 -->
-          <UFormField :label="t('providers.secret')" :error="secretError">
+          <UFormField :label="t('providers.secret')" required :error="secretError">
             <UInput
               v-model="form.secret"
               type="password"

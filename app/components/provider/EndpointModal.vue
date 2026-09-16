@@ -229,6 +229,7 @@ async function save() {
         <!-- 端点类型：修改时只读不可操作；新增 generate 时展示下拉选择 -->
         <UFormField
           :label="t('providerEndpoints.type')"
+          :required="!props.endpoint && form.type === 'generate'"
           :error="!props.endpoint ? generateError : undefined"
         >
           <UInput
@@ -248,7 +249,7 @@ async function save() {
         </UFormField>
 
         <!-- 端点地址输入框 -->
-        <UFormField :label="t('providerEndpoints.path')" :error="pathError">
+        <UFormField :label="t('providerEndpoints.path')" required :error="pathError">
           <UInput
             v-model="form.path"
             :placeholder="pathPlaceholder"

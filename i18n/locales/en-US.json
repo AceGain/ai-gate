@@ -117,7 +117,7 @@
     "title": "Keys",
     "editTitle": "Edit Key",
     "newTitle": "New Key",
-    "name": "Name",
+    "name": "Key Name",
     "namePlaceholder": "e.g. Production Key",
     "nameRequired": "Key name is required",
     "secret": "Secret",

@@ -96,7 +96,7 @@ async function save() {
   >
     <template #body>
       <div class="space-y-4">
-        <UFormField :label="t('providerKeys.name')" :error="nameError">
+        <UFormField :label="t('providerKeys.name')" required :error="nameError">
           <UInput
             v-model="form.name"
             :placeholder="t('providerKeys.namePlaceholder')"
@@ -104,7 +104,7 @@ async function save() {
           />
         </UFormField>
 
-        <UFormField :label="t('providerKeys.secret')" :error="secretError">
+        <UFormField :label="t('providerKeys.secret')" required :error="secretError">
           <UInput
             v-model="form.secret"
             type="password"
