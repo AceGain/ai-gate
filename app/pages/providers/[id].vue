@@ -179,8 +179,9 @@ function toggleReveal(id: string) {
 }
 
 function maskSecret(secret: string): string {
-  if (secret.length <= 16) return '················'
-  return `${secret.slice(0, 8)}················${secret.slice(-8)}`
+  const dots = '·'.repeat(64)
+  if (!secret || secret.length <= 12) return dots
+  return `${secret.slice(0, 6)}${dots}${secret.slice(-6)}`
 }
 
 async function handleCopy(text: string) {
