@@ -1134,6 +1134,7 @@ const tabs = computed<TabsItem[]>(() => [
     v-model:open="modelModalOpen"
     :provider-id="provider.id"
     :model-item="editingModel"
+    :existing-endpoints="endpoints"
     @saved="() => loadModels(provider!.id)"
   />
 </template>

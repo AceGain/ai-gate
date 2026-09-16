@@ -6,19 +6,19 @@ import type {
   SysModelStatus,
   SysModelType,
   SysModelModality,
-  SysModelEffortLevel
+  SysModelEffortLevel,
+  SysEndpoint
 } from '~/utils/providers'
 import {
   SYS_MODEL_MODALITIES,
   SYS_MODEL_EFFORT_LEVELS,
-  SYS_ENDPOINT_GENERATES,
-  SYS_ENDPOINT_GENERATE_DEFAULT_PATHS,
   splitUrl
 } from '~/utils/providers'
 
 const props = defineProps<{
   providerId: string
   modelItem: SysModel | null
+  existingEndpoints?: SysEndpoint[]
 }>()
 
 const emit = defineEmits<{saved: [modelItem: SysModel]}>()
@@ -40,7 +40,7 @@ const form = reactive({
   enabled: true,
   inputModal: ['text'] as SysModelModality[],
   outputModal: ['text'] as SysModelModality[],
-  generates: ['Chat Completions'] as string[],
+  generates: [] as string[],
   maxContext: null as number | null,
   maxInput: null as number | null,
   maxOutput: null as number | null,
@@ -107,31 +107,30 @@ const outputPresets = [
   {label: '256k', value: 256000}
 ]
 
+const effectiveEndpoints = computed(() => props.existingEndpoints ?? endpoints.value)
+
 const baseEndpoint = computed(() => {
-  return endpoints.value.find(e => e.type === 'base')
+  return effectiveEndpoints.value.find(e => e.type === 'base')
 })
 
 interface GenerateEndpointItem {
+  id: string
   type: string
   path: string
   fullUrl: string
-  isCustom: boolean
+  isDefault: boolean
 }
 
 const generateEndpointList = computed<GenerateEndpointItem[]>(() => {
-  return SYS_ENDPOINT_GENERATES.map(genType => {
-    const configuredEp = endpoints.value.find(
-      e => e.type === 'generate' && e.generate === genType
-    )
-    const rawPath = configuredEp?.path || SYS_ENDPOINT_GENERATE_DEFAULT_PATHS[genType]
-    const fullUrl = splitUrl(baseEndpoint.value?.path, rawPath).fullUrl
-    return {
-      type: genType,
-      path: rawPath,
-      fullUrl,
-      isCustom: !!configuredEp
-    }
-  })
+  return effectiveEndpoints.value
+    .filter(e => e.type === 'generate')
+    .map(ep => ({
+      id: ep.id,
+      type: ep.generate || ep.path,
+      path: ep.path,
+      fullUrl: splitUrl(baseEndpoint.value?.path, ep.path).fullUrl,
+      isDefault: ep.isDefault
+    }))
 })
 
 function toggleGenerate(genType: string) {
@@ -157,9 +156,23 @@ watch(open, (v) => {
   form.outputModal = props.modelItem?.outputModal?.length
     ? props.modelItem.outputModal.filter((m): m is SysModelModality => (SYS_MODEL_MODALITIES as readonly string[]).includes(m))
     : ['text']
-  form.generates = props.modelItem?.generates?.length
-    ? props.modelItem.generates.filter((g): g is string => (SYS_ENDPOINT_GENERATES as readonly string[]).includes(g))
-    : ['Chat Completions']
+
+  const availableGenerates = effectiveEndpoints.value
+    .filter(e => e.type === 'generate')
+    .map(e => e.generate || e.path)
+  const availableSet = new Set(availableGenerates)
+
+  if (props.modelItem?.generates?.length) {
+    form.generates = props.modelItem.generates.filter(g => availableSet.has(g))
+  } else if (!props.modelItem) {
+    const defaultEp = effectiveEndpoints.value.find(e => e.type === 'generate' && e.isDefault)
+    const firstGen = effectiveEndpoints.value.find(e => e.type === 'generate')
+    const initialGen = (defaultEp?.generate || defaultEp?.path) || (firstGen?.generate || firstGen?.path)
+    form.generates = initialGen ? [initialGen] : []
+  } else {
+    form.generates = []
+  }
+
   form.maxContext = props.modelItem?.maxContext || null
   form.maxInput = props.modelItem?.maxInput || null
   form.maxOutput = props.modelItem?.maxOutput || null
@@ -444,10 +457,10 @@ async function save() {
 
                 <!-- 3. 支持生成端点列表（展示完整路径） -->
                 <UFormField :label="t('providerModels.generates')">
-                  <div class="space-y-2 pt-0.5">
+                  <div v-if="generateEndpointList.length" class="space-y-2 pt-0.5">
                     <div
                       v-for="ep in generateEndpointList"
-                      :key="ep.type"
+                      :key="ep.id"
                       class="flex items-center gap-3 p-3 rounded-sm border transition-colors cursor-pointer select-none"
                       :class="form.generates.includes(ep.type)
                         ? 'border-primary/50 bg-elevated/40'
@@ -467,8 +480,14 @@ async function save() {
                           >
                             {{ ep.type }}
                           </span>
-                          <UBadge v-if="ep.isCustom" size="xs" variant="subtle" color="neutral">
-                            {{ t('providerModels.configuredEndpoint') }}
+                          <UBadge
+                            v-if="ep.isDefault"
+                            size="xs"
+                            variant="subtle"
+                            color="primary"
+                            class="rounded-sm py-0.5"
+                          >
+                            {{ t('providerEndpoints.defaultBadge') }}
                           </UBadge>
                         </div>
                         <div class="mt-1 truncate text-xs text-muted font-mono select-all" :title="ep.fullUrl">
@@ -476,6 +495,12 @@ async function save() {
                         </div>
                       </div>
                     </div>
+                  </div>
+                  <div
+                    v-else
+                    class="flex items-center justify-center p-4 rounded-sm border border-dashed border-default bg-elevated/10 text-xs text-muted"
+                  >
+                    {{ t('providerModels.noGenerateEndpoints') }}
                   </div>
                 </UFormField>
               </div>
