@@ -68,12 +68,12 @@ const reasoningOptions = computed(() => [
   {label: t('providerModels.reasoningDisable'), value: 'DISABLE'}
 ])
 
-const modalityCheckboxItems = computed<{label: string, value: SysModelModality}[]>(() => [
-  {label: t('providerModels.modalityText'), value: 'text'},
-  {label: t('providerModels.modalityImage'), value: 'image'},
-  {label: t('providerModels.modalityVideo'), value: 'video'},
-  {label: t('providerModels.modalityAudio'), value: 'audio'},
-  {label: t('providerModels.modalityPdf'), value: 'pdf'}
+const modalityOptions = computed<{label: string, value: SysModelModality, icon: string}[]>(() => [
+  {label: t('providerModels.modalityText'), value: 'text', icon: 'i-lucide-type'},
+  {label: t('providerModels.modalityImage'), value: 'image', icon: 'i-lucide-image'},
+  {label: t('providerModels.modalityVideo'), value: 'video', icon: 'i-lucide-video'},
+  {label: t('providerModels.modalityAudio'), value: 'audio', icon: 'i-lucide-music'},
+  {label: t('providerModels.modalityPdf'), value: 'pdf', icon: 'i-lucide-file-text'}
 ])
 
 const effortLevelOptions = computed<{label: string, value: SysModelEffortLevel}[]>(() => [
@@ -139,6 +139,16 @@ function toggleGenerate(genType: string) {
     form.generates.splice(idx, 1)
   } else {
     form.generates.push(genType)
+  }
+}
+
+function toggleModality(field: 'inputModal' | 'outputModal', value: SysModelModality) {
+  const list = form[field]
+  const idx = list.indexOf(value)
+  if (idx >= 0) {
+    list.splice(idx, 1)
+  } else {
+    list.push(value)
   }
 }
 
@@ -335,23 +345,41 @@ async function save() {
 
             <template #content>
               <div class="pt-3 space-y-4">
-                <!-- 1. 模态支持：平铺 CheckboxGroup -->
+                <!-- 1. 模态支持：平铺图标+文字切换按钮（与模型类型同款交互） -->
                 <UFormField :label="t('providerModels.inputModal')">
-                  <UCheckboxGroup
-                    v-model="form.inputModal"
-                    :items="modalityCheckboxItems"
-                    orientation="horizontal"
-                    class="pt-1"
-                  />
+                  <div class="flex flex-wrap items-center gap-1.5">
+                    <UButton
+                      v-for="item in modalityOptions"
+                      :key="item.value"
+                      type="button"
+                      :icon="item.icon"
+                      :label="item.label"
+                      size="xs"
+                      :variant="form.inputModal.includes(item.value) ? 'subtle' : 'outline'"
+                      :color="form.inputModal.includes(item.value) ? 'primary' : 'neutral'"
+                      :aria-pressed="form.inputModal.includes(item.value)"
+                      class="cursor-pointer select-none"
+                      @click="toggleModality('inputModal', item.value)"
+                    />
+                  </div>
                 </UFormField>
 
                 <UFormField :label="t('providerModels.outputModal')">
-                  <UCheckboxGroup
-                    v-model="form.outputModal"
-                    :items="modalityCheckboxItems"
-                    orientation="horizontal"
-                    class="pt-1"
-                  />
+                  <div class="flex flex-wrap items-center gap-1.5">
+                    <UButton
+                      v-for="item in modalityOptions"
+                      :key="item.value"
+                      type="button"
+                      :icon="item.icon"
+                      :label="item.label"
+                      size="xs"
+                      :variant="form.outputModal.includes(item.value) ? 'subtle' : 'outline'"
+                      :color="form.outputModal.includes(item.value) ? 'primary' : 'neutral'"
+                      :aria-pressed="form.outputModal.includes(item.value)"
+                      class="cursor-pointer select-none"
+                      @click="toggleModality('outputModal', item.value)"
+                    />
+                  </div>
                 </UFormField>
 
                 <!-- 2. Token 限制与快捷输入（标题行右侧预设按钮） -->
@@ -458,16 +486,17 @@ async function save() {
                 <!-- 3. 支持生成端点列表（展示完整路径） -->
                 <UFormField :label="t('providerModels.generates')">
                   <div v-if="generateEndpointList.length" class="space-y-2 pt-0.5">
-                    <!-- UCheckbox card 变体：根节点渲染为原生 label，整卡可点、Space 键盘切换、焦点环与选中态由主题自带 -->
+                    <!-- UCheckbox card 变体：根节点渲染为原生 label，整卡可点、Space 键盘切换、焦点环与选中态由主题自带；单行紧凑布局（类型名 + URL 同行） -->
                     <UCheckbox
                       v-for="ep in generateEndpointList"
                       :key="ep.id"
                       :model-value="form.generates.includes(ep.type)"
                       variant="card"
                       :ui="{
-                        root: 'cursor-pointer select-none items-center rounded-sm p-3',
-                        label: 'text-xs font-semibold',
-                        description: 'mt-1 truncate text-xs font-mono'
+                        root: 'cursor-pointer select-none items-center rounded-sm px-2.5 py-1.5',
+                        wrapper: 'flex flex-row items-center gap-2 min-w-0 flex-1',
+                        label: 'text-xs font-semibold shrink-0',
+                        description: 'min-w-0 flex-1 truncate text-xs font-mono'
                       }"
                       @update:model-value="() => toggleGenerate(ep.type)"
                     >
@@ -491,7 +520,7 @@ async function save() {
 
                       <template #description>
                         <span class="select-all" :title="ep.fullUrl">
-                          {{ ep.fullUrl || t('common.empty') }}
+                          {{ ep.path || t('common.empty') }}
                         </span>
                       </template>
                     </UCheckbox>
