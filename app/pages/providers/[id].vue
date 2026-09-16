@@ -171,6 +171,12 @@ const keyModalOpen = ref(false)
 const editingKey = ref<SysKey | null>(null)
 const revealedKeys = ref<Set<string>>(new Set())
 
+/** 密钥卡片 UCard 主题覆盖：行式密度（内边距由行容器接管），圆角与 hover 效果对齐项目基线 */
+const keyCardUi = {
+  root: 'rounded-sm transition hover:ring-primary/40 hover:bg-elevated/30',
+  body: 'p-0 sm:p-0'
+}
+
 function toggleReveal(id: string) {
   const next = new Set(revealedKeys.value)
   if (next.has(id)) next.delete(id)
@@ -825,137 +831,133 @@ const tabs = computed<TabsItem[]>(() => [
 
           <!-- 2. API 密钥 Tab -->
           <template #keys>
-            <!-- 加载骨架 -->
+            <!-- 加载骨架（与真实卡片同结构，避免加载完成跳动） -->
             <div v-if="configLoading && !keys.length" class="flex flex-col gap-2">
-              <div
-                v-for="i in 3"
-                :key="i"
-                class="flex items-center justify-between gap-4 rounded-sm border border-default bg-default px-3 py-2.5"
-              >
-                <div class="flex flex-1 items-center gap-2">
-                  <USkeleton class="size-7 rounded-sm"/>
-                  <div class="flex-1 space-y-2">
-                    <USkeleton class="h-4 w-40 rounded-sm"/>
-                    <USkeleton class="h-3 w-64 rounded-sm"/>
+              <UCard v-for="i in 3" :key="i" :ui="keyCardUi">
+                <div class="flex items-center justify-between gap-4 px-3 py-2.5">
+                  <div class="flex flex-1 items-center gap-2">
+                    <USkeleton class="size-7 rounded-sm"/>
+                    <div class="flex-1 space-y-2">
+                      <USkeleton class="h-4 w-40 rounded-sm"/>
+                      <USkeleton class="h-3 w-64 rounded-sm"/>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <USkeleton class="h-5 w-9 rounded-sm"/>
+                    <USkeleton class="size-6 rounded-sm"/>
+                    <USkeleton class="size-6 rounded-sm"/>
                   </div>
                 </div>
-                <div class="flex items-center gap-1">
-                  <USkeleton class="h-5 w-9 rounded-sm"/>
-                  <USkeleton class="size-6 rounded-sm"/>
-                  <USkeleton class="size-6 rounded-sm"/>
-                </div>
-              </div>
+              </UCard>
             </div>
 
             <!-- 密钥列表：单层卡片结构，无多层嵌套，纵向分行清晰 -->
             <div v-else-if="keys.length" ref="keyListEl" class="flex flex-col gap-2">
-              <div
-                v-for="k in keys"
-                :key="k.id"
-                class="group flex items-center justify-between gap-4 rounded-sm border border-default bg-default px-3 py-2.5 transition-colors hover:border-primary/40 hover:bg-elevated/30"
-              >
-                <!-- 左侧信息区：拖拽手柄 + 纵向信息流（第一行名称/状态/过期，第二行密文与操作） -->
-                <div class="flex min-w-0 flex-1 items-center gap-2">
-                  <div
-                    class="drag-handle -ml-1 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm text-dimmed transition-colors hover:bg-elevated hover:text-default"
-                    aria-hidden="true"
-                    :title="t('providers.dragToSort')"
-                  >
-                    <UIcon name="i-lucide-grip-vertical" class="size-4"/>
-                  </div>
+              <UCard v-for="k in keys" :key="k.id" :ui="keyCardUi">
+                <div class="flex items-center justify-between gap-4 px-3 py-2.5">
+                  <!-- 左侧信息区：拖拽手柄 + 纵向信息流（第一行名称/状态/过期，第二行密文与操作） -->
+                  <div class="flex min-w-0 flex-1 items-center gap-2">
+                    <div
+                      class="drag-handle -ml-1 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm text-dimmed transition-colors hover:bg-elevated hover:text-default"
+                      aria-hidden="true"
+                      :title="t('providers.dragToSort')"
+                    >
+                      <UIcon name="i-lucide-grip-vertical" class="size-4"/>
+                    </div>
 
-                  <div class="flex min-w-0 flex-1 flex-col gap-1">
-                    <!-- 第一行：名称 + 状态徽标 + 有效期 -->
-                    <div class="flex flex-wrap items-center gap-2">
-                      <span
-                        class="truncate text-sm font-semibold"
-                        :class="k.enabled ? 'text-highlighted' : 'text-dimmed'"
-                        :title="k.name"
-                      >
-                        {{ k.name }}
-                      </span>
+                    <div class="flex min-w-0 flex-1 flex-col gap-1">
+                      <!-- 第一行：名称 + 状态徽标 + 有效期 -->
+                      <div class="flex flex-wrap items-center gap-2">
+                        <span
+                          class="truncate text-sm font-semibold"
+                          :class="k.enabled ? 'text-highlighted' : 'text-dimmed'"
+                          :title="k.name"
+                        >
+                          {{ k.name }}
+                        </span>
 
-                      <UBadge
-                        v-if="k.status !== 'ACTIVE'"
-                        color="error"
-                        variant="subtle"
-                        size="xs"
-                      >
-                        {{ t('providerKeys.statusInvalid') }}
-                      </UBadge>
+                        <UBadge
+                          v-if="k.status !== 'ACTIVE'"
+                          color="error"
+                          variant="subtle"
+                          size="xs"
+                        >
+                          {{ t('providerKeys.statusInvalid') }}
+                        </UBadge>
 
-                      <span
-                        v-if="k.expiresTime"
-                        class="inline-flex items-center gap-1 text-xs"
-                        :class="isKeyExpired(k.expiresTime) ? 'text-error' : 'text-muted'"
-                      >
-                        <UIcon
-                          name="i-lucide-calendar-clock"
-                          class="size-3.5 shrink-0 text-dimmed"
+                        <span
+                          v-if="k.expiresTime"
+                          class="inline-flex items-center gap-1 text-xs"
+                          :class="isKeyExpired(k.expiresTime) ? 'text-error' : 'text-muted'"
+                        >
+                          <UIcon
+                            name="i-lucide-calendar-clock"
+                            class="size-3.5 shrink-0 text-dimmed"
+                          />
+                          <span>{{ formatKeyExpiry(k.expiresTime) }}</span>
+                        </span>
+                      </div>
+
+                      <!-- 第二行：密钥密文 + 明文切换 + 快捷复制（单层卡片内自然排布，无嵌套内盒） -->
+                      <div class="flex items-center gap-2 min-w-0">
+                        <code
+                          class="truncate text-xs select-all text-muted"
+                          :title="revealedKeys.has(k.id) ? k.secret : undefined"
+                        >
+                          {{ revealedKeys.has(k.id) ? k.secret : maskSecret(k.secret) }}
+                        </code>
+
+                        <UButton
+                          :icon="revealedKeys.has(k.id) ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                          variant="ghost"
+                          color="neutral"
+                          size="xs"
+                          class="shrink-0"
+                          :title="revealedKeys.has(k.id) ? t('providerKeys.hideSecret') : t('providerKeys.showSecret')"
+                          :aria-label="revealedKeys.has(k.id) ? t('providerKeys.hideSecret') : t('providerKeys.showSecret')"
+                          @click="toggleReveal(k.id)"
                         />
-                        <span>{{ formatKeyExpiry(k.expiresTime) }}</span>
-                      </span>
-                    </div>
 
-                    <!-- 第二行：密钥密文 + 明文切换 + 快捷复制（单层卡片内自然排布，无嵌套内盒） -->
-                    <div class="flex items-center gap-2 min-w-0">
-                      <code
-                        class="truncate text-xs select-all text-muted"
-                        :title="revealedKeys.has(k.id) ? k.secret : undefined"
-                      >
-                        {{ revealedKeys.has(k.id) ? k.secret : maskSecret(k.secret) }}
-                      </code>
-
-                      <UButton
-                        :icon="revealedKeys.has(k.id) ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-                        variant="ghost"
-                        color="neutral"
-                        size="xs"
-                        class="shrink-0"
-                        :title="revealedKeys.has(k.id) ? t('providerKeys.hideSecret') : t('providerKeys.showSecret')"
-                        :aria-label="revealedKeys.has(k.id) ? t('providerKeys.hideSecret') : t('providerKeys.showSecret')"
-                        @click="toggleReveal(k.id)"
-                      />
-
-                      <UButton
-                        :icon="copiedKeyId === k.id ? 'i-lucide-check' : 'i-lucide-copy'"
-                        :color="copiedKeyId === k.id ? 'success' : 'neutral'"
-                        variant="ghost"
-                        size="xs"
-                        class="shrink-0"
-                        :title="t('providerKeys.copySecret')"
-                        :aria-label="t('providerKeys.copySecret')"
-                        @click="handleCopyKey(k)"
-                      />
+                        <UButton
+                          :icon="copiedKeyId === k.id ? 'i-lucide-check' : 'i-lucide-copy'"
+                          :color="copiedKeyId === k.id ? 'success' : 'neutral'"
+                          variant="ghost"
+                          size="xs"
+                          class="shrink-0"
+                          :title="t('providerKeys.copySecret')"
+                          :aria-label="t('providerKeys.copySecret')"
+                          @click="handleCopyKey(k)"
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- 右侧操作按钮：启用状态开关 + 编辑 + 删除 -->
-                <div class="flex shrink-0 items-center gap-1">
-                  <USwitch
-                    :model-value="k.enabled"
-                    :aria-label="t('providers.toggleEnabled')"
-                    @update:model-value="v => handleToggleKeyEnabled(k, !!v)"
-                  />
-                  <UButton
-                    icon="i-lucide-square-pen"
-                    variant="ghost"
-                    color="neutral"
-                    size="xs"
-                    :aria-label="t('providers.edit')"
-                    @click="openEditKey(k)"
-                  />
-                  <UButton
-                    icon="i-lucide-trash-2"
-                    variant="ghost"
-                    color="error"
-                    size="xs"
-                    :aria-label="t('providers.remove')"
-                    @click="confirmDeleteKey(k)"
-                  />
+                  <!-- 右侧操作按钮：启用状态开关 + 编辑 + 删除 -->
+                  <div class="flex shrink-0 items-center gap-1">
+                    <USwitch
+                      :model-value="k.enabled"
+                      :aria-label="t('providers.toggleEnabled')"
+                      @update:model-value="v => handleToggleKeyEnabled(k, !!v)"
+                    />
+                    <UButton
+                      icon="i-lucide-square-pen"
+                      variant="ghost"
+                      color="neutral"
+                      size="xs"
+                      :aria-label="t('providers.edit')"
+                      @click="openEditKey(k)"
+                    />
+                    <UButton
+                      icon="i-lucide-trash-2"
+                      variant="ghost"
+                      color="error"
+                      size="xs"
+                      :aria-label="t('providers.remove')"
+                      @click="confirmDeleteKey(k)"
+                    />
+                  </div>
                 </div>
-              </div>
+              </UCard>
             </div>
 
             <!-- 空状态 -->
