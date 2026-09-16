@@ -15,6 +15,30 @@ export type SysModelType =
 
 export type SysModelReasoning = 'DISABLE' | 'ALWAYS' | 'SWITCH' | 'TOGGLE'
 
+/** 固定支持的输入/输出模态类型 */
+export const SYS_MODEL_MODALITIES = [
+  'text',
+  'image',
+  'video',
+  'audio',
+  'pdf'
+] as const
+
+export type SysModelModality = (typeof SYS_MODEL_MODALITIES)[number]
+
+/** 固定支持的推理档位 */
+export const SYS_MODEL_EFFORT_LEVELS = [
+  'none',
+  'minimal',
+  'low',
+  'medium',
+  'high',
+  'xhigh',
+  'max'
+] as const
+
+export type SysModelEffortLevel = (typeof SYS_MODEL_EFFORT_LEVELS)[number]
+
 export interface SysModel {
   id: string
   providerId: string

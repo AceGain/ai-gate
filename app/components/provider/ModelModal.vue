@@ -4,7 +4,16 @@ import type {
   SysModelInput,
   SysModelReasoning,
   SysModelStatus,
-  SysModelType
+  SysModelType,
+  SysModelModality,
+  SysModelEffortLevel
+} from '~/utils/providers'
+import {
+  SYS_MODEL_MODALITIES,
+  SYS_MODEL_EFFORT_LEVELS,
+  SYS_ENDPOINT_GENERATES,
+  SYS_ENDPOINT_GENERATE_DEFAULT_PATHS,
+  splitUrl
 } from '~/utils/providers'
 
 const props = defineProps<{
@@ -18,7 +27,9 @@ const open = defineModel<boolean>('open', {default: false})
 
 const {t} = useI18n()
 const toast = useToast()
-const {createModel, updateModel} = useProviderConfig()
+const {createModel, updateModel, endpoints} = useProviderConfig()
+
+const isAdvancedOpen = ref(false)
 
 const form = reactive({
   code: '',
@@ -27,14 +38,14 @@ const form = reactive({
   type: 'GenText' as SysModelType,
   status: 'ACTIVE' as SysModelStatus,
   enabled: true,
-  inputModalText: 'text',
-  outputModalText: 'text',
-  generatesText: '',
-  maxContext: 128000,
-  maxInput: 128000,
-  maxOutput: 4096,
+  inputModal: ['text'] as SysModelModality[],
+  outputModal: ['text'] as SysModelModality[],
+  generates: ['Chat Completions'] as string[],
+  maxContext: null as number | null,
+  maxInput: null as number | null,
+  maxOutput: null as number | null,
   reasoning: 'TOGGLE' as SysModelReasoning,
-  effortLevelText: '',
+  effortLevel: [] as SysModelEffortLevel[],
   description: ''
 })
 
@@ -50,17 +61,87 @@ const typeOptions = computed<{label: string, value: SysModelType}[]>(() => [
   {label: t('providerModels.typeRerank'), value: 'Rerank'}
 ])
 
-const statusOptions = computed(() => [
-  {label: t('providerModels.statusActive'), value: 'ACTIVE'},
-  {label: t('providerModels.statusInvalid'), value: 'INVALID'}
-])
-
 const reasoningOptions = computed(() => [
   {label: t('providerModels.reasoningToggle'), value: 'TOGGLE'},
   {label: t('providerModels.reasoningSwitch'), value: 'SWITCH'},
   {label: t('providerModels.reasoningAlways'), value: 'ALWAYS'},
   {label: t('providerModels.reasoningDisable'), value: 'DISABLE'}
 ])
+
+const modalityCheckboxItems = computed<{label: string, value: SysModelModality}[]>(() => [
+  {label: t('providerModels.modalityText'), value: 'text'},
+  {label: t('providerModels.modalityImage'), value: 'image'},
+  {label: t('providerModels.modalityVideo'), value: 'video'},
+  {label: t('providerModels.modalityAudio'), value: 'audio'},
+  {label: t('providerModels.modalityPdf'), value: 'pdf'}
+])
+
+const effortLevelOptions = computed<{label: string, value: SysModelEffortLevel}[]>(() => [
+  {label: t('providerModels.effortNone'), value: 'none'},
+  {label: t('providerModels.effortMinimal'), value: 'minimal'},
+  {label: t('providerModels.effortLow'), value: 'low'},
+  {label: t('providerModels.effortMedium'), value: 'medium'},
+  {label: t('providerModels.effortHigh'), value: 'high'},
+  {label: t('providerModels.effortXhigh'), value: 'xhigh'},
+  {label: t('providerModels.effortMax'), value: 'max'}
+])
+
+const contextPresets = [
+  {label: '128k', value: 128000},
+  {label: '256k', value: 256000},
+  {label: '512k', value: 512000},
+  {label: '1m', value: 1000000}
+]
+
+const inputPresets = [
+  {label: '128k', value: 128000},
+  {label: '256k', value: 256000},
+  {label: '512k', value: 512000},
+  {label: '1m', value: 1000000}
+]
+
+const outputPresets = [
+  {label: '32k', value: 32000},
+  {label: '64k', value: 64000},
+  {label: '128k', value: 128000},
+  {label: '256k', value: 256000}
+]
+
+const baseEndpoint = computed(() => {
+  return endpoints.value.find(e => e.type === 'base')
+})
+
+interface GenerateEndpointItem {
+  type: string
+  path: string
+  fullUrl: string
+  isCustom: boolean
+}
+
+const generateEndpointList = computed<GenerateEndpointItem[]>(() => {
+  return SYS_ENDPOINT_GENERATES.map(genType => {
+    const configuredEp = endpoints.value.find(
+      e => e.type === 'generate' && e.generate === genType
+    )
+    const rawPath = configuredEp?.path || SYS_ENDPOINT_GENERATE_DEFAULT_PATHS[genType]
+    const fullUrl = splitUrl(baseEndpoint.value?.path, rawPath).fullUrl
+    return {
+      type: genType,
+      path: rawPath,
+      fullUrl,
+      isCustom: !!configuredEp
+    }
+  })
+})
+
+function toggleGenerate(genType: string) {
+  const idx = form.generates.indexOf(genType)
+  if (idx >= 0) {
+    form.generates.splice(idx, 1)
+  } else {
+    form.generates.push(genType)
+  }
+}
 
 watch(open, (v) => {
   if (!v) return
@@ -70,16 +151,31 @@ watch(open, (v) => {
   form.type = props.modelItem?.type ?? 'GenText'
   form.status = props.modelItem?.status ?? 'ACTIVE'
   form.enabled = props.modelItem?.enabled ?? true
-  form.inputModalText = props.modelItem ? props.modelItem.inputModal.join(', ') : 'text'
-  form.outputModalText = props.modelItem ? props.modelItem.outputModal.join(', ') : 'text'
-  form.generatesText = props.modelItem ? props.modelItem.generates.join(', ') : ''
-  form.maxContext = props.modelItem?.maxContext ?? 128000
-  form.maxInput = props.modelItem?.maxInput ?? 128000
-  form.maxOutput = props.modelItem?.maxOutput ?? 4096
+  form.inputModal = props.modelItem?.inputModal?.length
+    ? props.modelItem.inputModal.filter((m): m is SysModelModality => (SYS_MODEL_MODALITIES as readonly string[]).includes(m))
+    : ['text']
+  form.outputModal = props.modelItem?.outputModal?.length
+    ? props.modelItem.outputModal.filter((m): m is SysModelModality => (SYS_MODEL_MODALITIES as readonly string[]).includes(m))
+    : ['text']
+  form.generates = props.modelItem?.generates?.length
+    ? props.modelItem.generates.filter((g): g is string => (SYS_ENDPOINT_GENERATES as readonly string[]).includes(g))
+    : ['Chat Completions']
+  form.maxContext = props.modelItem?.maxContext || null
+  form.maxInput = props.modelItem?.maxInput || null
+  form.maxOutput = props.modelItem?.maxOutput || null
   form.reasoning = props.modelItem?.reasoning ?? 'TOGGLE'
-  form.effortLevelText = props.modelItem ? props.modelItem.effortLevel.join(', ') : ''
+  form.effortLevel = props.modelItem?.effortLevel
+    ? props.modelItem.effortLevel.filter((e): e is SysModelEffortLevel => (SYS_MODEL_EFFORT_LEVELS as readonly string[]).includes(e))
+    : []
   form.description = props.modelItem?.description ?? ''
+  isAdvancedOpen.value = !!props.modelItem
   showErrors.value = false
+})
+
+watch(() => form.reasoning, (val) => {
+  if (val !== 'TOGGLE') {
+    form.effortLevel = []
+  }
 })
 
 const codeError = computed(() =>
@@ -87,13 +183,6 @@ const codeError = computed(() =>
 )
 
 const canSave = computed(() => !!form.code.trim() && !saving.value)
-
-function parseTags(text: string): string[] {
-  return text
-    .split(/[,，\s]+/)
-    .map(s => s.trim())
-    .filter(Boolean)
-}
 
 async function save() {
   if (!canSave.value) {
@@ -109,14 +198,14 @@ async function save() {
     type: form.type,
     status: form.status,
     enabled: form.enabled,
-    inputModal: parseTags(form.inputModalText),
-    outputModal: parseTags(form.outputModalText),
-    generates: parseTags(form.generatesText),
+    inputModal: form.inputModal,
+    outputModal: form.outputModal,
+    generates: form.generates,
     maxContext: Number(form.maxContext) || 0,
     maxInput: Number(form.maxInput) || 0,
     maxOutput: Number(form.maxOutput) || 0,
     reasoning: form.reasoning,
-    effortLevel: parseTags(form.effortLevelText),
+    effortLevel: form.reasoning === 'TOGGLE' ? form.effortLevel : [],
     description: form.description.trim()
   }
   try {
@@ -145,12 +234,13 @@ async function save() {
   <UModal
     v-model:open="open"
     :title="props.modelItem ? t('providerModels.editTitle') : t('providerModels.newTitle')"
-    :ui="{ content: 'max-w-lg', footer: 'justify-end' }"
+    :ui="{ content: 'sm:max-w-lg', body: 'no-scrollbar', footer: 'justify-end' }"
   >
     <template #body>
-      <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-        <div class="grid grid-cols-2 gap-3">
-          <UFormField :label="t('providerModels.code')" :error="codeError">
+      <div class="space-y-3">
+        <!-- 基础配置：常用必要项（纯单列垂直排列） -->
+        <div class="space-y-4">
+          <UFormField :label="t('providerModels.code')" required :error="codeError">
             <UInput
               v-model="form.code"
               :placeholder="t('providerModels.codePlaceholder')"
@@ -165,16 +255,6 @@ async function save() {
               class="w-full"
             />
           </UFormField>
-        </div>
-
-        <div class="grid grid-cols-3 gap-3">
-          <UFormField :label="t('providerModels.type')">
-            <USelect
-              v-model="form.type"
-              :items="typeOptions"
-              class="w-full"
-            />
-          </UFormField>
 
           <UFormField :label="t('providerModels.category')">
             <UInput
@@ -184,98 +264,201 @@ async function save() {
             />
           </UFormField>
 
-          <UFormField :label="t('providerModels.status')">
+          <UFormField :label="t('providerModels.type')">
             <USelect
-              v-model="form.status"
-              :items="statusOptions"
+              v-model="form.type"
+              :items="typeOptions"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField :label="t('providers.description')">
+            <UTextarea
+              v-model="form.description"
+              autoresize
+              :rows="2"
+              :placeholder="t('providers.descriptionPlaceholder')"
               class="w-full"
             />
           </UFormField>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <UFormField :label="t('providerModels.inputModal')">
-            <UInput
-              v-model="form.inputModalText"
-              :placeholder="t('providerModels.inputModalPlaceholder')"
-              class="w-full"
-            />
-          </UFormField>
+        <!-- 额外配置：模态、Token限制、推理、生成端点等可选扩展 -->
+        <div class="border-t border-default pt-3">
+          <UCollapsible v-model:open="isAdvancedOpen" :unmount-on-hide="false" class="w-full">
+            <UButton
+              color="neutral"
+              variant="subtle"
+              block
+              class="justify-between px-3 py-2 cursor-pointer"
+              :trailing-icon="isAdvancedOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+            >
+              <div class="flex items-center gap-2">
+                <UIcon name="i-lucide-sliders-horizontal" class="size-4 text-primary" />
+                <span class="text-xs font-semibold text-highlighted">
+                  {{ t('providerModels.advancedConfig') }}
+                </span>
+              </div>
+            </UButton>
 
-          <UFormField :label="t('providerModels.outputModal')">
-            <UInput
-              v-model="form.outputModalText"
-              :placeholder="t('providerModels.outputModalPlaceholder')"
-              class="w-full"
-            />
-          </UFormField>
-        </div>
+            <template #content>
+              <div class="pt-3 space-y-4">
+                <!-- 1. 模态支持：平铺 CheckboxGroup -->
+                <UFormField :label="t('providerModels.inputModal')">
+                  <UCheckboxGroup
+                    v-model="form.inputModal"
+                    :items="modalityCheckboxItems"
+                    orientation="horizontal"
+                    class="pt-1"
+                  />
+                </UFormField>
 
-        <UFormField :label="t('providerModels.generates')">
-          <UInput
-            v-model="form.generatesText"
-            :placeholder="t('providerModels.generatesPlaceholder')"
-            class="w-full"
-          />
-        </UFormField>
+                <UFormField :label="t('providerModels.outputModal')">
+                  <UCheckboxGroup
+                    v-model="form.outputModal"
+                    :items="modalityCheckboxItems"
+                    orientation="horizontal"
+                    class="pt-1"
+                  />
+                </UFormField>
 
-        <div class="grid grid-cols-3 gap-3">
-          <UFormField :label="t('providerModels.maxContext')">
-            <UInput
-              v-model.number="form.maxContext"
-              type="number"
-              class="w-full"
-            />
-          </UFormField>
+                <!-- 2. Token 限制与快捷输入（纯单列垂直排列） -->
+                <!-- 上下文 -->
+                <UFormField :label="t('providerModels.maxContext')">
+                  <div class="space-y-1.5">
+                    <UInput
+                      v-model.number="form.maxContext"
+                      type="number"
+                      :placeholder="t('providerModels.tokenPlaceholder')"
+                      class="w-full"
+                    />
+                    <div class="flex flex-wrap items-center gap-1.5">
+                      <UButton
+                        v-for="p in contextPresets"
+                        :key="p.value"
+                        size="xs"
+                        :variant="form.maxContext === p.value ? 'subtle' : 'ghost'"
+                        :color="form.maxContext === p.value ? 'primary' : 'neutral'"
+                        class="px-2 py-0.5 text-xs font-mono cursor-pointer"
+                        @click="form.maxContext = form.maxContext === p.value ? null : p.value"
+                      >
+                        {{ p.label }}
+                      </UButton>
+                    </div>
+                  </div>
+                </UFormField>
 
-          <UFormField :label="t('providerModels.maxInput')">
-            <UInput
-              v-model.number="form.maxInput"
-              type="number"
-              class="w-full"
-            />
-          </UFormField>
+                <!-- 最大输入 -->
+                <UFormField :label="t('providerModels.maxInput')">
+                  <div class="space-y-1.5">
+                    <UInput
+                      v-model.number="form.maxInput"
+                      type="number"
+                      :placeholder="t('providerModels.tokenPlaceholder')"
+                      class="w-full"
+                    />
+                    <div class="flex flex-wrap items-center gap-1.5">
+                      <UButton
+                        v-for="p in inputPresets"
+                        :key="p.value"
+                        size="xs"
+                        :variant="form.maxInput === p.value ? 'subtle' : 'ghost'"
+                        :color="form.maxInput === p.value ? 'primary' : 'neutral'"
+                        class="px-2 py-0.5 text-xs font-mono cursor-pointer"
+                        @click="form.maxInput = form.maxInput === p.value ? null : p.value"
+                      >
+                        {{ p.label }}
+                      </UButton>
+                    </div>
+                  </div>
+                </UFormField>
 
-          <UFormField :label="t('providerModels.maxOutput')">
-            <UInput
-              v-model.number="form.maxOutput"
-              type="number"
-              class="w-full"
-            />
-          </UFormField>
-        </div>
+                <!-- 最大输出 -->
+                <UFormField :label="t('providerModels.maxOutput')">
+                  <div class="space-y-1.5">
+                    <UInput
+                      v-model.number="form.maxOutput"
+                      type="number"
+                      :placeholder="t('providerModels.tokenPlaceholder')"
+                      class="w-full"
+                    />
+                    <div class="flex flex-wrap items-center gap-1.5">
+                      <UButton
+                        v-for="p in outputPresets"
+                        :key="p.value"
+                        size="xs"
+                        :variant="form.maxOutput === p.value ? 'subtle' : 'ghost'"
+                        :color="form.maxOutput === p.value ? 'primary' : 'neutral'"
+                        class="px-2 py-0.5 text-xs font-mono cursor-pointer"
+                        @click="form.maxOutput = form.maxOutput === p.value ? null : p.value"
+                      >
+                        {{ p.label }}
+                      </UButton>
+                    </div>
+                  </div>
+                </UFormField>
 
-        <div class="grid grid-cols-2 gap-3">
-          <UFormField :label="t('providerModels.reasoning')">
-            <USelect
-              v-model="form.reasoning"
-              :items="reasoningOptions"
-              class="w-full"
-            />
-          </UFormField>
+                <!-- 推理模式 -->
+                <UFormField :label="t('providerModels.reasoning')">
+                  <USelect
+                    v-model="form.reasoning"
+                    :items="reasoningOptions"
+                    class="w-full"
+                  />
+                </UFormField>
 
-          <UFormField :label="t('providerModels.effortLevel')">
-            <UInput
-              v-model="form.effortLevelText"
-              :placeholder="t('providerModels.effortLevelPlaceholder')"
-              class="w-full"
-            />
-          </UFormField>
-        </div>
+                <!-- 推理档位：平铺 CheckboxGroup，仅 TOGGLE 模式下动态展示 -->
+                <UFormField
+                  v-if="form.reasoning === 'TOGGLE'"
+                  :label="t('providerModels.effortLevel')"
+                >
+                  <UCheckboxGroup
+                    v-model="form.effortLevel"
+                    :items="effortLevelOptions"
+                    orientation="horizontal"
+                    class="pt-1"
+                  />
+                </UFormField>
 
-        <UFormField :label="t('providers.description')">
-          <UTextarea
-            v-model="form.description"
-            autoresize
-            :rows="2"
-            :placeholder="t('providers.descriptionPlaceholder')"
-            class="w-full"
-          />
-        </UFormField>
-
-        <div class="flex items-center justify-between rounded-sm border border-default p-3">
-          <span class="text-sm font-medium">{{ t('providers.enable') }}</span>
-          <USwitch v-model="form.enabled" :aria-label="t('providers.enable')" />
+                <!-- 3. 支持生成端点列表（展示完整路径） -->
+                <UFormField :label="t('providerModels.generates')">
+                  <div class="space-y-2 pt-0.5">
+                    <div
+                      v-for="ep in generateEndpointList"
+                      :key="ep.type"
+                      class="flex items-center gap-3 p-3 rounded-sm border transition-colors cursor-pointer select-none"
+                      :class="form.generates.includes(ep.type)
+                        ? 'border-primary/50 bg-elevated/40'
+                        : 'border-default bg-default hover:bg-elevated/20'"
+                      @click="toggleGenerate(ep.type)"
+                    >
+                      <UCheckbox
+                        :model-value="form.generates.includes(ep.type)"
+                        :aria-label="ep.type"
+                        class="pointer-events-none"
+                      />
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                          <span
+                            class="text-xs font-semibold"
+                            :class="form.generates.includes(ep.type) ? 'text-highlighted' : 'text-default'"
+                          >
+                            {{ ep.type }}
+                          </span>
+                          <UBadge v-if="ep.isCustom" size="xs" variant="subtle" color="neutral">
+                            {{ t('providerModels.configuredEndpoint') }}
+                          </UBadge>
+                        </div>
+                        <div class="mt-1 truncate text-xs text-muted font-mono select-all" :title="ep.fullUrl">
+                          {{ ep.fullUrl || t('common.empty') }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </UFormField>
+              </div>
+            </template>
+          </UCollapsible>
         </div>
       </div>
     </template>

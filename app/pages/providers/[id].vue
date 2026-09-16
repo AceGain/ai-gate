@@ -339,6 +339,38 @@ function modelTypeBadgeColor(type: string): 'primary' | 'secondary' | 'neutral' 
   }
 }
 
+function getModelTypeLabel(type: string): string {
+  const map: Record<string, string> = {
+    GenText: t('providerModels.typeGenText'),
+    GenImage: t('providerModels.typeGenImage'),
+    GenAudio: t('providerModels.typeGenAudio'),
+    GenVideo: t('providerModels.typeGenVideo'),
+    Embedding: t('providerModels.typeEmbedding'),
+    Rerank: t('providerModels.typeRerank')
+  }
+  return map[type] || type
+}
+
+function getModalityLabel(mod: string): string {
+  const map: Record<string, string> = {
+    text: t('providerModels.modalityText'),
+    image: t('providerModels.modalityImage'),
+    video: t('providerModels.modalityVideo'),
+    audio: t('providerModels.modalityAudio'),
+    pdf: t('providerModels.modalityPdf')
+  }
+  return map[mod] || mod
+}
+
+function getReasoningLabel(r: string): string {
+  const map: Record<string, string> = {
+    ALWAYS: t('providerModels.reasoningAlways'),
+    SWITCH: t('providerModels.reasoningSwitch'),
+    TOGGLE: t('providerModels.reasoningToggle')
+  }
+  return map[r] || r
+}
+
 const modelListEl = ref<HTMLElement | null>(null)
 
 useSortable(modelListEl, models, {
@@ -987,7 +1019,7 @@ const tabs = computed<TabsItem[]>(() => [
                     </span>
 
                     <UBadge :color="modelTypeBadgeColor(m.type)" variant="subtle" size="xs">
-                      {{ m.type }}
+                      {{ getModelTypeLabel(m.type) }}
                     </UBadge>
 
                     <UBadge v-if="m.category" color="neutral" variant="outline" size="xs">
@@ -1009,15 +1041,15 @@ const tabs = computed<TabsItem[]>(() => [
                     <span v-if="m.reasoning && m.reasoning !== 'DISABLE'"
                           class="inline-flex items-center gap-0.5 text-primary">
                       <UIcon name="i-lucide-brain" class="size-3"/>
-                      <span>{{ m.reasoning }}</span>
+                      <span>{{ getReasoningLabel(m.reasoning) }}</span>
                     </span>
 
                     <span v-if="m.inputModal?.length" class="text-dimmed">
-                      {{ t('providerModels.inputModalPrefix') }}: [{{ m.inputModal.join(', ') }}]
+                      {{ t('providerModels.inputModalPrefix') }}: [{{ m.inputModal.map(getModalityLabel).join(', ') }}]
                     </span>
 
                     <span v-if="m.outputModal?.length" class="text-dimmed">
-                      {{ t('providerModels.outputModalPrefix') }}: [{{ m.outputModal.join(', ') }}]
+                      {{ t('providerModels.outputModalPrefix') }}: [{{ m.outputModal.map(getModalityLabel).join(', ') }}]
                     </span>
                   </div>
                 </div>

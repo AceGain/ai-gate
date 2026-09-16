@@ -20,12 +20,18 @@ export type {
   SysEndpointGenerate
 } from '../../shared/sys-endpoint'
 export type {SysKey, SysKeyInput, SysKeyStatus} from '../../shared/sys-key'
+export {
+  SYS_MODEL_MODALITIES,
+  SYS_MODEL_EFFORT_LEVELS
+} from '../../shared/sys-model'
 export type {
   SysModel,
   SysModelInput,
   SysModelReasoning,
   SysModelStatus,
-  SysModelType
+  SysModelType,
+  SysModelModality,
+  SysModelEffortLevel
 } from '../../shared/sys-model'
 export type {SysKeyModel} from '../../shared/sys-key-model'
 
@@ -36,4 +42,34 @@ export type {SysKeyModel} from '../../shared/sys-key-model'
 export function apiBase(): string {
   const base = import.meta.env.VITE_API_BASE as string | undefined
   return base ?? ''
+}
+
+/**
+ * 将基地址与相对路径拼接为完整 URL，并返回拆分后的结构
+ */
+export function splitUrl(baseUrl?: string, path?: string): { basePart: string; pathPart: string; fullUrl: string } {
+  if (!path) return {basePart: '', pathPart: '', fullUrl: ''}
+  const trimmedPath = path.trim()
+  if (!trimmedPath) return {basePart: '', pathPart: '', fullUrl: ''}
+
+  if (/^https?:\/\//i.test(trimmedPath)) {
+    try {
+      const u = new URL(trimmedPath)
+      const origin = u.origin
+      const pathname = trimmedPath.slice(origin.length)
+      return {basePart: origin, pathPart: pathname, fullUrl: trimmedPath}
+    } catch {
+      return {basePart: '', pathPart: trimmedPath, fullUrl: trimmedPath}
+    }
+  }
+
+  const base = baseUrl?.trim()
+  if (!base) {
+    return {basePart: '', pathPart: trimmedPath, fullUrl: trimmedPath}
+  }
+
+  const baseNormalized = base.replace(/\/+$/, '')
+  const subNormalized = trimmedPath.replace(/^\/+/, '')
+  const full = `${baseNormalized}/${subNormalized}`
+  return {basePart: baseNormalized, pathPart: `/${subNormalized}`, fullUrl: full}
 }
