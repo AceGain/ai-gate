@@ -323,7 +323,7 @@ async function save() {
               color="neutral"
               variant="ghost"
               block
-              class="group justify-between px-0 py-2 border-b border-default cursor-pointer transition-colors rounded-none hover:bg-transparent"
+              class="group justify-between px-0 py-2 border-b border-default cursor-pointer transition-colors hover:bg-transparent"
               :trailing-icon="isAdvancedOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
               :ui="{
                 trailingIcon: isAdvancedOpen ? 'text-primary' : 'text-muted group-hover:text-default'

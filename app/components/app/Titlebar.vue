@@ -24,7 +24,7 @@ const {isDesktop, maximized, minimize, toggleMaximize, close} = useWindowControl
         variant="ghost"
         color="neutral"
         :aria-label="t('titlebar.minimize')"
-        class="h-full w-11 justify-center rounded-none text-highlighted transition-colors hover:bg-(--ui-titlebar-control-hover) active:bg-(--ui-titlebar-control-active)"
+        class="h-full w-11 justify-center text-highlighted transition-colors hover:bg-(--ui-titlebar-control-hover) active:bg-(--ui-titlebar-control-active)"
         @click="minimize"
       >
         <UIcon name="i-lucide-minus" class="size-3.5" />
@@ -33,7 +33,7 @@ const {isDesktop, maximized, minimize, toggleMaximize, close} = useWindowControl
         variant="ghost"
         color="neutral"
         :aria-label="t('titlebar.maximize')"
-        class="h-full w-11 justify-center rounded-none text-highlighted transition-colors hover:bg-(--ui-titlebar-control-hover) active:bg-(--ui-titlebar-control-active)"
+        class="h-full w-11 justify-center text-highlighted transition-colors hover:bg-(--ui-titlebar-control-hover) active:bg-(--ui-titlebar-control-active)"
         @click="toggleMaximize"
       >
         <UIcon :name="maximized ? 'i-lucide-copy' : 'i-lucide-square'" class="size-3.5" />
@@ -42,7 +42,7 @@ const {isDesktop, maximized, minimize, toggleMaximize, close} = useWindowControl
         variant="ghost"
         color="neutral"
         :aria-label="t('titlebar.close')"
-        class="h-full w-11 justify-center rounded-none text-highlighted transition-colors hover:bg-(--ui-titlebar-close-hover) hover:text-(--ui-titlebar-close-foreground) active:bg-(--ui-titlebar-close-active)"
+        class="h-full w-11 justify-center text-highlighted transition-colors hover:bg-(--ui-titlebar-close-hover) hover:text-(--ui-titlebar-close-foreground) active:bg-(--ui-titlebar-close-active)"
         @click="close"
       >
         <UIcon name="i-lucide-x" class="size-3.5" />

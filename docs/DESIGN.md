@@ -65,10 +65,10 @@ Nuxt UI 组件已提供键盘导航、焦点管理与 ARIA 关联，页面只需
 | 项 | 值 | 位置 |
 | --- | --- | --- |
 | 字体 | Inter；`--font-mono` 也映射为 Inter（无等宽字体）。代码/JSON/日志如需对齐阅读，按任务在局部引入等宽字体，不改全局基线 | `app/assets/css/main.css` |
-| 圆角 | `--ui-radius: 0.25rem` 为基准，Nuxt UI 依此派生 `rounded-sm`=4px、`rounded-md`=6px（以 16px 根字号为前提）；页面卡片/容器统一 `rounded-sm`，组件内部圆角交给 Nuxt UI | `app/assets/css/main.css` |
+| 圆角 | 全局无圆角：`--ui-radius: 0rem`，Nuxt UI 派生的 `rounded-xs`~`rounded-3xl` 随之全部归零（`rounded-full` 不受影响）；禁止再为圆角做任何局部覆盖 | `app/assets/css/main.css` |
 | 标题栏 | `--ui-header-height: 2rem`，全宽 `data-tauri-drag-region`；平台外观见 §6.2 | `app/assets/css/main.css` + `app/app.vue` |
 | 控件默认尺寸 | 按钮/徽标/Tab `xs`，输入/选择/开关/复选 `sm` | `app/app.config.ts` |
-| 弹窗 | 背景/边框/圆角/阴影/遮罩/宽度 | `app/app.config.ts` |
+| 弹窗 | 背景/边框/阴影/遮罩/宽度（圆角已全局归零，见上） | `app/app.config.ts` |
 | 页面骨架 | `dashboardPanel` 的 `#body` 全局为 `overflow-hidden min-h-0 p-0 gap-0`（滚动职责见 §3），页面无需重复传 `ui` | `app/app.config.ts` |
 
 - 调整全局默认优先改 `app.config.ts` 的 `defaultVariants`，页面只在偏离默认时传参（例如模态框主操作按钮 `size="sm"`）；

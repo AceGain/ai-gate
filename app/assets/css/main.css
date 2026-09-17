@@ -7,7 +7,7 @@
 }
 
 :root {
-  --ui-radius: 0.25rem;
+  --ui-radius: 0rem;
   /* 窗口标题栏高度（UHeader 高度与 UMain 视口高度偏移共用此变量）：对齐 Windows 11 原生 32px */
   --ui-header-height: 2rem;
   /* 平台 chrome 具象色白名单：标题栏控件系统观感（docs/DESIGN.md §1.3），组件只引用 Token */
@@ -39,7 +39,6 @@
 }
 ::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, currentColor 15%, transparent);
-  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: color-mix(in srgb, currentColor 30%, transparent);

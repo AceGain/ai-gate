@@ -135,12 +135,12 @@ function getModelTypeLabel(type: string): string {
 <template>
   <UCard :ui="groupCardUi">
     <UCollapsible v-model:open="isOpen" :unmount-on-hide="false">
-      <!-- 分组头：折叠/展开触发器，标题栏底色与内容分层（卡片 overflow-hidden 负责裁圆角） -->
+      <!-- 分组头：折叠/展开触发器，标题栏底色与内容分层（卡片 overflow-hidden 负责裁剪内容） -->
       <UButton
         color="neutral"
         variant="ghost"
         block
-        class="justify-between px-2 py-2 rounded-none bg-elevated/50 hover:bg-elevated transition-colors"
+        class="justify-between px-2 py-2 bg-elevated/50 hover:bg-elevated transition-colors"
         :trailing-icon="isOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
         :ui="{trailingIcon: 'text-dimmed'}"
       >

@@ -27,7 +27,7 @@ export default defineAppConfig({
     calendar: {defaultVariants: {size: 'sm'}},
     popover: {
       slots: {
-        content: 'bg-default shadow-xl rounded-sm border border-default ring-0 focus:outline-none pointer-events-auto'
+        content: 'bg-default shadow-xl border border-default ring-0 focus:outline-none pointer-events-auto'
       }
     },
     // 页面骨架：body 不滚动（裁切 + min-h-0 允许收缩），滚动统一交给页面内容容器（见 docs/DESIGN.md §3）
@@ -39,12 +39,12 @@ export default defineAppConfig({
     },
     modal: {
       slots: {
-        content: 'bg-default divide-y divide-default flex flex-col focus:outline-none rounded-sm border border-default shadow-xl ring-0'
+        content: 'bg-default divide-y divide-default flex flex-col focus:outline-none border border-default shadow-xl ring-0'
       },
       variants: {
         fullscreen: {
           false: {
-            content: 'w-[calc(100vw-2rem)] sm:max-w-md rounded-sm border border-default bg-default shadow-xl ring-0'
+            content: 'w-[calc(100vw-2rem)] sm:max-w-md border border-default bg-default shadow-xl ring-0'
           }
         },
         overlay: {
