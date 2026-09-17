@@ -1004,29 +1004,43 @@ const tabs = computed<TabsItem[]>(() => [
 
           <!-- 3. 模型列表 Tab -->
           <template #models>
-            <!-- 加载骨架 -->
-            <div v-if="configLoading && !models.length" class="divide-y divide-default/50">
-              <div
-                v-for="i in 5"
+            <!-- 加载骨架：分组卡片形态 -->
+            <div v-if="configLoading && !models.length" class="flex flex-col gap-2">
+              <UCard
+                v-for="i in 3"
                 :key="i"
-                class="flex items-center justify-between py-2 px-1 gap-2"
+                :ui="{root: 'rounded-sm', body: 'p-0 sm:p-0'}"
               >
-                <div class="flex flex-1 items-center gap-2.5">
-                  <USkeleton class="size-7 rounded-sm"/>
-                  <USkeleton class="h-4 w-28 rounded-sm"/>
-                  <USkeleton class="h-4 w-16 rounded-sm"/>
-                  <USkeleton class="h-4 w-12 rounded-sm"/>
+                <!-- 分组头骨架 -->
+                <div class="flex items-center justify-between bg-elevated/50 px-2 py-2">
+                  <USkeleton class="h-4 w-24 rounded-sm"/>
                 </div>
-                <div class="flex items-center gap-1.5">
-                  <USkeleton class="h-5 w-9 rounded-sm"/>
-                  <USkeleton class="size-6 rounded-sm"/>
-                  <USkeleton class="size-6 rounded-sm"/>
+                <!-- 模型行骨架 -->
+                <div class="divide-y divide-default/50 border-t border-default/50">
+                  <div
+                    v-for="j in 3"
+                    :key="j"
+                    class="flex items-center justify-between py-1.5 px-2 gap-2"
+                  >
+                    <div class="flex flex-1 items-center gap-2.5">
+                      <USkeleton class="size-7 rounded-sm"/>
+                      <USkeleton class="h-4 w-28 rounded-sm"/>
+                      <USkeleton class="h-4 w-16 rounded-sm"/>
+                      <USkeleton class="h-4 w-12 rounded-sm"/>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                      <USkeleton class="h-5 w-9 rounded-sm"/>
+                      <USkeleton class="size-6 rounded-sm"/>
+                      <USkeleton class="size-6 rounded-sm"/>
+                      <USkeleton class="size-6 rounded-sm"/>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </UCard>
             </div>
 
-            <!-- 模型列表：按模型分组分组展示，组内两行式简化行 -->
-            <div v-else-if="models.length" class="space-y-4">
+            <!-- 模型列表：按模型分组折叠展示，每组一张卡片 -->
+            <div v-else-if="models.length" class="flex flex-col gap-2">
               <ProviderModelGroup
                 v-for="group in modelGroups"
                 :key="group.key"
