@@ -261,7 +261,7 @@ async function save() {
         <!-- 完整端点地址预览 -->
         <UFormField :label="t('providerEndpoints.fullUrlPreview')">
           <div
-            class="flex items-center justify-between gap-2 rounded-sm border border-default bg-elevated/30 px-2.5 py-1.5 min-h-9"
+            class="flex items-center justify-between gap-2 border border-default bg-elevated/30 px-2.5 py-1.5 min-h-9"
           >
             <code
               class="truncate text-xs select-all flex-1 min-w-0"

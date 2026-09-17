@@ -488,7 +488,7 @@ async function save() {
                       :model-value="form.generates.includes(ep.type)"
                       variant="card"
                       :ui="{
-                        root: 'cursor-pointer select-none items-center rounded-sm px-2.5 py-1.5',
+                        root: 'cursor-pointer select-none items-center px-2.5 py-1.5',
                         wrapper: 'flex flex-row items-center gap-2 min-w-0 flex-1',
                         label: 'text-xs font-semibold shrink-0',
                         description: 'min-w-0 flex-1 truncate text-xs font-mono'
@@ -505,7 +505,6 @@ async function save() {
                             v-if="ep.isDefault"
                             variant="subtle"
                             color="primary"
-                            class="rounded-sm py-0.5"
                           >
                             {{ t('providerEndpoints.defaultBadge') }}
                           </UBadge>
@@ -521,7 +520,7 @@ async function save() {
                   </div>
                   <div
                     v-else
-                    class="flex items-center justify-center p-4 rounded-sm border border-dashed border-default bg-elevated/10 text-xs text-muted"
+                    class="flex items-center justify-center p-4 border border-dashed border-default bg-elevated/10 text-xs text-muted"
                   >
                     {{ t('providerModels.noGenerateEndpoints') }}
                   </div>

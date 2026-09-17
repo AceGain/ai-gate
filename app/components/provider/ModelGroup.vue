@@ -24,9 +24,8 @@ const {t} = useI18n()
 const toast = useToast()
 const {testModel} = useProviderConfig()
 
-/** 分组卡片 UCard 主题覆盖：行式密度（内边距由行容器接管），圆角对齐项目基线；行与分组头自带 hover，卡片层不叠加 */
+/** 分组卡片 UCard 主题覆盖：行式密度（内边距由行容器接管）；行与分组头自带 hover，卡片层不叠加 */
 const groupCardUi = {
-  root: 'rounded-sm',
   body: 'p-0 sm:p-0'
 }
 
@@ -143,8 +142,10 @@ function getModelTypeLabel(type: string): string {
         class="justify-between px-2 py-2 bg-elevated/50 hover:bg-elevated transition-colors"
         :trailing-icon="isOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
         :ui="{trailingIcon: 'text-dimmed'}"
+        :title="label"
       >
-        <span class="text-sm font-semibold text-highlighted">{{ label }}</span>
+        <!-- 分组标题：粗体高亮压过行内常规字重的模型名，确立主从层级 -->
+        <span class="truncate text-sm font-semibold text-highlighted">{{ label }}</span>
       </UButton>
 
       <!-- 模型行：单行压缩（显示名 + 类型徽章） -->
@@ -153,11 +154,11 @@ function getModelTypeLabel(type: string): string {
           <div
             v-for="m in localItems"
             :key="m.id"
-            class="group flex items-center justify-between py-1.5 px-2 hover:bg-elevated/20 transition-colors rounded-sm gap-2"
+            class="group flex items-center justify-between py-1.5 px-2 hover:bg-elevated/20 transition-colors gap-2"
           >
             <div class="flex min-w-0 flex-1 items-center gap-2.5">
               <div
-                class="drag-handle flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm text-dimmed hover:bg-elevated hover:text-default"
+                class="drag-handle flex size-7 shrink-0 cursor-pointer items-center justify-center text-dimmed hover:bg-elevated hover:text-default"
                 aria-hidden="true"
                 :title="t('providers.dragToSort')"
               >
@@ -167,7 +168,7 @@ function getModelTypeLabel(type: string): string {
               <!-- 单行：显示名（无则回退模型编码）+ 模型类型 + 失效图标（仅异常时） -->
               <div class="flex min-w-0 flex-1 items-center gap-2">
                 <span
-                  class="min-w-0 shrink truncate text-sm font-semibold"
+                  class="min-w-0 shrink truncate text-sm"
                   :class="m.enabled ? 'text-highlighted' : 'text-dimmed'"
                   :title="displayName(m)"
                 >
@@ -179,7 +180,7 @@ function getModelTypeLabel(type: string): string {
                   variant="subtle"
                   :icon="modelTypeIcon(m.type)"
                   :label="getModelTypeLabel(m.type)"
-                  class="shrink-0 rounded-sm"
+                  class="shrink-0"
                 />
 
                 <UIcon

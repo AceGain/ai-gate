@@ -174,7 +174,7 @@ const revealedKeys = ref<Set<string>>(new Set())
 
 /** 密钥卡片 UCard 主题覆盖：行式密度（内边距由行容器接管），圆角与 hover 效果对齐项目基线 */
 const keyCardUi = {
-  root: 'rounded-sm transition hover:ring-primary/40 hover:bg-elevated/30',
+  root: 'transition hover:ring-primary/40 hover:bg-elevated/30',
   body: 'p-0 sm:p-0'
 }
 
@@ -528,7 +528,7 @@ const tabs = computed<TabsItem[]>(() => [
 
             <!-- 右侧：启用状态开关 -->
             <div class="flex shrink-0 items-center">
-              <div class="flex items-center gap-1.5 rounded-sm border border-default bg-elevated/50 px-2 py-1 text-xs">
+              <div class="flex items-center gap-1.5 border border-default bg-elevated/50 px-2 py-1 text-xs">
                 <span class="text-muted">
                   {{ provider.enabled ? t('providers.enabled') : t('providers.disabled') }}
                 </span>
@@ -606,7 +606,7 @@ const tabs = computed<TabsItem[]>(() => [
             <div v-else class="divide-y divide-default/50">
               <!-- 默认端点 1: Base URL -->
               <div
-                class="group flex items-center justify-between py-2.5 px-2 hover:bg-elevated/20 transition-colors rounded-sm gap-4"
+                class="group flex items-center justify-between py-2.5 px-2 hover:bg-elevated/20 transition-colors gap-4"
               >
                 <!-- 左侧两行信息：第一行标题，第二行地址 -->
                 <div class="flex min-w-0 flex-1 flex-col gap-1">
@@ -653,7 +653,7 @@ const tabs = computed<TabsItem[]>(() => [
 
               <!-- 默认端点 2: Models -->
               <div
-                class="group flex items-center justify-between py-2.5 px-2 hover:bg-elevated/20 transition-colors rounded-sm gap-4"
+                class="group flex items-center justify-between py-2.5 px-2 hover:bg-elevated/20 transition-colors gap-4"
               >
                 <!-- 左侧两行信息：第一行标题，第二行全路径地址 -->
                 <div class="flex min-w-0 flex-1 flex-col gap-1">
@@ -708,7 +708,7 @@ const tabs = computed<TabsItem[]>(() => [
               <div
                 v-for="ep in generateEndpoints"
                 :key="ep.id"
-                class="group flex items-center justify-between py-2.5 px-2 hover:bg-elevated/20 transition-colors rounded-sm gap-4"
+                class="group flex items-center justify-between py-2.5 px-2 hover:bg-elevated/20 transition-colors gap-4"
               >
                 <!-- 左侧两行信息：第一行标题，第二行全路径地址 -->
                 <div class="flex min-w-0 flex-1 flex-col gap-1">
@@ -721,7 +721,6 @@ const tabs = computed<TabsItem[]>(() => [
                       v-if="ep.isDefault"
                       color="primary"
                       variant="subtle"
-                      class="rounded-sm py-0.5"
                     >
                       {{ t('providerEndpoints.defaultBadge') }}
                     </UBadge>
@@ -813,7 +812,7 @@ const tabs = computed<TabsItem[]>(() => [
                   <!-- 左侧信息区：拖拽手柄 + 纵向信息流（第一行名称/状态/过期，第二行密文与操作） -->
                   <div class="flex min-w-0 flex-1 items-center gap-2">
                     <div
-                      class="drag-handle -ml-1 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm text-dimmed transition-colors hover:bg-elevated hover:text-default"
+                      class="drag-handle -ml-1 flex size-7 shrink-0 cursor-pointer items-center justify-center text-dimmed transition-colors hover:bg-elevated hover:text-default"
                       aria-hidden="true"
                       :title="t('providers.dragToSort')"
                     >
@@ -824,7 +823,7 @@ const tabs = computed<TabsItem[]>(() => [
                       <!-- 第一行：名称 + 状态徽标 + 有效期 -->
                       <div class="flex flex-wrap items-center gap-2">
                         <span
-                          class="truncate text-sm font-semibold"
+                          class="truncate text-sm"
                           :class="k.enabled ? 'text-highlighted' : 'text-dimmed'"
                           :title="k.name"
                         >

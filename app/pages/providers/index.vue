@@ -8,7 +8,7 @@ const confirmDialog = useConfirmDialog()
 
 /** 供应商卡片 UCard 主题覆盖：行式密度（内边距由行容器接管），圆角与 hover 效果对齐项目基线 */
 const providerCardUi = {
-  root: 'rounded-sm select-none transition hover:ring-primary/40 hover:bg-elevated/50',
+  root: 'select-none transition hover:ring-primary/40 hover:bg-elevated/50',
   body: 'p-0 sm:p-0'
 }
 
@@ -91,7 +91,7 @@ onBeforeUnmount(() => {
             <div class="flex min-h-[64px] items-center gap-3 px-3.5 py-2.5">
               <!-- 拖拽手柄（扩大命中区，hover 高亮）：排序唯一入口，A11y 例外见 docs/DESIGN.md §6.3 -->
               <div
-                class="drag-handle -ml-1 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm text-dimmed transition-colors hover:bg-elevated hover:text-default"
+                class="drag-handle -ml-1 flex size-7 shrink-0 cursor-pointer items-center justify-center text-dimmed transition-colors hover:bg-elevated hover:text-default"
                 aria-hidden="true"
                 :title="t('providers.dragToSort')"
               >

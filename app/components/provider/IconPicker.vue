@@ -89,17 +89,17 @@ watch(open, (v) => {
     <UPopover
       v-model:open="open"
       :content="{ side: 'bottom', align: 'center', sideOffset: 8 }"
-      :ui="{ content: 'w-84 p-3 rounded-sm border border-default bg-default shadow-lg' }"
+      :ui="{ content: 'w-84 p-3 border border-default bg-default shadow-lg' }"
     >
       <UButton
         color="neutral"
         variant="outline"
-        class="group relative size-14 shrink-0 p-0 overflow-hidden rounded-sm border border-default bg-elevated hover:border-primary/60 active:scale-95 justify-center items-center"
+        class="group relative size-14 shrink-0 p-0 overflow-hidden border border-default bg-elevated hover:border-primary/60 active:scale-95 justify-center items-center"
         :aria-label="t('providers.iconChange')"
       >
         <ProviderIcon :icon="model" :name="props.name || '?'" size="xl"/>
         <!-- 悬停半透明遮罩与相机提示 -->
-        <div class="absolute inset-0 flex items-center justify-center rounded-sm bg-elevated/80 opacity-0 transition-opacity group-hover:opacity-100">
+        <div class="absolute inset-0 flex items-center justify-center bg-elevated/80 opacity-0 transition-opacity group-hover:opacity-100">
           <UIcon name="i-lucide-camera" class="size-4 text-highlighted"/>
         </div>
       </UButton>
@@ -132,7 +132,7 @@ watch(open, (v) => {
               :color="!model ? 'primary' : 'neutral'"
               :variant="!model ? 'subtle' : 'outline'"
               icon="i-lucide-sparkles"
-              class="flex-1 justify-center rounded-sm"
+              class="flex-1 justify-center"
               @click="resetToAuto"
             >
               {{ t('providers.iconAuto') }}
@@ -141,7 +141,7 @@ watch(open, (v) => {
               color="neutral"
               variant="outline"
               icon="i-lucide-upload"
-              class="flex-1 justify-center rounded-sm"
+              class="flex-1 justify-center"
               @click="pickFile"
             >
               {{ t('providers.iconUpload') }}
@@ -156,7 +156,7 @@ watch(open, (v) => {
                 :key="item.value"
                 variant="ghost"
                 color="neutral"
-                class="size-10 p-1 justify-center rounded-sm border transition-all hover:border-primary/50 hover:bg-elevated"
+                class="size-10 p-1 justify-center border transition-all hover:border-primary/50 hover:bg-elevated"
                 :class="model === item.value ? 'border-primary bg-primary/10 ring-1 ring-primary' : 'border-transparent bg-elevated/60'"
                 :title="item.label"
                 :aria-label="item.label"

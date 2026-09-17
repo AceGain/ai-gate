@@ -156,7 +156,7 @@ async function importSelected() {
           class="w-full"
         />
 
-        <div class="flex items-center justify-between gap-2 rounded-sm px-2.5 py-1">
+        <div class="flex items-center justify-between gap-2 px-2.5 py-1">
           <UCheckbox
             :model-value="allVisibleSelected"
             :label="t('providerModels.importSelectAll')"
@@ -175,7 +175,7 @@ async function importSelected() {
             :disabled="existingCodes.has(item.code)"
             variant="card"
             :ui="{
-              root: 'cursor-pointer select-none items-center rounded-sm px-2.5 py-1.5',
+              root: 'cursor-pointer select-none items-center px-2.5 py-1.5',
               wrapper: 'flex flex-row items-center gap-2 min-w-0 flex-1',
               label: 'text-xs font-medium min-w-0 flex-1 truncate',
               description: 'text-xs text-muted truncate'
@@ -192,7 +192,7 @@ async function importSelected() {
                   v-if="existingCodes.has(item.code)"
                   color="neutral"
                   variant="subtle"
-                  class="shrink-0 rounded-sm"
+                  class="shrink-0"
                 >
                   {{ t('providerModels.importExists') }}
                 </UBadge>
