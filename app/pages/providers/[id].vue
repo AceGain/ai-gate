@@ -296,7 +296,7 @@ function openEditModel(m: SysModel) {
 }
 
 async function confirmDeleteModel(m: SysModel) {
-  const label = m.name || `${provider.value?.code ?? ''}/${m.code}`
+  const label = m.name || m.code
   const confirmed = await confirmDialog({
     title: t('providerModels.removeConfirmTitle'),
     description: t('providerModels.removeConfirmDesc', {name: label})
@@ -978,8 +978,8 @@ const tabs = computed<TabsItem[]>(() => [
               <ProviderModelGroup
                 v-for="group in modelGroups"
                 :key="group.key"
+                :provider-id="provider.id"
                 :label="group.label"
-                :provider-code="provider.code"
                 :items="group.items"
                 @reorder="handleModelGroupReorder"
                 @edit="openEditModel"

@@ -147,6 +147,78 @@ models.get('/providers/:providerId/models/remote', async (c) => {
   return c.json({models: items})
 })
 
+/** 组装最小生成测试请求：按生成端点类型选择请求体与认证头 */
+function buildTestPayload(generate: string, code: string, key: string | undefined): {headers: Record<string, string>, body: unknown} {
+  const headers: Record<string, string> = {'Content-Type': 'application/json'}
+  if (key) {
+    if (generate === 'Messages') {
+      headers['x-api-key'] = key
+      headers['anthropic-version'] = '2023-06-01'
+    } else {
+      headers.Authorization = `Bearer ${key}`
+    }
+  }
+  const body = generate === 'Responses'
+    ? {model: code, input: 'ping', max_output_tokens: 1}
+    : {model: code, messages: [{role: 'user', content: 'ping'}], max_tokens: 1}
+  return {headers, body}
+}
+
+/** 从上游错误响应提取可读详情（兼容 OpenAI/Anthropic 的 error.message 结构） */
+function extractUpstreamDetail(status: number, text: string): string {
+  try {
+    const json = JSON.parse(text) as {error?: {message?: string} | string, message?: string}
+    const msg = typeof json.error === 'string' ? json.error : json.error?.message ?? json.message
+    if (msg) return `HTTP ${status}: ${msg}`
+  } catch { /* 非 JSON 响应仅保留状态码 */ }
+  return `HTTP ${status}`
+}
+
+/** 测试单个模型可用性：以最小生成请求打到上游，返回延迟；失败返回错误码 + 详情 */
+models.post('/providers/:providerId/models/:id/test', async (c) => {
+  const providerId = c.req.param('providerId')
+  const id = c.req.param('id')
+  const model = (await listModels(providerId)).find(m => m.id === id)
+  if (!model) return c.json({error: 'MODEL_NOT_FOUND'}, 404)
+
+  const endpoints = await listEndpoints(providerId)
+  const base = endpoints.find(e => e.type === 'base')
+  if (!base?.path?.trim()) return c.json({error: 'MISSING_BASE_ENDPOINT'}, 400)
+  const generate = endpoints.find(e => e.type === 'generate' && model.generates.includes(e.generate))
+    ?? endpoints.find(e => e.type === 'generate' && e.isDefault)
+    ?? endpoints.find(e => e.type === 'generate')
+  if (!generate?.path?.trim()) return c.json({error: 'MISSING_GENERATE_ENDPOINT'}, 400)
+
+  const keys = await listKeys(providerId)
+  const key = keys.find(k => k.enabled && k.status === 'ACTIVE')?.secret
+
+  const url = joinUrl(base.path.trim(), generate.path.trim())
+  const {headers, body} = buildTestPayload(generate.generate, model.code, key)
+
+  const startedAt = Date.now()
+  let res: Response
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(20_000)
+    })
+  } catch (err) {
+    if (err instanceof Error && err.name === 'TimeoutError') {
+      return c.json({error: 'UPSTREAM_TIMEOUT'}, 502)
+    }
+    console.warn('[ai-gate] 测试模型失败:', url, err)
+    return c.json({error: 'UPSTREAM_UNREACHABLE'}, 502)
+  }
+  const latencyMs = Date.now() - startedAt
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    return c.json({error: 'UPSTREAM_ERROR', detail: extractUpstreamDetail(res.status, text)}, 502)
+  }
+  return c.json({ok: true, latencyMs})
+})
+
 /** 批量导入模型：跳过已存在的编码，其余以最小配置落库（类型、分组等后续在编辑弹窗完善） */
 models.post('/providers/:providerId/models/import', async (c) => {
   const providerId = c.req.param('providerId')

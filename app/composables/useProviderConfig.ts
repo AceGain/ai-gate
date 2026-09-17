@@ -165,6 +165,14 @@ export function useProviderConfig() {
     )
   }
 
+  /** 测试模型可用性（经后端向上游发起最小生成请求）；失败抛出，由调用方按错误码就近提示 */
+  async function testModel(providerId: string, id: string): Promise<{ok: true, latencyMs: number}> {
+    return await $fetch<{ok: true, latencyMs: number}>(
+      `${apiBase()}/api/providers/${providerId}/models/${id}/test`,
+      {method: 'POST'}
+    )
+  }
+
   async function createModel(providerId: string, input: SysModelInput): Promise<SysModel> {
     const sort = models.value.length ? Math.max(...models.value.map(m => m.sort)) + 1 : 0
     const created = await $fetch<SysModel>(`${apiBase()}/api/providers/${providerId}/models`, {
@@ -241,6 +249,7 @@ export function useProviderConfig() {
     loadModels,
     fetchRemoteModels,
     importModels,
+    testModel,
     createModel,
     updateModel,
     removeModel,

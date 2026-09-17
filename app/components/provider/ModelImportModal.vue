@@ -127,7 +127,7 @@ async function importSelected() {
   >
     <template #body>
       <!-- 加载骨架：与条目行同构，避免加载完成跳动 -->
-      <div v-if="loading" class="space-y-2 p-4">
+      <div v-if="loading" class="space-y-2">
         <div v-for="i in 5" :key="i" class="flex items-center gap-2.5">
           <USkeleton class="size-4.5 rounded-sm"/>
           <div class="flex-1 space-y-1.5">
@@ -138,7 +138,7 @@ async function importSelected() {
       </div>
 
       <!-- 拉取失败：错误文案 + 重试入口 -->
-      <div v-else-if="errorCode" class="flex flex-col items-center justify-center gap-3 px-4 py-10">
+      <div v-else-if="errorCode" class="flex flex-col items-center justify-center gap-3 py-10">
         <UEmpty :title="errorMessage" variant="naked"/>
         <UButton
           icon="i-lucide-refresh-cw"
@@ -152,12 +152,12 @@ async function importSelected() {
       </div>
 
       <!-- 上游列表为空 -->
-      <div v-else-if="!items.length" class="flex min-h-40 items-center justify-center p-4">
+      <div v-else-if="!items.length" class="flex min-h-40 items-center justify-center">
         <UEmpty :title="t('providerModels.fetchEmpty')" variant="naked"/>
       </div>
 
       <!-- 模型勾选列表：搜索 + 全选 + 滚动列表 -->
-      <div v-else class="space-y-2 p-4">
+      <div v-else class="space-y-2">
         <UInput
           v-model="filter"
           icon="i-lucide-search"
@@ -232,7 +232,7 @@ async function importSelected() {
         :disabled="!selectedCount"
         @click="importSelected"
       >
-        {{ t('providerModels.importBtn', {count: selectedCount}) }}
+        {{ t('providerModels.importBtn') }}
       </UButton>
     </template>
   </UModal>
