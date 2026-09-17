@@ -216,7 +216,8 @@ async function save() {
   saving.value = true
   const input: SysModelInput = {
     code: form.code.trim(),
-    name: form.name.trim() || form.code.trim(),
+    // 显示名允许为空，列表展示时回退到模型编码
+    name: form.name.trim(),
     category: form.category.trim(),
     type: form.type,
     status: form.status,

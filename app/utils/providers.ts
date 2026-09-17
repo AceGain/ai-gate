@@ -31,7 +31,8 @@ export type {
   SysModelStatus,
   SysModelType,
   SysModelModality,
-  SysModelEffortLevel
+  SysModelEffortLevel,
+  RemoteModelItem
 } from '../../shared/sys-model'
 export type {SysKeyModel} from '../../shared/sys-key-model'
 

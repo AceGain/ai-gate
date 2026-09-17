@@ -62,6 +62,14 @@ export interface SysModel {
   updateTime: string
 }
 
+/** 从供应商模型列表端点（如 /v1/models）拉取到的模型条目 */
+export interface RemoteModelItem {
+  /** 模型编码（上游返回的 id） */
+  code: string
+  /** 上游提供的显示名（如 Anthropic 的 display_name），无则为空串 */
+  name: string
+}
+
 export interface SysModelInput {
   code: string
   name?: string

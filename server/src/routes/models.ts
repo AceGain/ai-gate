@@ -3,8 +3,8 @@
  */
 import {Hono} from 'hono'
 import {newId} from '../../../shared/sys-provider'
-import type {SysModelInput, SysModelReasoning, SysModelStatus, SysModelType} from '../../../shared/sys-model'
-import {insertModel, listModels, removeModel, reorderModels, updateModel} from '../store'
+import type {RemoteModelItem, SysModelInput, SysModelReasoning, SysModelStatus, SysModelType} from '../../../shared/sys-model'
+import {insertModel, listEndpoints, listKeys, listModels, removeModel, reorderModels, updateModel} from '../store'
 
 export const models = new Hono()
 
@@ -74,6 +74,128 @@ models.put('/providers/:providerId/models/reorder', async (c) => {
   }
   await reorderModels(body)
   return c.json({ok: true})
+})
+
+/** 拼接基地址与模型列表端点路径（模型列表端点为绝对地址时直接使用） */
+function joinUrl(base: string, path: string): string {
+  if (/^https?:\/\//i.test(path)) return path
+  return `${base.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`
+}
+
+/** 依序取第一个非空字符串值 */
+function firstNonEmptyString(...values: unknown[]): string | null {
+  for (const v of values) {
+    if (typeof v === 'string' && v.trim()) return v.trim()
+  }
+  return null
+}
+
+/**
+ * 从上游响应解析模型列表：兼容 OpenAI 风格 {data: [...]}、{models: [...]} 与裸数组；
+ * 条目编码取 id/code/name，显示名取 display_name/displayName；结构无法识别时返回 null
+ */
+function extractRemoteModels(json: unknown): RemoteModelItem[] | null {
+  let arr: unknown[] | null = null
+  if (Array.isArray(json)) {
+    arr = json
+  } else if (json && typeof json === 'object') {
+    const {data, models} = json as {data?: unknown, models?: unknown}
+    if (Array.isArray(data)) arr = data
+    else if (Array.isArray(models)) arr = models
+  }
+  if (!arr) return null
+
+  const items: RemoteModelItem[] = []
+  const seen = new Set<string>()
+  for (const entry of arr) {
+    if (!entry || typeof entry !== 'object') continue
+    const obj = entry as Record<string, unknown>
+    const code = firstNonEmptyString(obj.id, obj.code, obj.name)
+    if (!code || seen.has(code)) continue
+    seen.add(code)
+    items.push({code, name: firstNonEmptyString(obj.display_name, obj.displayName) ?? ''})
+  }
+  return items
+}
+
+/** 从上游模型列表端点拉取可用模型（经服务端转发，规避浏览器跨域） */
+models.get('/providers/:providerId/models/remote', async (c) => {
+  const providerId = c.req.param('providerId')
+  const endpoints = await listEndpoints(providerId)
+  const base = endpoints.find(e => e.type === 'base')
+  const modelsEndpoint = endpoints.find(e => e.type === 'models')
+  if (!base?.path?.trim()) return c.json({error: 'MISSING_BASE_ENDPOINT'}, 400)
+  if (!modelsEndpoint?.path?.trim()) return c.json({error: 'MISSING_MODELS_ENDPOINT'}, 400)
+
+  const url = joinUrl(base.path.trim(), modelsEndpoint.path.trim())
+  const keys = await listKeys(providerId)
+  const key = keys.find(k => k.enabled && k.status === 'ACTIVE')
+  const headers: Record<string, string> = key ? {Authorization: `Bearer ${key.secret}`} : {}
+
+  let res: Response
+  try {
+    res = await fetch(url, {headers, signal: AbortSignal.timeout(15_000)})
+  } catch (err) {
+    console.warn('[ai-gate] 拉取上游模型列表失败:', url, err)
+    return c.json({error: 'UPSTREAM_UNREACHABLE'}, 502)
+  }
+  if (!res.ok) return c.json({error: 'UPSTREAM_ERROR', detail: `HTTP ${res.status}`}, 502)
+
+  const json: unknown = await res.json().catch(() => null)
+  const items = extractRemoteModels(json)
+  if (!items) return c.json({error: 'UPSTREAM_INVALID_RESPONSE'}, 502)
+  return c.json({models: items})
+})
+
+/** 批量导入模型：跳过已存在的编码，其余以最小配置落库（类型、分组等后续在编辑弹窗完善） */
+models.post('/providers/:providerId/models/import', async (c) => {
+  const providerId = c.req.param('providerId')
+  const body = await c.req.json<unknown>().catch(() => null)
+  const rawModels = (body as {models?: unknown} | null)?.models
+  if (!Array.isArray(rawModels) || rawModels.length === 0) {
+    return c.json({error: 'Body must be {models: [{code, name?, type?}]}'}, 400)
+  }
+
+  const parsed: {code: string, name: string, type: SysModelType}[] = []
+  for (const raw of rawModels) {
+    const p = (raw ?? {}) as Partial<SysModelInput>
+    const code = typeof p.code === 'string' ? p.code.trim() : ''
+    if (!code) return c.json({error: 'Invalid model: missing code'}, 400)
+    if (!p.type || !VALID_TYPES.has(p.type)) {
+      return c.json({error: 'Invalid model: type must be GenText, GenImage, GenAudio, GenVideo, Embedding, or Rerank'}, 400)
+    }
+    parsed.push({code, name: typeof p.name === 'string' ? p.name.trim() : '', type: p.type})
+  }
+
+  const endpoints = await listEndpoints(providerId)
+  const defaultGenerate = endpoints.find(e => e.type === 'generate' && e.isDefault)
+    ?? endpoints.find(e => e.type === 'generate')
+  const initialGenerate = defaultGenerate?.generate || defaultGenerate?.path || ''
+
+  const existing = await listModels(providerId)
+  const existingCodes = new Set(existing.map(m => m.code))
+  let nextSort = existing.reduce((max, m) => Math.max(max, m.sort), -1) + 1
+
+  let imported = 0
+  let skipped = 0
+  for (const item of parsed) {
+    if (existingCodes.has(item.code)) {
+      skipped++
+      continue
+    }
+    await insertModel(newId(), providerId, {
+      code: item.code,
+      name: item.name,
+      type: item.type,
+      inputModal: ['text'],
+      outputModal: ['text'],
+      generates: initialGenerate ? [initialGenerate] : [],
+      sort: nextSort++
+    })
+    existingCodes.add(item.code)
+    imported++
+  }
+  return c.json({imported, skipped}, 201)
 })
 
 /** 新增 */

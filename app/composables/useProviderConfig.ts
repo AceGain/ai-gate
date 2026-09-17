@@ -1,4 +1,5 @@
 import type {
+  RemoteModelItem,
   SysEndpoint,
   SysEndpointInput,
   SysKey,
@@ -150,6 +151,20 @@ export function useProviderConfig() {
 
   /* ---------------- 模型 (Models) ---------------- */
 
+  /** 拉取上游模型列表（经后端转发）；失败抛出，由调用方按 error 码就近展示 */
+  async function fetchRemoteModels(providerId: string): Promise<RemoteModelItem[]> {
+    const res = await $fetch<{models: RemoteModelItem[]}>(`${apiBase()}/api/providers/${providerId}/models/remote`)
+    return res.models ?? []
+  }
+
+  /** 批量导入模型（后端跳过已存在编码）；成功后由调用方重新加载列表 */
+  async function importModels(providerId: string, inputs: SysModelInput[]): Promise<{imported: number, skipped: number}> {
+    return await $fetch<{imported: number, skipped: number}>(
+      `${apiBase()}/api/providers/${providerId}/models/import`,
+      {method: 'POST', body: {models: inputs}}
+    )
+  }
+
   async function createModel(providerId: string, input: SysModelInput): Promise<SysModel> {
     const sort = models.value.length ? Math.max(...models.value.map(m => m.sort)) + 1 : 0
     const created = await $fetch<SysModel>(`${apiBase()}/api/providers/${providerId}/models`, {
@@ -224,6 +239,8 @@ export function useProviderConfig() {
     removeKey,
     saveKeyOrder,
     loadModels,
+    fetchRemoteModels,
+    importModels,
     createModel,
     updateModel,
     removeModel,

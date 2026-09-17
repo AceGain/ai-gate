@@ -28,7 +28,8 @@
     "deleted": "已删除",
     "clear": "清空",
     "today": "今天",
-    "selectDate": "选择日期"
+    "selectDate": "选择日期",
+    "retry": "重试"
   },
   "dashboard": {
     "title": "仪表盘"
@@ -141,12 +142,12 @@
     "desc": "管理该供应商支持的模型、模态类型与能力配置",
     "editTitle": "编辑模型",
     "newTitle": "新增模型",
-    "code": "模型标识",
+    "code": "模型编码",
     "codePlaceholder": "如 gpt-4o、claude-3-5-sonnet",
-    "codeRequired": "请输入模型标识",
-    "codeDuplicate": "该模型标识已存在",
+    "codeRequired": "请输入模型编码",
+    "codeDuplicate": "该模型编码已存在",
     "name": "显示名称",
-    "namePlaceholder": "选填，留空时展示标识",
+    "namePlaceholder": "选填，留空时展示编码",
     "category": "模型分组",
     "categoryPlaceholder": "如 LLM、Embedding、多模态",
     "type": "模型类型",
@@ -204,8 +205,24 @@
     "effortMax": "最大",
     "inputModalPrefix": "入",
     "outputModalPrefix": "出",
+    "ungrouped": "未分组",
+    "fetchTitle": "从模型列表获取模型",
+    "fetchAction": "获取模型",
+    "fetchEmpty": "供应商模型列表为空",
+    "searchModelsPlaceholder": "搜索模型...",
+    "importSelectAll": "全选",
+    "importSelectedCount": "已选 {count} 个",
+    "importBtn": "导入 {count} 个",
+    "importExists": "已存在",
+    "importSuccess": "已导入 {count} 个模型",
+    "errorMissingBase": "请先在「端点」标签页配置 Base URL",
+    "errorMissingModelsEndpoint": "请先在「端点」标签页配置模型列表端点",
+    "errorUnreachable": "无法连接供应商，请检查网络与端点配置",
+    "errorUpstream": "供应商返回错误，请检查密钥与端点配置",
+    "errorInvalidResponse": "供应商返回的模型列表格式无法识别",
+    "errorFetchFailed": "获取模型列表失败",
     "removeConfirmTitle": "删除模型",
-    "removeConfirmDesc": "确定删除模型「{code}」？"
+    "removeConfirmDesc": "确定删除模型「{name}」？"
   },
   "virtualModels": {
     "title": "虚拟模型",

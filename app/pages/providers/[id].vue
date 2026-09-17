@@ -279,10 +279,15 @@ useSortable(keyListEl, keys, {
 /* ---------------- 4. 模型弹窗与操作 ---------------- */
 const modelModalOpen = ref(false)
 const editingModel = ref<SysModel | null>(null)
+const importModalOpen = ref(false)
 
 function openCreateModel() {
   editingModel.value = null
   modelModalOpen.value = true
+}
+
+function openImportModels() {
+  importModalOpen.value = true
 }
 
 function openEditModel(m: SysModel) {
@@ -291,9 +296,10 @@ function openEditModel(m: SysModel) {
 }
 
 async function confirmDeleteModel(m: SysModel) {
+  const label = m.name || `${provider.value?.code ?? ''}/${m.code}`
   const confirmed = await confirmDialog({
     title: t('providerModels.removeConfirmTitle'),
-    description: t('providerModels.removeConfirmDesc', {code: m.code})
+    description: t('providerModels.removeConfirmDesc', {name: label})
   })
   if (confirmed && provider.value) {
     await removeModel(provider.value.id, m.id)
@@ -322,78 +328,43 @@ async function handleToggleModelEnabled(m: SysModel, enabled: boolean) {
   })
 }
 
-function formatTokens(count: number): string {
-  if (!count) return '0'
-  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`
-  if (count >= 1000) return `${Math.round(count / 1000)}K`
-  return String(count)
-}
+/* 模型按「模型分组」(category) 分组展示：分组按首现顺序排列，未分组的固定在最后 */
+const UNGROUPED_KEY = '__ungrouped__'
 
-function modelTypeBadgeColor(type: string): 'primary' | 'secondary' | 'neutral' | 'success' | 'warning' {
-  switch (type) {
-    case 'GenText':
-      return 'primary'
-    case 'GenImage':
-      return 'secondary'
-    case 'GenAudio':
-    case 'GenVideo':
-      return 'warning'
-    case 'Embedding':
-      return 'success'
-    default:
-      return 'neutral'
+const modelGroups = computed(() => {
+  const groups: {key: string, label: string, items: SysModel[]}[] = []
+  const map = new Map<string, {key: string, label: string, items: SysModel[]}>()
+  for (const m of models.value) {
+    const category = (m.category || '').trim()
+    const key = category || UNGROUPED_KEY
+    let group = map.get(key)
+    if (!group) {
+      group = {key, label: category || t('providerModels.ungrouped'), items: []}
+      map.set(key, group)
+      groups.push(group)
+    }
+    group.items.push(m)
   }
-}
-
-function getModelTypeLabel(type: string): string {
-  const map: Record<string, string> = {
-    GenText: t('providerModels.typeGenText'),
-    GenImage: t('providerModels.typeGenImage'),
-    GenAudio: t('providerModels.typeGenAudio'),
-    GenVideo: t('providerModels.typeGenVideo'),
-    Embedding: t('providerModels.typeEmbedding'),
-    Rerank: t('providerModels.typeRerank')
+  const ungrouped = map.get(UNGROUPED_KEY)
+  if (ungrouped) {
+    groups.splice(groups.indexOf(ungrouped), 1)
+    groups.push(ungrouped)
   }
-  return map[type] || type
-}
-
-function getModalityLabel(mod: string): string {
-  const map: Record<string, string> = {
-    text: t('providerModels.modalityText'),
-    image: t('providerModels.modalityImage'),
-    video: t('providerModels.modalityVideo'),
-    audio: t('providerModels.modalityAudio'),
-    pdf: t('providerModels.modalityPdf')
-  }
-  return map[mod] || mod
-}
-
-function getReasoningLabel(r: string): string {
-  const map: Record<string, string> = {
-    ALWAYS: t('providerModels.reasoningAlways'),
-    SWITCH: t('providerModels.reasoningSwitch'),
-    TOGGLE: t('providerModels.reasoningToggle')
-  }
-  return map[r] || r
-}
-
-const modelListEl = ref<HTMLElement | null>(null)
-
-useSortable(modelListEl, models, {
-  handle: '.drag-handle',
-  animation: 150,
-  forceFallback: true,
-  fallbackOnBody: true,
-  watchElement: true,
-  onStart: () => {
-    document.body.classList.add('provider-sortable-dragging')
-  },
-  onEnd: (evt) => {
-    document.body.classList.remove('provider-sortable-dragging')
-    if (evt.oldIndex == null || evt.newIndex == null || evt.oldIndex === evt.newIndex || !provider.value) return
-    void nextTick(() => saveModelOrder(provider.value!.id))
-  }
+  return groups
 })
+
+/** 组内拖拽排序：以该组新顺序重建全局列表（其它分组原位不动）并持久化 */
+function handleModelGroupReorder(ids: string[]) {
+  if (!provider.value) return
+  const idSet = new Set(ids)
+  const byId = new Map(models.value.map(m => [m.id, m] as const))
+  const ordered = ids.map(id => byId.get(id)).filter((m): m is SysModel => !!m)
+  const firstIndex = models.value.findIndex(m => idSet.has(m.id))
+  if (firstIndex < 0 || ordered.length !== idSet.size) return
+  const others = models.value.filter(m => !idSet.has(m.id))
+  models.value = [...others.slice(0, firstIndex), ...ordered, ...others.slice(firstIndex)]
+  void nextTick(() => saveModelOrder(provider.value!.id))
+}
 
 /* ---------------- 5. Tab 标签页切换 ---------------- */
 type TabKey = 'endpoints' | 'keys' | 'models'
@@ -597,15 +568,25 @@ const tabs = computed<TabsItem[]>(() => [
                 >
                   {{ t('providers.add') }}
                 </UButton>
-                <UButton
-                  v-else-if="activeTab === 'models'"
-                  icon="i-lucide-plus"
-                  variant="ghost"
-                  size="xs"
-                  @click="openCreateModel"
-                >
-                  {{ t('providers.add') }}
-                </UButton>
+                <template v-else-if="activeTab === 'models'">
+                  <UButton
+                    icon="i-lucide-download"
+                    variant="ghost"
+                    size="xs"
+                    :title="t('providerModels.fetchTitle')"
+                    @click="openImportModels"
+                  >
+                    <span class="hidden sm:inline">{{ t('providerModels.fetchAction') }}</span>
+                  </UButton>
+                  <UButton
+                    icon="i-lucide-plus"
+                    variant="ghost"
+                    size="xs"
+                    @click="openCreateModel"
+                  >
+                    {{ t('providers.add') }}
+                  </UButton>
+                </template>
               </div>
             </template>
           <!-- 3. 各 Tab 配置内容区域：组件内容插槽，由 Nuxt UI 生成 tabpanel 与 ARIA 关联 -->
@@ -992,94 +973,19 @@ const tabs = computed<TabsItem[]>(() => [
               </div>
             </div>
 
-            <!-- 模型列表：扁平无边框行 -->
-            <div v-else-if="models.length" ref="modelListEl" class="divide-y divide-default/50">
-              <div
-                v-for="m in models"
-                :key="m.id"
-                class="flex items-center justify-between py-2 px-1 hover:bg-elevated/20 transition-colors rounded-sm gap-2"
-              >
-                <div class="flex min-w-0 flex-1 items-center gap-2.5">
-                  <div
-                    class="drag-handle flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-sm text-dimmed hover:bg-elevated hover:text-default"
-                    aria-hidden="true"
-                    :title="t('providers.dragToSort')"
-                  >
-                    <UIcon name="i-lucide-grip-vertical" class="size-4"/>
-                  </div>
-
-                  <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-xs">
-                    <span
-                      class="font-medium truncate"
-                      :class="m.enabled ? 'text-highlighted' : 'text-dimmed'"
-                    >
-                      {{ m.code }}
-                    </span>
-
-                    <span v-if="m.name && m.name !== m.code" class="text-muted truncate max-w-[140px]">
-                      ({{ m.name }})
-                    </span>
-
-                    <UBadge :color="modelTypeBadgeColor(m.type)" variant="subtle" size="xs">
-                      {{ getModelTypeLabel(m.type) }}
-                    </UBadge>
-
-                    <UBadge v-if="m.category" color="neutral" variant="outline" size="xs">
-                      {{ m.category }}
-                    </UBadge>
-
-                    <UBadge
-                      :color="m.status === 'ACTIVE' ? 'success' : 'error'"
-                      variant="subtle"
-                      size="xs"
-                    >
-                      {{ m.status === 'ACTIVE' ? t('providerModels.statusActive') : t('providerModels.statusInvalid') }}
-                    </UBadge>
-
-                    <span v-if="m.maxContext" class="text-muted">
-                      {{ formatTokens(m.maxContext) }}
-                    </span>
-
-                    <span v-if="m.reasoning && m.reasoning !== 'DISABLE'"
-                          class="inline-flex items-center gap-0.5 text-primary">
-                      <UIcon name="i-lucide-brain" class="size-3"/>
-                      <span>{{ getReasoningLabel(m.reasoning) }}</span>
-                    </span>
-
-                    <span v-if="m.inputModal?.length" class="text-dimmed">
-                      {{ t('providerModels.inputModalPrefix') }}: [{{ m.inputModal.map(getModalityLabel).join(', ') }}]
-                    </span>
-
-                    <span v-if="m.outputModal?.length" class="text-dimmed">
-                      {{ t('providerModels.outputModalPrefix') }}: [{{ m.outputModal.map(getModalityLabel).join(', ') }}]
-                    </span>
-                  </div>
-                </div>
-
-                <div class="flex shrink-0 items-center gap-1.5">
-                  <USwitch
-                    :model-value="m.enabled"
-                    :aria-label="t('providers.toggleEnabled')"
-                    @update:model-value="v => handleToggleModelEnabled(m, !!v)"
-                  />
-                  <UButton
-                    icon="i-lucide-square-pen"
-                    variant="ghost"
-                    color="neutral"
-                    size="xs"
-                    :aria-label="t('providers.edit')"
-                    @click="openEditModel(m)"
-                  />
-                  <UButton
-                    icon="i-lucide-trash-2"
-                    variant="ghost"
-                    color="error"
-                    size="xs"
-                    :aria-label="t('providers.remove')"
-                    @click="confirmDeleteModel(m)"
-                  />
-                </div>
-              </div>
+            <!-- 模型列表：按模型分组分组展示，组内两行式简化行 -->
+            <div v-else-if="models.length" class="space-y-4">
+              <ProviderModelGroup
+                v-for="group in modelGroups"
+                :key="group.key"
+                :label="group.label"
+                :provider-code="provider.code"
+                :items="group.items"
+                @reorder="handleModelGroupReorder"
+                @edit="openEditModel"
+                @remove="confirmDeleteModel"
+                @toggle="(m, enabled) => handleToggleModelEnabled(m, enabled)"
+              />
             </div>
 
             <div v-else class="flex min-h-48 items-center justify-center p-4">
@@ -1137,6 +1043,15 @@ const tabs = computed<TabsItem[]>(() => [
     :provider-id="provider.id"
     :model-item="editingModel"
     :existing-endpoints="endpoints"
+    @saved="() => loadModels(provider!.id)"
+  />
+
+  <!-- 从模型列表端点获取模型：拉取上游列表后批量导入 -->
+  <ProviderModelImportModal
+    v-if="provider"
+    v-model:open="importModalOpen"
+    :provider-id="provider.id"
+    :existing-models="models"
     @saved="() => loadModels(provider!.id)"
   />
 </template>

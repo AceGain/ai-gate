@@ -28,7 +28,8 @@
     "deleted": "Deleted",
     "clear": "Clear",
     "today": "Today",
-    "selectDate": "Select date"
+    "selectDate": "Select date",
+    "retry": "Retry"
   },
   "dashboard": {
     "title": "Dashboard"
@@ -204,8 +205,24 @@
     "effortMax": "Max",
     "inputModalPrefix": "In",
     "outputModalPrefix": "Out",
+    "ungrouped": "Ungrouped",
+    "fetchTitle": "Fetch from Model List",
+    "fetchAction": "Fetch",
+    "fetchEmpty": "The provider returned an empty model list",
+    "searchModelsPlaceholder": "Search models...",
+    "importSelectAll": "Select all",
+    "importSelectedCount": "{count} selected",
+    "importBtn": "Import {count}",
+    "importExists": "Exists",
+    "importSuccess": "Imported {count} models",
+    "errorMissingBase": "Please configure the Base URL in the Endpoints tab first",
+    "errorMissingModelsEndpoint": "Please configure the model list endpoint in the Endpoints tab first",
+    "errorUnreachable": "Cannot reach the provider. Check the network and endpoint configuration",
+    "errorUpstream": "The provider returned an error. Check the key and endpoint configuration",
+    "errorInvalidResponse": "Unrecognized model list format from the provider",
+    "errorFetchFailed": "Failed to fetch the model list",
     "removeConfirmTitle": "Delete Model",
-    "removeConfirmDesc": "Are you sure you want to delete model \"{code}\"?"
+    "removeConfirmDesc": "Are you sure you want to delete model \"{name}\"?"
   },
   "virtualModels": {
     "title": "Virtual Model",
