@@ -18,6 +18,7 @@
   },
   "common": {
     "empty": "No data",
+    "loading": "Loading...",
     "confirm": "Confirm",
     "cancel": "Cancel",
     "back": "Back",

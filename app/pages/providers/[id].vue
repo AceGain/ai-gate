@@ -495,30 +495,8 @@ const tabs = computed<TabsItem[]>(() => [
 
     <!-- 页面内容：扁平流式布局 + Tab 标签页切换 -->
     <template #body>
-      <!-- 详情加载中骨架屏 -->
-      <div v-if="loadingProvider && !provider" class="h-full overflow-y-auto p-4 sm:p-6">
-        <div class="mx-auto max-w-5xl space-y-3">
-          <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3.5">
-              <USkeleton class="size-11.5 rounded-sm"/>
-              <div class="space-y-1.5">
-                <div class="flex items-center gap-1.5">
-                  <USkeleton class="h-5 w-36 rounded-sm"/>
-                  <USkeleton class="size-6 rounded-sm"/>
-                </div>
-                <USkeleton class="h-3.5 w-60 rounded-sm"/>
-              </div>
-            </div>
-            <div class="flex items-center">
-              <USkeleton class="h-6 w-20 rounded-sm"/>
-            </div>
-          </div>
-          <USkeleton class="h-9 w-full rounded-sm"/>
-          <div class="space-y-3 pt-2">
-            <USkeleton v-for="i in 3" :key="i" class="h-16 w-full rounded-sm"/>
-          </div>
-        </div>
-      </div>
+      <!-- 详情加载中：居中 spinner -->
+      <AppLoading v-if="loadingProvider && !provider" class="h-full"/>
 
       <div v-else-if="provider" class="h-full overflow-y-auto p-4 sm:p-6">
         <div class="mx-auto max-w-5xl space-y-3">
@@ -621,16 +599,8 @@ const tabs = computed<TabsItem[]>(() => [
           <!-- 3. 各 Tab 配置内容区域：组件内容插槽，由 Nuxt UI 生成 tabpanel 与 ARIA 关联 -->
           <!-- 1. 网络端点 Tab -->
           <template #endpoints>
-            <!-- 加载骨架 -->
-            <div v-if="configLoading && !endpoints.length" class="divide-y divide-default/50">
-              <div v-for="i in 3" :key="i" class="flex items-center justify-between py-2.5 px-2 gap-4">
-                <div class="flex-1 space-y-2">
-                  <USkeleton class="h-4 w-32 rounded-sm"/>
-                  <USkeleton class="h-3 w-72 rounded-sm"/>
-                </div>
-                <USkeleton class="size-7 rounded-sm"/>
-              </div>
-            </div>
+            <!-- 加载中：居中 spinner -->
+            <AppLoading v-if="configLoading && !endpoints.length" class="min-h-40"/>
 
             <!-- 端点列表：两行格式（第一行标题，第二行地址） -->
             <div v-else class="divide-y divide-default/50">
@@ -833,26 +803,8 @@ const tabs = computed<TabsItem[]>(() => [
 
           <!-- 2. API 密钥 Tab -->
           <template #keys>
-            <!-- 加载骨架（与真实卡片同结构，避免加载完成跳动） -->
-            <div v-if="configLoading && !keys.length" class="flex flex-col gap-2">
-              <UCard v-for="i in 3" :key="i" :ui="keyCardUi">
-                <div class="flex items-center justify-between gap-4 px-3 py-2.5">
-                  <div class="flex flex-1 items-center gap-2">
-                    <USkeleton class="size-7 rounded-sm"/>
-                    <div class="flex-1 space-y-2">
-                      <USkeleton class="h-4 w-40 rounded-sm"/>
-                      <USkeleton class="h-3 w-64 rounded-sm"/>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <USkeleton class="h-5 w-9 rounded-sm"/>
-                    <USkeleton class="size-6 rounded-sm"/>
-                    <USkeleton class="size-6 rounded-sm"/>
-                    <USkeleton class="size-6 rounded-sm"/>
-                  </div>
-                </div>
-              </UCard>
-            </div>
+            <!-- 加载中：居中 spinner -->
+            <AppLoading v-if="configLoading && !keys.length" class="min-h-40"/>
 
             <!-- 密钥列表：单层卡片结构，无多层嵌套，纵向分行清晰 -->
             <div v-else-if="keys.length" ref="keyListEl" class="flex flex-col gap-2">
@@ -980,40 +932,8 @@ const tabs = computed<TabsItem[]>(() => [
 
           <!-- 3. 模型列表 Tab -->
           <template #models>
-            <!-- 加载骨架：分组卡片形态 -->
-            <div v-if="configLoading && !models.length" class="flex flex-col gap-2">
-              <UCard
-                v-for="i in 3"
-                :key="i"
-                :ui="{root: 'rounded-sm', body: 'p-0 sm:p-0'}"
-              >
-                <!-- 分组头骨架 -->
-                <div class="flex items-center justify-between bg-elevated/50 px-2 py-2">
-                  <USkeleton class="h-4 w-24 rounded-sm"/>
-                </div>
-                <!-- 模型行骨架 -->
-                <div class="divide-y divide-default/50 border-t border-default/50">
-                  <div
-                    v-for="j in 3"
-                    :key="j"
-                    class="flex items-center justify-between py-1.5 px-2 gap-2"
-                  >
-                    <div class="flex flex-1 items-center gap-2.5">
-                      <USkeleton class="size-7 rounded-sm"/>
-                      <USkeleton class="h-4 w-28 rounded-sm"/>
-                      <USkeleton class="h-4 w-16 rounded-sm"/>
-                      <USkeleton class="h-4 w-12 rounded-sm"/>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                      <USkeleton class="h-5 w-9 rounded-sm"/>
-                      <USkeleton class="size-6 rounded-sm"/>
-                      <USkeleton class="size-6 rounded-sm"/>
-                      <USkeleton class="size-6 rounded-sm"/>
-                    </div>
-                  </div>
-                </div>
-              </UCard>
-            </div>
+            <!-- 加载中：居中 spinner -->
+            <AppLoading v-if="configLoading && !models.length" class="min-h-40"/>
 
             <!-- 模型列表：按模型分组折叠展示，每组一张卡片 -->
             <div v-else-if="models.length" class="flex flex-col gap-2">

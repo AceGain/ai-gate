@@ -81,27 +81,8 @@ onBeforeUnmount(() => {
     </template>
 
     <template #body>
-      <!-- 加载中骨架屏（与真实卡片同结构，避免加载完成跳动） -->
-      <div v-if="loading && !providers.length" class="h-full overflow-y-auto p-4">
-        <div class="flex flex-col gap-2.5">
-          <UCard v-for="i in 5" :key="i" :ui="providerCardUi">
-            <div class="flex min-h-[64px] items-center gap-3 px-3.5 py-2.5">
-              <USkeleton class="size-7 rounded-sm"/>
-              <USkeleton class="size-11.5 rounded-sm"/>
-              <div class="flex-1 space-y-1.5">
-                <USkeleton class="h-4 w-32 rounded-sm"/>
-                <USkeleton class="h-3 w-48 rounded-sm"/>
-              </div>
-              <USkeleton class="h-5 w-9 rounded-sm"/>
-              <div class="flex items-center gap-1">
-                <USkeleton class="size-6 rounded-sm"/>
-                <USkeleton class="size-6 rounded-sm"/>
-                <USkeleton class="size-6 rounded-sm"/>
-              </div>
-            </div>
-          </UCard>
-        </div>
-      </div>
+      <!-- 加载中：居中 spinner -->
+      <AppLoading v-if="loading && !providers.length" class="h-full"/>
 
       <!-- 有数据：一行一条独立卡片，严格贴合范式 A -->
       <div v-else-if="providers.length" class="h-full overflow-y-auto p-4">

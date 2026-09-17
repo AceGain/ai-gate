@@ -126,16 +126,8 @@ async function importSelected() {
     :ui="{content: 'sm:max-w-md', body: 'no-scrollbar', footer: 'justify-end'}"
   >
     <template #body>
-      <!-- 加载骨架：与条目行同构，避免加载完成跳动 -->
-      <div v-if="loading" class="space-y-2">
-        <div v-for="i in 5" :key="i" class="flex items-center gap-2.5">
-          <USkeleton class="size-4.5 rounded-sm"/>
-          <div class="flex-1 space-y-1.5">
-            <USkeleton class="h-3.5 w-40 rounded-sm"/>
-            <USkeleton class="h-3 w-24 rounded-sm"/>
-          </div>
-        </div>
-      </div>
+      <!-- 加载中：居中 spinner，与空态块同高 -->
+      <AppLoading v-if="loading" class="min-h-40"/>
 
       <!-- 拉取失败：错误文案 + 重试入口 -->
       <div v-else-if="errorCode" class="flex flex-col items-center justify-center gap-3 py-10">
