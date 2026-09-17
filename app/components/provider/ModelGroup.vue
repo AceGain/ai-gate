@@ -88,7 +88,8 @@ useSortable(listEl, localItems, {
   onEnd: (evt) => {
     document.body.classList.remove('provider-sortable-dragging')
     if (evt.oldIndex == null || evt.newIndex == null || evt.oldIndex === evt.newIndex) return
-    emit('reorder', localItems.value.map(m => m.id))
+    // useSortable 的 onUpdate（先于 onEnd 触发）把数组同步推迟到 nextTick，须待其落地后再读取新顺序
+    void nextTick(() => emit('reorder', localItems.value.map(m => m.id)))
   }
 })
 
