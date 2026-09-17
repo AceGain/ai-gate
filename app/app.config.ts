@@ -11,6 +11,17 @@ export default defineAppConfig({
         }
       }
     },
+    navigationMenu: {
+      variants: {
+        active: {
+          // 未激活菜单项深色文字（黑），激活项保持主题色（Nuxt UI 默认未激活为 text-muted 过浅）
+          false: {
+            link: 'text-default',
+            linkLeadingIcon: 'text-default'
+          }
+        }
+      }
+    },
     popover: {
       slots: {
         content: 'bg-default shadow-xl border border-default ring-0 focus:outline-none pointer-events-auto'

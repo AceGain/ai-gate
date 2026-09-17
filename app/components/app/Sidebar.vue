@@ -46,10 +46,10 @@ defineShortcuts({
     :max-size="20"
     :collapsed-size="4"
     :toggle="false"
-    :ui="{ root: 'flex', header: 'h-auto px-2.5 pt-2 pb-1', body: 'px-2.5 py-1', footer: 'px-2.5 pt-1 pb-2' }"
+    :ui="{ root: 'flex', header: 'h-auto px-2.5 pt-3 pb-0', body: 'px-2.5 pt-0 pb-1', footer: 'px-2.5 pt-1 pb-3' }"
     class="min-h-0 bg-elevated/25"
   >
-    <!-- 侧栏顶部：全局搜索入口（折叠态：仅图标 + 悬停 tooltip） -->
+    <!-- 侧栏顶部：全局搜索入口（ghost 形态融入导航列表；行高与导航链接一致 py-2，折叠态覆盖 square 变体的 justify-center，同位左对齐 px-1.5） -->
     <!-- trailing 覆盖默认 hidden lg:flex：展示"图标+文字"时 kbd 常驻（不随窗口宽度消失），仅图标折叠态隐藏 -->
     <template #header="{ collapsed: isCollapsed }">
       <UDashboardSearchButton
@@ -59,8 +59,7 @@ defineShortcuts({
         variant="ghost"
         class="w-full"
         :ui="{
-          base: 'px-2 py-2',
-          leadingIcon: 'size-5',
+          base: 'py-2' + (isCollapsed ? ' justify-start px-1.5' : ''),
           trailing: isCollapsed ? 'hidden' : 'flex'
         }"
       />
@@ -73,7 +72,7 @@ defineShortcuts({
         :items="mainNav"
         orientation="vertical"
         class="flex-1"
-        :ui="{ link: 'px-2 py-2' }"
+        :ui="{ link: 'py-2' }"
       />
     </template>
 
@@ -84,7 +83,7 @@ defineShortcuts({
         :items="footerNav"
         orientation="vertical"
         class="flex-1"
-        :ui="{ link: 'px-2 py-2' }"
+        :ui="{ link: 'py-2' }"
       />
     </template>
   </UDashboardSidebar>
