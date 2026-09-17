@@ -56,7 +56,6 @@ defineShortcuts({
         :collapsed="isCollapsed"
         :tooltip="isCollapsed"
         :label="t('search.label')"
-        size="md"
         variant="ghost"
         class="w-full"
         :ui="{

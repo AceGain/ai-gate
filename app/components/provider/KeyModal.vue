@@ -127,7 +127,6 @@ async function save() {
               <UButton
                 color="neutral"
                 variant="outline"
-                size="sm"
                 icon="i-lucide-calendar"
                 class="w-full justify-start font-normal"
                 :class="expiresDate ? 'text-highlighted pe-8' : 'text-dimmed'"
@@ -140,7 +139,6 @@ async function save() {
               <template #content="{ close }">
                 <UCalendar
                   v-model="expiresDate"
-                  size="sm"
                   class="p-2"
                   @update:model-value="() => close()"
                 />
@@ -152,7 +150,6 @@ async function save() {
               icon="i-lucide-circle-x"
               variant="ghost"
               color="neutral"
-              size="xs"
               class="absolute end-1 top-1/2 -translate-y-1/2 cursor-pointer opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
               :aria-label="t('providerKeys.clearExpires')"
               @click="expiresDate = null"

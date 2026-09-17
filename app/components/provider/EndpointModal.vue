@@ -279,7 +279,6 @@ async function save() {
               icon="i-lucide-copy"
               variant="ghost"
               color="neutral"
-              size="xs"
               class="shrink-0"
               :title="t('common.copy')"
               :aria-label="t('common.copy')"

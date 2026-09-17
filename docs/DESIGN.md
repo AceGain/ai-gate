@@ -43,7 +43,7 @@ Nuxt UI 组件已提供键盘导航、焦点管理与 ARIA 关联，页面只需
 - **弹窗焦点管理**：使用 `UModal` / `USlideover` / `UPopover`，焦点进入弹窗、Esc 可关闭、关闭后回到触发元素；确认类弹窗的 Esc/关闭一律按「取消」处理，不得用 `dismissible=false` 屏蔽 Esc；
 - **状态不只靠颜色**：启用/失效、成功/失败等状态必须有文字或图标（如 `UBadge`、`UIcon`），不能只靠红绿区分；
 - **对比度**：正文文本 ≥ 4.5:1；大号文本（≥24px 常规字重，或 ≥18.67px 粗体）≥ 3:1；占位符、次要文本同样适用 4.5:1 基线；
-- **指针目标**：点击目标 ≥ 24×24 CSS px，或满足 WCAG 2.2 的间距例外；`size="xs"` 本身不违规，但要实测实际命中区域，必要时扩大热区；
+- **指针目标**：点击目标 ≥ 24×24 CSS px，或满足 WCAG 2.2 的间距例外；组件默认 `md` 尺寸已满足，若局部确需改用更小 `size`，要实测实际命中区域，必要时扩大热区；
 - **放大与重排**：文字放大至 200% 不丢失内容或功能；适用内容在等效 320 CSS px 宽度下重排、无横向滚动（数据表/图表等二维内容除外，见 §6.1）。
 
 依据：WCAG 2.2（1.4.1、1.4.3、1.4.10、2.1.1、2.4.3、2.4.7、2.5.7、2.5.8、3.3.2）。
@@ -67,11 +67,11 @@ Nuxt UI 组件已提供键盘导航、焦点管理与 ARIA 关联，页面只需
 | 字体 | Inter；`--font-mono` 也映射为 Inter（无等宽字体）。代码/JSON/日志如需对齐阅读，按任务在局部引入等宽字体，不改全局基线 | `app/assets/css/main.css` |
 | 圆角 | 全局无圆角：`--ui-radius: 0rem`，Nuxt UI 派生的 `rounded-xs`~`rounded-3xl` 随之全部归零（`rounded-full` 不受影响）；禁止再为圆角做任何局部覆盖 | `app/assets/css/main.css` |
 | 标题栏 | `--ui-header-height: 2rem`，全宽 `data-tauri-drag-region`；平台外观见 §6.2 | `app/assets/css/main.css` + `app/app.vue` |
-| 控件默认尺寸 | 按钮/徽标/Tab `xs`，输入/选择/开关/复选 `sm` | `app/app.config.ts` |
+| 控件默认尺寸 | 全部使用 Nuxt UI 内置默认（`md`）：`app.config.ts` 不覆盖 `size`，页面也不传 `size` | Nuxt UI 内置默认 |
 | 弹窗 | 背景/边框/阴影/遮罩/宽度（圆角已全局归零，见上） | `app/app.config.ts` |
 | 页面骨架 | `dashboardPanel` 的 `#body` 全局为 `overflow-hidden min-h-0 p-0 gap-0`（滚动职责见 §3），页面无需重复传 `ui` | `app/app.config.ts` |
 
-- 调整全局默认优先改 `app.config.ts` 的 `defaultVariants`，页面只在偏离默认时传参（例如模态框主操作按钮 `size="sm"`）；
+- 页面不传 `size`，统一使用 Nuxt UI 内置默认 `md`；个别场景确需偏离时才就地传参（如紧凑图标按钮），并按 §1.2 实测指针目标；
 - 覆盖要就地可读，不要为"统一"牺牲表单可用性；`ui` 覆盖前先看生成的 `.nuxt/ui/<component>.ts`，避免重复默认类；
 - 应用入口已使用 `<UApp>` 并同步 Nuxt UI locale（`app/app.vue`），新页面无需重复包裹。
 

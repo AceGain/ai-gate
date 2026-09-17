@@ -4,27 +4,13 @@ export default defineAppConfig({
       primary: 'indigo',
       neutral: 'zinc'
     },
-    // 全局基准：按钮/徽标等紧凑元素为 xs，表单控件（输入框、单选/复选、开关、下拉）为 sm 避免变形
     button: {
-      defaultVariants: {size: 'xs'},
       variants: {
         square: {
           true: 'justify-center'
         }
       }
     },
-    input: {defaultVariants: {size: 'sm'}},
-    textarea: {defaultVariants: {size: 'sm'}},
-    inputNumber: {defaultVariants: {size: 'sm'}},
-    select: {defaultVariants: {size: 'sm'}},
-    selectMenu: {defaultVariants: {size: 'sm'}},
-    badge: {defaultVariants: {size: 'xs'}},
-    switch: {defaultVariants: {size: 'sm'}},
-    checkbox: {defaultVariants: {size: 'sm'}},
-    checkboxGroup: {defaultVariants: {size: 'sm'}},
-    tabs: {defaultVariants: {size: 'xs'}},
-    formField: {defaultVariants: {size: 'sm'}},
-    calendar: {defaultVariants: {size: 'sm'}},
     popover: {
       slots: {
         content: 'bg-default shadow-xl border border-default ring-0 focus:outline-none pointer-events-auto'

@@ -432,7 +432,6 @@ const tabs = computed<TabsItem[]>(() => [
       label: String(endpoints.value.length),
       color: 'neutral',
       variant: 'subtle',
-      size: 'xs'
     } : undefined
   },
   {
@@ -444,7 +443,6 @@ const tabs = computed<TabsItem[]>(() => [
       label: String(keys.value.length),
       color: 'neutral',
       variant: 'subtle',
-      size: 'xs'
     } : undefined
   },
   {
@@ -456,7 +454,6 @@ const tabs = computed<TabsItem[]>(() => [
       label: String(models.value.length),
       color: 'neutral',
       variant: 'subtle',
-      size: 'xs'
     } : undefined
   }
 ])
@@ -539,7 +536,6 @@ const tabs = computed<TabsItem[]>(() => [
                     icon="i-lucide-square-pen"
                     variant="ghost"
                     color="neutral"
-                    size="xs"
                     class="shrink-0"
                     :aria-label="t('providers.edit')"
                     :title="t('providers.edit')"
@@ -589,7 +585,6 @@ const tabs = computed<TabsItem[]>(() => [
                   v-if="activeTab === 'endpoints'"
                   icon="i-lucide-plus"
                   variant="ghost"
-                  size="xs"
                   :disabled="isAllGeneratesAdded"
                   :title="isAllGeneratesAdded ? t('providerEndpoints.allGeneratesAdded') : t('providers.add')"
                   @click="openCreateEndpoint"
@@ -600,7 +595,6 @@ const tabs = computed<TabsItem[]>(() => [
                   v-else-if="activeTab === 'keys'"
                   icon="i-lucide-plus"
                   variant="ghost"
-                  size="xs"
                   @click="openCreateKey"
                 >
                   {{ t('providers.add') }}
@@ -609,7 +603,6 @@ const tabs = computed<TabsItem[]>(() => [
                   <UButton
                     icon="i-lucide-download"
                     variant="ghost"
-                    size="xs"
                     :title="t('providerModels.fetchTitle')"
                     @click="openImportModels"
                   >
@@ -618,7 +611,6 @@ const tabs = computed<TabsItem[]>(() => [
                   <UButton
                     icon="i-lucide-plus"
                     variant="ghost"
-                    size="xs"
                     @click="openCreateModel"
                   >
                     {{ t('providers.add') }}
@@ -668,7 +660,6 @@ const tabs = computed<TabsItem[]>(() => [
                       icon="i-lucide-copy"
                       variant="ghost"
                       color="neutral"
-                      size="xs"
                       class="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                       :title="t('common.copy')"
                       :aria-label="t('common.copy')"
@@ -683,7 +674,6 @@ const tabs = computed<TabsItem[]>(() => [
                     icon="i-lucide-square-pen"
                     variant="ghost"
                     color="neutral"
-                    size="xs"
                     :aria-label="t('providers.edit')"
                     :title="t('providers.edit')"
                     @click="openEditBaseEndpoint"
@@ -723,7 +713,6 @@ const tabs = computed<TabsItem[]>(() => [
                       icon="i-lucide-copy"
                       variant="ghost"
                       color="neutral"
-                      size="xs"
                       class="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                       :title="t('common.copy')"
                       :aria-label="t('common.copy')"
@@ -738,7 +727,6 @@ const tabs = computed<TabsItem[]>(() => [
                     icon="i-lucide-square-pen"
                     variant="ghost"
                     color="neutral"
-                    size="xs"
                     :aria-label="t('providers.edit')"
                     :title="t('providers.edit')"
                     @click="openEditModelsEndpoint"
@@ -763,7 +751,6 @@ const tabs = computed<TabsItem[]>(() => [
                       v-if="ep.isDefault"
                       color="primary"
                       variant="subtle"
-                      size="sm"
                       class="rounded-sm py-0.5"
                     >
                       {{ t('providerEndpoints.defaultBadge') }}
@@ -789,7 +776,6 @@ const tabs = computed<TabsItem[]>(() => [
                       icon="i-lucide-copy"
                       variant="ghost"
                       color="neutral"
-                      size="xs"
                       class="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                       :title="t('common.copy')"
                       :aria-label="t('common.copy')"
@@ -805,7 +791,6 @@ const tabs = computed<TabsItem[]>(() => [
                     icon="i-lucide-star"
                     variant="ghost"
                     color="primary"
-                    size="xs"
                     class="[&_svg_path]:fill-current"
                     :title="t('providerEndpoints.cancelDefault')"
                     :aria-label="t('providerEndpoints.cancelDefault')"
@@ -816,7 +801,6 @@ const tabs = computed<TabsItem[]>(() => [
                     icon="i-lucide-star"
                     variant="ghost"
                     color="neutral"
-                    size="xs"
                     :title="t('providerEndpoints.setDefault')"
                     :aria-label="t('providerEndpoints.setDefault')"
                     @click="handleToggleDefault(ep)"
@@ -825,7 +809,6 @@ const tabs = computed<TabsItem[]>(() => [
                     icon="i-lucide-square-pen"
                     variant="ghost"
                     color="neutral"
-                    size="xs"
                     :title="t('providers.edit')"
                     :aria-label="t('providers.edit')"
                     @click="openEditEndpoint(ep)"
@@ -834,7 +817,6 @@ const tabs = computed<TabsItem[]>(() => [
                     icon="i-lucide-trash-2"
                     variant="ghost"
                     color="error"
-                    size="xs"
                     :title="t('providers.remove')"
                     :aria-label="t('providers.remove')"
                     @click="confirmDeleteEndpoint(ep)"
@@ -901,7 +883,6 @@ const tabs = computed<TabsItem[]>(() => [
                           v-if="k.status !== 'ACTIVE'"
                           color="error"
                           variant="subtle"
-                          size="xs"
                         >
                           {{ t('providerKeys.statusInvalid') }}
                         </UBadge>
@@ -932,7 +913,6 @@ const tabs = computed<TabsItem[]>(() => [
                           :icon="revealedKeys.has(k.id) ? 'i-lucide-eye-off' : 'i-lucide-eye'"
                           variant="ghost"
                           color="neutral"
-                          size="xs"
                           class="shrink-0"
                           :title="revealedKeys.has(k.id) ? t('providerKeys.hideSecret') : t('providerKeys.showSecret')"
                           :aria-label="revealedKeys.has(k.id) ? t('providerKeys.hideSecret') : t('providerKeys.showSecret')"
@@ -943,7 +923,6 @@ const tabs = computed<TabsItem[]>(() => [
                           :icon="copiedKeyId === k.id ? 'i-lucide-check' : 'i-lucide-copy'"
                           :color="copiedKeyId === k.id ? 'success' : 'neutral'"
                           variant="ghost"
-                          size="xs"
                           class="shrink-0"
                           :title="t('providerKeys.copySecret')"
                           :aria-label="t('providerKeys.copySecret')"
@@ -964,7 +943,6 @@ const tabs = computed<TabsItem[]>(() => [
                       icon="i-lucide-activity"
                       variant="ghost"
                       color="neutral"
-                      size="xs"
                       :loading="testingKeyId === k.id"
                       :aria-label="t('providerKeys.testBtn')"
                       :title="t('providerKeys.testBtn')"
@@ -974,7 +952,6 @@ const tabs = computed<TabsItem[]>(() => [
                       icon="i-lucide-square-pen"
                       variant="ghost"
                       color="neutral"
-                      size="xs"
                       :aria-label="t('providers.edit')"
                       :title="t('providers.edit')"
                       @click="openEditKey(k)"
@@ -983,7 +960,6 @@ const tabs = computed<TabsItem[]>(() => [
                       icon="i-lucide-trash-2"
                       variant="ghost"
                       color="error"
-                      size="xs"
                       :aria-label="t('providers.remove')"
                       :title="t('providers.remove')"
                       @click="confirmDeleteKey(k)"

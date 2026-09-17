@@ -144,7 +144,6 @@ async function importSelected() {
           icon="i-lucide-refresh-cw"
           variant="outline"
           color="neutral"
-          size="xs"
           @click="load"
         >
           {{ t('common.retry') }}
@@ -201,7 +200,6 @@ async function importSelected() {
                   v-if="existingCodes.has(item.code)"
                   color="neutral"
                   variant="subtle"
-                  size="xs"
                   class="shrink-0 rounded-sm"
                 >
                   {{ t('providerModels.importExists') }}

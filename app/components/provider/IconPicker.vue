@@ -112,7 +112,6 @@ watch(open, (v) => {
             v-model="search"
             icon="i-lucide-search"
             :placeholder="t('providers.iconSearch')"
-            size="sm"
             class="w-full"
             autofocus
           >
@@ -121,7 +120,6 @@ watch(open, (v) => {
                 icon="i-lucide-x"
                 variant="ghost"
                 color="neutral"
-                size="xs"
                 :aria-label="t('common.clear')"
                 @click="search = ''"
               />
@@ -133,7 +131,6 @@ watch(open, (v) => {
             <UButton
               :color="!model ? 'primary' : 'neutral'"
               :variant="!model ? 'subtle' : 'outline'"
-              size="xs"
               icon="i-lucide-sparkles"
               class="flex-1 justify-center rounded-sm"
               @click="resetToAuto"
@@ -143,7 +140,6 @@ watch(open, (v) => {
             <UButton
               color="neutral"
               variant="outline"
-              size="xs"
               icon="i-lucide-upload"
               class="flex-1 justify-center rounded-sm"
               @click="pickFile"
@@ -160,7 +156,6 @@ watch(open, (v) => {
                 :key="item.value"
                 variant="ghost"
                 color="neutral"
-                size="xs"
                 class="size-10 p-1 justify-center rounded-sm border transition-all hover:border-primary/50 hover:bg-elevated"
                 :class="model === item.value ? 'border-primary bg-primary/10 ring-1 ring-primary' : 'border-transparent bg-elevated/60'"
                 :title="item.label"
