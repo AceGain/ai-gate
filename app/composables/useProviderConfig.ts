@@ -149,6 +149,14 @@ export function useProviderConfig() {
     }
   }
 
+  /** 测试密钥可用性（经后端向上游发起最小鉴权请求）；失败抛出，由调用方按错误码就近提示 */
+  async function testKey(providerId: string, id: string): Promise<{ok: true, latencyMs: number}> {
+    return await $fetch<{ok: true, latencyMs: number}>(
+      `${apiBase()}/api/providers/${providerId}/keys/${id}/test`,
+      {method: 'POST'}
+    )
+  }
+
   /* ---------------- 模型 (Models) ---------------- */
 
   /** 拉取上游模型列表（经后端转发）；失败抛出，由调用方按 error 码就近展示 */
@@ -246,6 +254,7 @@ export function useProviderConfig() {
     updateKey,
     removeKey,
     saveKeyOrder,
+    testKey,
     loadModels,
     fetchRemoteModels,
     importModels,

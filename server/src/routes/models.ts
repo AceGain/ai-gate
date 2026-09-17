@@ -5,6 +5,7 @@ import {Hono} from 'hono'
 import {newId} from '../../../shared/sys-provider'
 import type {RemoteModelItem, SysModelInput, SysModelReasoning, SysModelStatus, SysModelType} from '../../../shared/sys-model'
 import {insertModel, listEndpoints, listKeys, listModels, removeModel, reorderModels, updateModel} from '../store'
+import {extractUpstreamDetail, joinUrl} from '../upstream'
 
 export const models = new Hono()
 
@@ -75,12 +76,6 @@ models.put('/providers/:providerId/models/reorder', async (c) => {
   await reorderModels(body)
   return c.json({ok: true})
 })
-
-/** 拼接基地址与模型列表端点路径（模型列表端点为绝对地址时直接使用） */
-function joinUrl(base: string, path: string): string {
-  if (/^https?:\/\//i.test(path)) return path
-  return `${base.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`
-}
 
 /** 依序取第一个非空字符串值 */
 function firstNonEmptyString(...values: unknown[]): string | null {
@@ -162,16 +157,6 @@ function buildTestPayload(generate: string, code: string, key: string | undefine
     ? {model: code, input: 'ping', max_output_tokens: 1}
     : {model: code, messages: [{role: 'user', content: 'ping'}], max_tokens: 1}
   return {headers, body}
-}
-
-/** 从上游错误响应提取可读详情（兼容 OpenAI/Anthropic 的 error.message 结构） */
-function extractUpstreamDetail(status: number, text: string): string {
-  try {
-    const json = JSON.parse(text) as {error?: {message?: string} | string, message?: string}
-    const msg = typeof json.error === 'string' ? json.error : json.error?.message ?? json.message
-    if (msg) return `HTTP ${status}: ${msg}`
-  } catch { /* 非 JSON 响应仅保留状态码 */ }
-  return `HTTP ${status}`
 }
 
 /** 测试单个模型可用性：以最小生成请求打到上游，返回延迟；失败返回错误码 + 详情 */

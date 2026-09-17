@@ -191,12 +191,13 @@ function getModelTypeLabel(type: string): string {
               @update:model-value="v => emit('toggle', m, !!v)"
             />
             <UButton
-              icon="i-lucide-flask-conical"
+              icon="i-lucide-activity"
               variant="ghost"
               color="neutral"
               size="xs"
               :loading="testingId === m.id"
               :aria-label="t('providerModels.testBtn')"
+              :title="t('providerModels.testBtn')"
               @click="runTest(m)"
             />
             <UButton
@@ -205,6 +206,7 @@ function getModelTypeLabel(type: string): string {
               color="neutral"
               size="xs"
               :aria-label="t('providers.edit')"
+              :title="t('providers.edit')"
               @click="emit('edit', m)"
             />
             <UButton
@@ -213,6 +215,7 @@ function getModelTypeLabel(type: string): string {
               color="error"
               size="xs"
               :aria-label="t('providers.remove')"
+              :title="t('providers.remove')"
               @click="emit('remove', m)"
             />
           </div>

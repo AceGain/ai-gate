@@ -149,6 +149,7 @@ onBeforeUnmount(() => {
                   color="neutral"
                   class="text-muted hover:text-default"
                   :aria-label="t('providers.config')"
+                  :title="t('providers.config')"
                   @click="openConfig(p)"
                 />
                 <UButton
@@ -157,6 +158,7 @@ onBeforeUnmount(() => {
                   color="neutral"
                   class="text-muted hover:text-default"
                   :aria-label="t('providers.edit')"
+                  :title="t('providers.edit')"
                   @click="openEdit(p)"
                 />
                 <UButton
@@ -165,6 +167,7 @@ onBeforeUnmount(() => {
                   color="error"
                   class="text-muted hover:text-error"
                   :aria-label="t('providers.remove')"
+                  :title="t('providers.remove')"
                   @click="confirmRemove(p)"
                 />
               </div>

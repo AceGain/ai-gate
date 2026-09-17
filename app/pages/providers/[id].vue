@@ -32,6 +32,7 @@ const {
   updateKey,
   removeKey,
   saveKeyOrder,
+  testKey,
   loadModels,
   updateModel,
   removeModel,
@@ -256,6 +257,42 @@ async function handleToggleKeyEnabled(k: SysKey, enabled: boolean) {
     expiresTime: k.expiresTime,
     sort: k.sort
   })
+}
+
+/** 正在测试的密钥 id：单卡粒度的加载态 */
+const testingKeyId = ref<string | null>(null)
+
+/** 密钥测试失败文案：按后端错误码就近映射 */
+function keyTestErrorMessage(code: string | undefined, detail?: string): string {
+  switch (code) {
+    case 'MISSING_BASE_ENDPOINT':
+      return t('providerKeys.errorMissingBase')
+    case 'MISSING_MODELS_ENDPOINT':
+      return t('providerKeys.errorMissingModelsEndpoint')
+    case 'UPSTREAM_UNREACHABLE':
+      return t('providerKeys.errorUnreachable')
+    case 'UPSTREAM_TIMEOUT':
+      return t('providerKeys.errorUpstreamTimeout')
+    case 'UPSTREAM_ERROR':
+      return detail ? t('providerKeys.testFailedDetail', {detail}) : t('providerKeys.testFailed')
+    default:
+      return t('providers.backendUnavailable')
+  }
+}
+
+async function runKeyTest(k: SysKey) {
+  if (!provider.value || testingKeyId.value) return
+  testingKeyId.value = k.id
+  try {
+    const res = await testKey(provider.value.id, k.id)
+    toast.add({color: 'success', title: t('providerKeys.testSuccess', {ms: res.latencyMs})})
+  } catch (err) {
+    console.warn('[ai-gate] 测试密钥失败', err)
+    const data = (err as {data?: {error?: string, detail?: string}}).data
+    toast.add({color: 'error', title: keyTestErrorMessage(data?.error, data?.detail)})
+  } finally {
+    testingKeyId.value = null
+  }
 }
 
 const keyListEl = ref<HTMLElement | null>(null)
@@ -648,6 +685,7 @@ const tabs = computed<TabsItem[]>(() => [
                     color="neutral"
                     size="xs"
                     :aria-label="t('providers.edit')"
+                    :title="t('providers.edit')"
                     @click="openEditBaseEndpoint"
                   />
                 </div>
@@ -702,6 +740,7 @@ const tabs = computed<TabsItem[]>(() => [
                     color="neutral"
                     size="xs"
                     :aria-label="t('providers.edit')"
+                    :title="t('providers.edit')"
                     @click="openEditModelsEndpoint"
                   />
                 </div>
@@ -827,6 +866,7 @@ const tabs = computed<TabsItem[]>(() => [
                     <USkeleton class="h-5 w-9 rounded-sm"/>
                     <USkeleton class="size-6 rounded-sm"/>
                     <USkeleton class="size-6 rounded-sm"/>
+                    <USkeleton class="size-6 rounded-sm"/>
                   </div>
                 </div>
               </UCard>
@@ -913,7 +953,7 @@ const tabs = computed<TabsItem[]>(() => [
                     </div>
                   </div>
 
-                  <!-- 右侧操作按钮：启用状态开关 + 编辑 + 删除 -->
+                  <!-- 右侧操作按钮：启用状态开关 + 测试 + 编辑 + 删除 -->
                   <div class="flex shrink-0 items-center gap-1">
                     <USwitch
                       :model-value="k.enabled"
@@ -921,11 +961,22 @@ const tabs = computed<TabsItem[]>(() => [
                       @update:model-value="v => handleToggleKeyEnabled(k, !!v)"
                     />
                     <UButton
+                      icon="i-lucide-activity"
+                      variant="ghost"
+                      color="neutral"
+                      size="xs"
+                      :loading="testingKeyId === k.id"
+                      :aria-label="t('providerKeys.testBtn')"
+                      :title="t('providerKeys.testBtn')"
+                      @click="runKeyTest(k)"
+                    />
+                    <UButton
                       icon="i-lucide-square-pen"
                       variant="ghost"
                       color="neutral"
                       size="xs"
                       :aria-label="t('providers.edit')"
+                      :title="t('providers.edit')"
                       @click="openEditKey(k)"
                     />
                     <UButton
@@ -934,6 +985,7 @@ const tabs = computed<TabsItem[]>(() => [
                       color="error"
                       size="xs"
                       :aria-label="t('providers.remove')"
+                      :title="t('providers.remove')"
                       @click="confirmDeleteKey(k)"
                     />
                   </div>
