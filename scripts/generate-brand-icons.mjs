@@ -45,20 +45,20 @@ for (const id of ids) {
   if (colorIds.has(id)) {
     const varName = id.replace(/[-_](\w)/g, (_, c) => c.toUpperCase())
     imports.push(`import ${varName} from '@lobehub/icons-static-png/light/${id}-color.png'`)
-    entries.push(`  ${JSON.stringify(id)}: { label: ${JSON.stringify(label)}, color: ${varName} }`)
+    entries.push(`  ${JSON.stringify(id)}: {label: ${JSON.stringify(label)}, color: ${varName}}`)
   } else {
     const varName = id.replace(/[-_](\w)/g, (_, c) => c.toUpperCase())
     const hasDark = darkFiles.has(`${id}.png`)
     imports.push(`import ${varName}Light from '@lobehub/icons-static-png/light/${id}.png'`)
     if (hasDark) imports.push(`import ${varName}Dark from '@lobehub/icons-static-png/dark/${id}.png'`)
     entries.push(
-      `  ${JSON.stringify(id)}: { label: ${JSON.stringify(label)}, light: ${varName}Light${hasDark ? `, dark: ${varName}Dark` : ''} }`
+      `  ${JSON.stringify(id)}: {label: ${JSON.stringify(label)}, light: ${varName}Light${hasDark ? `, dark: ${varName}Dark` : ''}}`
     )
   }
 }
 
 const content = `/**\n * 品牌图标：@lobehub/icons 静态 PNG 资源（本文件由 scripts/generate-brand-icons.mjs 生成，勿手改）\n * 收录包内全部图标（${ids.length} 个）；有彩色变体的用 -color.png（light/dark 内容一致只引一份），\n * 仅单色的引 light/dark 两份由 brandIconUrl(icon, isDark) 按颜色模式取用\n */\n${imports.join('\n')}\n\n/** 品牌 id → 图标资源与显示名 */\ninterface BrandIconEntry {\n  label: string\n  color?: string\n  light?: string\n  dark?: string\n}\n\nconst brandIcons: Record<string, BrandIconEntry> = {\n${entries.join(',\n')}\n}\n\n/** 旧版本地品牌 key（public/brands/*.svg 文件名）→ @lobehub/icons 品牌 id 兼容映射 */\nexport const legacyBrandIconKeys: Record<string, string> = {\n  googlegemini: 'gemini',\n  moonshotai: 'moonshot',\n  mistralai: 'mistral'\n}\n\n/** 可选的供应商显示图标选项 */\nexport interface ProviderIconOption {\n  /** 品牌 id；空串表示自动（首字母 fallback） */\n  value: string\n  /** 品牌名（tooltip/无障碍）；自动项为空由组件用 i18n */\n  label: string\n}\n\n/** 全部品牌图标选项（不含“自动”项），按品牌名排序 */\nexport const providerIconOptions: ProviderIconOption[] = [\n${ids
-  .map(id => `  { value: ${JSON.stringify(id)}, label: ${JSON.stringify(labelById.get(id) ?? prettify(id))} }`)
+  .map(id => `  {value: ${JSON.stringify(id)}, label: ${JSON.stringify(labelById.get(id) ?? prettify(id))}}`)
   .sort((a, b) => a.localeCompare(b))
   .join(',\n')}\n]\n\n/** 默认图标：空串 = 自动（首字母 fallback） */\nexport const defaultProviderIcon = ''\n\n/** 是否为自定义上传图标（data URL 或 http 链接，直接作为图片地址） */\nexport function isCustomIcon(icon: string): boolean {\n  return icon.startsWith('data:') || icon.startsWith('http://') || icon.startsWith('https://')\n}\n\n/** 解析图标 URL：自定义图片原样返回；品牌 id（含旧 key 兼容）映射到 lobehub PNG；未知返回空串。无彩色的品牌按 isDark 取亮/暗单色变体 */\nexport function brandIconUrl(icon: string, isDark = false): string {\n  if (!icon) return ''\n  if (isCustomIcon(icon)) return icon\n  const id = legacyBrandIconKeys[icon] ?? icon\n  const entry = brandIcons[id]\n  if (!entry) return ''\n  return entry.color ?? (isDark ? entry.dark : entry.light) ?? ''\n}\n`
 

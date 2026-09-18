@@ -22,7 +22,7 @@
     "@iconify-json/lucide": "^1.2.123",
     "@internationalized/date": "^3.12.4",
     "@libsql/client": "^0.18.0",
-    "@lobehub/icons-static-png": "^1.95.0",
+    "@lobehub/icons-static-png": "^1.97.0",
     "@nuxt/fonts": "^0.14.0",
     "@nuxt/ui": "^4.11.0",
     "@nuxtjs/i18n": "^10.6.0",
@@ -37,7 +37,7 @@
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
-    "@lobehub/icons": "^5.16.0",
+    "@lobehub/icons": "^5.18.0",
     "@tauri-apps/cli": "^2",
     "@types/node": "^26.2.0",
     "@types/sortablejs": "^1.15.9",

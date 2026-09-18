@@ -1,6 +1,6 @@
 /**
  * 品牌图标：@lobehub/icons 静态 PNG 资源（本文件由 scripts/generate-brand-icons.mjs 生成，勿手改）
- * 收录包内全部图标（321 个）；有彩色变体的用 -color.png（light/dark 内容一致只引一份），
+ * 收录包内全部图标（322 个）；有彩色变体的用 -color.png（light/dark 内容一致只引一份），
  * 仅单色的引 light/dark 两份由 brandIconUrl(icon, isDark) 按颜色模式取用
  */
 import aceLight from '@lobehub/icons-static-png/light/ace.png'
@@ -384,6 +384,7 @@ import tripo from '@lobehub/icons-static-png/light/tripo-color.png'
 import turixLight from '@lobehub/icons-static-png/light/turix.png'
 import turixDark from '@lobehub/icons-static-png/dark/turix.png'
 import udio from '@lobehub/icons-static-png/light/udio-color.png'
+import unsloth from '@lobehub/icons-static-png/light/unsloth-color.png'
 import unstructured from '@lobehub/icons-static-png/light/unstructured-color.png'
 import upstage from '@lobehub/icons-static-png/light/upstage-color.png'
 import v0Light from '@lobehub/icons-static-png/light/v0.png'
@@ -727,6 +728,7 @@ const brandIcons: Record<string, BrandIconEntry> = {
   "tripo": {label: "Tripo", color: tripo},
   "turix": {label: "TuriX", light: turixLight, dark: turixDark},
   "udio": {label: "Udio", color: udio},
+  "unsloth": {label: "Unsloth", color: unsloth},
   "unstructured": {label: "Unstructured", color: unstructured},
   "upstage": {label: "Upstage", color: upstage},
   "v0": {label: "V0 (Vercel)", light: v0Light, dark: v0Dark},
@@ -1067,6 +1069,7 @@ export const providerIconOptions: ProviderIconOption[] = [
   {value: "tripo", label: "Tripo"},
   {value: "turix", label: "TuriX"},
   {value: "udio", label: "Udio"},
+  {value: "unsloth", label: "Unsloth"},
   {value: "unstructured", label: "Unstructured"},
   {value: "upstage", label: "Upstage"},
   {value: "v0", label: "V0 (Vercel)"},
