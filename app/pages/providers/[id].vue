@@ -4,6 +4,7 @@ import {useSortable} from '@vueuse/integrations/useSortable'
 import type {TabsItem} from '@nuxt/ui'
 import {
   SYS_ENDPOINT_GENERATES,
+  SYS_MODEL_DEFAULT_CATEGORY,
   type SysEndpoint,
   type SysEndpointType,
   type SysKey,
@@ -365,27 +366,19 @@ async function handleToggleModelEnabled(m: SysModel, enabled: boolean) {
   })
 }
 
-/* 模型按「模型分组」(category) 分组展示：分组按首现顺序排列，未分组的固定在最后 */
-const UNGROUPED_KEY = '__ungrouped__'
-
+/* 模型按「模型分组」(category) 分组展示：分组按首现顺序排列（空分组由后端归一为 Default） */
 const modelGroups = computed(() => {
   const groups: {key: string, label: string, items: SysModel[]}[] = []
   const map = new Map<string, {key: string, label: string, items: SysModel[]}>()
   for (const m of models.value) {
-    const category = (m.category || '').trim()
-    const key = category || UNGROUPED_KEY
-    let group = map.get(key)
+    const category = (m.category || '').trim() || SYS_MODEL_DEFAULT_CATEGORY
+    let group = map.get(category)
     if (!group) {
-      group = {key, label: category || t('providerModels.ungrouped'), items: []}
-      map.set(key, group)
+      group = {key: category, label: category, items: []}
+      map.set(category, group)
       groups.push(group)
     }
     group.items.push(m)
-  }
-  const ungrouped = map.get(UNGROUPED_KEY)
-  if (ungrouped) {
-    groups.splice(groups.indexOf(ungrouped), 1)
-    groups.push(ungrouped)
   }
   return groups
 })

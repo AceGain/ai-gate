@@ -3,6 +3,7 @@
  */
 import {Hono} from 'hono'
 import {newId} from '../../../shared/sys-provider'
+import {SYS_MODEL_DEFAULT_CATEGORY} from '../../../shared/sys-model'
 import type {RemoteModelItem, SysModelInput, SysModelReasoning, SysModelStatus, SysModelType} from '../../../shared/sys-model'
 import {insertModel, listEndpoints, listKeys, listModels, removeModel, reorderModels, updateModel} from '../store'
 import {extractUpstreamDetail, joinUrl} from '../upstream'
@@ -37,7 +38,8 @@ function parseModelBody(raw: unknown): {data?: SysModelInput; error?: string} {
     data: {
       code: p.code.trim(),
       name: typeof p.name === 'string' ? p.name.trim() : '',
-      category: typeof p.category === 'string' ? p.category.trim() : '',
+      // 未指定分组时归入默认分组 Default
+      category: (typeof p.category === 'string' && p.category.trim()) ? p.category.trim() : SYS_MODEL_DEFAULT_CATEGORY,
       enabled: p.enabled !== false,
       status: (p.status === 'INVALID' ? 'INVALID' : 'ACTIVE') as SysModelStatus,
       type: p.type as SysModelType,
@@ -243,6 +245,7 @@ models.post('/providers/:providerId/models/import', async (c) => {
     await insertModel(newId(), providerId, {
       code: item.code,
       name: item.name,
+      category: SYS_MODEL_DEFAULT_CATEGORY,
       type: item.type,
       inputModal: ['text'],
       outputModal: ['text'],

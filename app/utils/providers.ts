@@ -22,7 +22,8 @@ export type {
 export type {SysKey, SysKeyInput, SysKeyStatus} from '../../shared/sys-key'
 export {
   SYS_MODEL_MODALITIES,
-  SYS_MODEL_EFFORT_LEVELS
+  SYS_MODEL_EFFORT_LEVELS,
+  SYS_MODEL_DEFAULT_CATEGORY
 } from '../../shared/sys-model'
 export type {
   SysModel,

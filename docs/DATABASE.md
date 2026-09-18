@@ -275,7 +275,7 @@ CREATE INDEX IF NOT EXISTS idx_model_provider ON sys_model (provider_id, sort);
 | `provider_id` | TEXT | NOT NULL REFERENCES `sys_provider(id)` ON DELETE CASCADE | 外键，关联供应商 ID |
 | `code` | TEXT | NOT NULL | 模型标识（如 `gpt-4o`、`claude-3-5-sonnet-20241022`） |
 | `name` | TEXT | NOT NULL DEFAULT `''` | 模型别名或展示名称 |
-| `category` | TEXT | NOT NULL DEFAULT `''` | 模型分组/分类标签 |
+| `category` | TEXT | NOT NULL DEFAULT `''` | 模型分组/分类标签，未指定时后端归一为 `Default` |
 | `enabled` | INTEGER | NOT NULL DEFAULT 0 | 启用状态（0: 禁用, 1: 启用） |
 | `status` | TEXT | NOT NULL DEFAULT 'ACTIVE' | 模型状态：`ACTIVE`（正常）、`INVALID`（已失效） |
 | `type` | TEXT | NOT NULL | 模型类别枚举：`GenText`、`GenImage`、`GenAudio`、`GenVideo`、`Embedding`、`Rerank` |

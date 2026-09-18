@@ -15,6 +15,9 @@ export type SysModelType =
 
 export type SysModelReasoning = 'DISABLE' | 'ALWAYS' | 'SWITCH' | 'TOGGLE'
 
+/** 未指定分组时的默认模型分组（固定标识符，不随界面语言本地化） */
+export const SYS_MODEL_DEFAULT_CATEGORY = 'Default'
+
 /** 固定支持的输入/输出模态类型 */
 export const SYS_MODEL_MODALITIES = [
   'text',

@@ -77,14 +77,10 @@ watch(() => form.generate, (newGen, oldGen) => {
   }
 })
 
-/** 编码格式：大小写字母/数字/中划线，字母或数字开头结尾（对外模型标识前缀） */
-const CODE_PATTERN = /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/
-
-/** 编码实际校验结果（与错误展示解耦，供 canSave 使用） */
+/** 编码实际校验结果（与错误展示解耦，供 canSave 使用）：不限制字符，仅要求非空且供应商内唯一 */
 const codeInvalidReason = computed(() => {
   const v = form.code.trim()
   if (!v) return t('providers.codeRequired')
-  if (!CODE_PATTERN.test(v)) return t('providers.codeInvalid')
   if (providers.value.some(p => p.code === v && p.id !== props.provider?.id)) {
     return t('providers.codeDuplicate')
   }

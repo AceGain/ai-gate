@@ -12,6 +12,7 @@ import type {
 import {
   SYS_MODEL_MODALITIES,
   SYS_MODEL_EFFORT_LEVELS,
+  SYS_MODEL_DEFAULT_CATEGORY,
   splitUrl
 } from '~/utils/providers'
 
@@ -156,7 +157,8 @@ watch(open, (v) => {
   if (!v) return
   form.code = props.modelItem?.code ?? ''
   form.name = props.modelItem?.name ?? ''
-  form.category = props.modelItem?.category ?? ''
+  // 分组留空时回退到默认分组 Default（含历史空分组数据）
+  form.category = props.modelItem?.category || SYS_MODEL_DEFAULT_CATEGORY
   form.type = props.modelItem?.type ?? 'GenText'
   form.status = props.modelItem?.status ?? 'ACTIVE'
   form.enabled = props.modelItem?.enabled ?? true
@@ -218,7 +220,7 @@ async function save() {
     code: form.code.trim(),
     // 显示名允许为空，列表展示时回退到模型编码
     name: form.name.trim(),
-    category: form.category.trim(),
+    category: form.category.trim() || SYS_MODEL_DEFAULT_CATEGORY,
     type: form.type,
     status: form.status,
     enabled: form.enabled,
@@ -305,16 +307,6 @@ async function save() {
               />
             </div>
           </UFormField>
-
-          <UFormField :label="t('providers.description')">
-            <UTextarea
-              v-model="form.description"
-              autoresize
-              :rows="2"
-              :placeholder="t('providers.descriptionPlaceholder')"
-              class="w-full"
-            />
-          </UFormField>
         </div>
 
         <!-- 额外配置：模态、Token限制、推理、生成端点等可选扩展 -->
@@ -327,18 +319,16 @@ async function save() {
               class="group justify-between px-0 py-2 border-b border-default cursor-pointer transition-colors hover:bg-transparent"
               :trailing-icon="isAdvancedOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
               :ui="{
-                trailingIcon: isAdvancedOpen ? 'text-primary' : 'text-muted group-hover:text-default'
+                trailingIcon: 'text-muted transition-colors group-hover:text-default'
               }"
             >
               <div class="flex items-center gap-2">
                 <UIcon
                   name="i-lucide-sliders-horizontal"
-                  class="size-4 transition-colors"
-                  :class="isAdvancedOpen ? 'text-primary' : 'text-muted group-hover:text-default'"
+                  class="size-5 text-muted transition-colors group-hover:text-default"
                 />
                 <span
-                  class="text-xs font-normal transition-colors"
-                  :class="isAdvancedOpen ? 'text-highlighted' : 'text-default group-hover:text-highlighted'"
+                  class="text-sm font-medium text-default transition-colors group-hover:text-highlighted"
                 >
                   {{ t('providerModels.advancedConfig') }}
                 </span>
@@ -526,6 +516,17 @@ async function save() {
                   >
                     {{ t('providerModels.noGenerateEndpoints') }}
                   </div>
+                </UFormField>
+
+                <!-- 描述：归入高级配置，保持基础区只留高频字段 -->
+                <UFormField :label="t('providers.description')">
+                  <UTextarea
+                    v-model="form.description"
+                    autoresize
+                    :rows="2"
+                    :placeholder="t('providers.descriptionPlaceholder')"
+                    class="w-full"
+                  />
                 </UFormField>
               </div>
             </template>

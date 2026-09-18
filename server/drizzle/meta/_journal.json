@@ -15,6 +15,13 @@
       "when": 1789728000000,
       "tag": "0001_rename_default_key",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789731600000,
+      "tag": "0002_default_model_category",
+      "breakpoints": true
     }
   ]
 }
