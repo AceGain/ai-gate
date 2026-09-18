@@ -96,10 +96,9 @@ export async function insertProvider(id: string, input: SysProviderInput): Promi
   return (await getProvider(id))!
 }
 
-/** 按 id 全量更新可写字段（不存在时不生效） */
+/** 按 id 全量更新可写字段（不存在时不生效）；code 创建后不可变，更新时忽略 */
 export async function updateProvider(id: string, input: SysProviderInput): Promise<SysProvider | null> {
   const values: Record<string, unknown> = {
-    code: input.code,
     name: input.name,
     icon: input.icon ?? '',
     enabled: input.enabled === true,
@@ -371,10 +370,9 @@ export async function insertModel(id: string, providerId: string, input: SysMode
   return (await getModel(id))!
 }
 
-/** 更新模型 */
+/** 更新模型；code 创建后不可变，更新时忽略 */
 export async function updateModel(id: string, input: SysModelInput): Promise<SysModel | null> {
   const values: Record<string, unknown> = {
-    code: input.code,
     name: input.name ?? '',
     category: input.category ?? '',
     enabled: input.enabled !== false,

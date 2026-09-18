@@ -264,10 +264,12 @@ async function save() {
       <div class="space-y-3">
         <!-- 基础配置：常用必要项（纯单列垂直排列） -->
         <div class="space-y-4">
+          <!-- 模型编码全局唯一，创建后不可修改：编辑态只读禁用（与端点类型字段同范式） -->
           <UFormField :label="t('providerModels.code')" required :error="codeError">
             <UInput
               v-model="form.code"
               :placeholder="t('providerModels.codePlaceholder')"
+              :disabled="!!props.modelItem"
               class="w-full"
             />
           </UFormField>

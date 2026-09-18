@@ -68,7 +68,6 @@
     "baseUrlPlaceholder": "e.g. https://api.openai.com",
     "baseUrlRequired": "Base URL is required",
     "secret": "API Key",
-    "defaultKeyName": "Default Key",
     "description": "Description",
     "descriptionPlaceholder": "Optional",
     "enable": "Enabled",

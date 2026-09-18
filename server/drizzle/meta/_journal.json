@@ -8,6 +8,13 @@
       "when": 1789439725581,
       "tag": "0000_tricky_luke_cage",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1789728000000,
+      "tag": "0001_rename_default_key",
+      "breakpoints": true
     }
   ]
 }

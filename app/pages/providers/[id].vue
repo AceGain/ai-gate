@@ -172,9 +172,9 @@ const keyModalOpen = ref(false)
 const editingKey = ref<SysKey | null>(null)
 const revealedKeys = ref<Set<string>>(new Set())
 
-/** 密钥卡片 UCard 主题覆盖：行式密度（内边距由行容器接管），圆角与 hover 效果对齐项目基线 */
+/** 密钥卡片 UCard 主题覆盖：行式密度（内边距由行容器接管），圆角与 hover 效果对齐项目基线；group 供密文操作按钮悬浮显现 */
 const keyCardUi = {
-  root: 'transition hover:ring-primary/40 hover:bg-elevated/30',
+  root: 'group transition hover:ring-primary/40 hover:bg-elevated/30',
   body: 'p-0 sm:p-0'
 }
 
@@ -823,7 +823,7 @@ const tabs = computed<TabsItem[]>(() => [
                       <!-- 第一行：名称 + 状态徽标 + 有效期 -->
                       <div class="flex flex-wrap items-center gap-2">
                         <span
-                          class="truncate text-sm"
+                          class="truncate text-sm font-semibold"
                           :class="k.enabled ? 'text-highlighted' : 'text-dimmed'"
                           :title="k.name"
                         >
@@ -864,7 +864,7 @@ const tabs = computed<TabsItem[]>(() => [
                           :icon="revealedKeys.has(k.id) ? 'i-lucide-eye-off' : 'i-lucide-eye'"
                           variant="ghost"
                           color="neutral"
-                          class="shrink-0"
+                          class="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                           :title="revealedKeys.has(k.id) ? t('providerKeys.hideSecret') : t('providerKeys.showSecret')"
                           :aria-label="revealedKeys.has(k.id) ? t('providerKeys.hideSecret') : t('providerKeys.showSecret')"
                           @click="toggleReveal(k.id)"
@@ -874,7 +874,7 @@ const tabs = computed<TabsItem[]>(() => [
                           :icon="copiedKeyId === k.id ? 'i-lucide-check' : 'i-lucide-copy'"
                           :color="copiedKeyId === k.id ? 'success' : 'neutral'"
                           variant="ghost"
-                          class="shrink-0"
+                          class="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                           :title="t('providerKeys.copySecret')"
                           :aria-label="t('providerKeys.copySecret')"
                           @click="handleCopyKey(k)"

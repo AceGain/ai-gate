@@ -162,7 +162,8 @@ async function save() {
     ...(!props.provider ? {
       baseUrl: form.baseUrl.trim(),
       generateEndpoint: {generate: form.generate, path: form.generatePath.trim()},
-      apiKey: {name: t('providers.defaultKeyName'), secret: form.secret.trim()}
+      // 首个密钥名称固定为 default（标识符，不随界面语言本地化）
+      apiKey: {name: 'default', secret: form.secret.trim()}
     } : {})
   }
   try {
@@ -200,10 +201,12 @@ async function save() {
           <ProviderIconPicker v-model="form.icon" :name="form.name"/>
         </div>
 
+        <!-- 编码全局唯一，创建后不可修改：编辑态只读禁用（与端点类型字段同范式） -->
         <UFormField :label="t('providers.code')" required :error="codeError">
           <UInput
             v-model="form.code"
             :placeholder="t('providers.codePlaceholder')"
+            :disabled="!!props.provider"
             class="w-full"
           />
         </UFormField>
