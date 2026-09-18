@@ -4,6 +4,12 @@ export default defineAppConfig({
       primary: 'indigo',
       neutral: 'zinc'
     },
+    // 徽章全局默认尺寸 sm（Nuxt UI 默认 md）
+    badge: {
+      defaultVariants: {
+        size: 'sm'
+      }
+    },
     button: {
       variants: {
         square: {
