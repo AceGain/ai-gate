@@ -518,20 +518,21 @@ async function save() {
                   </div>
                 </UFormField>
 
-                <!-- 描述：归入高级配置，保持基础区只留高频字段 -->
-                <UFormField :label="t('providers.description')">
-                  <UTextarea
-                    v-model="form.description"
-                    autoresize
-                    :rows="2"
-                    :placeholder="t('providers.descriptionPlaceholder')"
-                    class="w-full"
-                  />
-                </UFormField>
               </div>
             </template>
           </UCollapsible>
         </div>
+
+        <!-- 描述：识别性补充说明，不属能力配置；恒可见收尾于表单（与供应商弹窗同范式） -->
+        <UFormField :label="t('providers.description')">
+          <UTextarea
+            v-model="form.description"
+            autoresize
+            :rows="2"
+            :placeholder="t('providers.descriptionPlaceholder')"
+            class="w-full"
+          />
+        </UFormField>
       </div>
     </template>
 
