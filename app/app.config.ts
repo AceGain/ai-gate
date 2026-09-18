@@ -11,10 +11,20 @@ export default defineAppConfig({
       }
     },
     button: {
+      // 按钮全局默认尺寸 sm（Nuxt UI 默认 md），与徽章保持一致
+      defaultVariants: {
+        size: 'sm'
+      },
       variants: {
         square: {
           true: 'justify-center'
         }
+      }
+    },
+    // 开关全局默认尺寸 xs（Nuxt UI 默认 md）：sm 视觉上比 sm 按钮偏大，再降一档
+    switch: {
+      defaultVariants: {
+        size: 'xs'
       }
     },
     navigationMenu: {

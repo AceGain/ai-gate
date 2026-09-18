@@ -37,7 +37,7 @@ Nuxt UI 已提供键盘导航、焦点管理与 ARIA 关联，页面只需正确
 - **弹窗焦点管理**：焦点进入弹窗、Esc 关闭、关闭后回到触发元素；确认类弹窗的 Esc/关闭一律按「取消」，不得用 `dismissible=false` 屏蔽 Esc；
 - **状态不只靠颜色**：启用/失效、成功/失败必须有文字或图标，不能只靠红绿；
 - **对比度**：正文 ≥ 4.5:1，大号文本 ≥ 3:1；占位符与次要文本同样 4.5:1；
-- **指针目标**：≥ 24×24 CSS px 或满足 WCAG 2.2 间距例外；默认 `md` 尺寸已满足，更小 `size` 需实测命中区域；
+- **指针目标**：≥ 24×24 CSS px 或满足 WCAG 2.2 间距例外；默认尺寸（按钮 `sm` 28px、其余控件 `md`）已满足，开关 `xs` 为组件固有偏小尺寸（靠关联标签点击与空格键兜底），更小 `size` 需实测命中区域；
 - **放大与重排**：200% 放大不丢内容；320 CSS px 等效宽度下重排、无横向滚动（二维内容除外，见 §6.1）。
 
 依据：WCAG 2.2（1.4.1、1.4.3、1.4.10、2.1.1、2.4.3、2.4.7、2.5.7、2.5.8、3.3.2）。
@@ -52,14 +52,14 @@ Nuxt UI 已提供键盘导航、焦点管理与 ARIA 关联，页面只需正确
 
 ## 2. 全局配置是单源，页面不要重复（默认）
 
-字体、圆角、标题栏、弹窗样式与页面骨架已集中配置，控件尺寸统一用 Nuxt UI 内置默认。新页面直接用默认值，不要重复覆盖：
+字体、圆角、标题栏、弹窗样式与页面骨架已集中配置，控件尺寸已统一为全局默认（按钮/徽章 `sm`、开关 `xs`，其余控件 Nuxt UI 内置 `md`）。新页面直接用默认值，不要重复覆盖：
 
 | 项 | 值 | 位置 |
 | --- | --- | --- |
 | 字体 | Inter；`--font-mono` 也映射为 Inter。代码/JSON 需对齐阅读时局部引入等宽字体，不改全局基线 | `app/assets/css/main.css` |
 | 圆角 | 全局无圆角：`--ui-radius: 0rem`，`rounded-xs`~`rounded-3xl` 随之全部归零（`rounded-full` 不受影响）；代码中不写局部圆角类 | `app/assets/css/main.css` |
 | 标题栏 | `--ui-header-height: 2rem`，全宽 `data-tauri-drag-region`；平台外观见 §6.2 | `app/assets/css/main.css` + `app/app.vue` |
-| 控件默认尺寸 | 全部用 Nuxt UI 内置默认（`md`）：`app.config.ts` 不覆盖 `size`，页面不传 `size` | Nuxt UI 内置默认 |
+| 控件默认尺寸 | 按钮与徽章全局默认 `sm`、开关 `xs`（sm 视觉上比 sm 按钮偏大），其余控件用 Nuxt UI 内置默认（`md`）；页面不传 `size` | `app/app.config.ts` `defaultVariants` |
 | 弹窗 | 背景/边框/阴影/遮罩/宽度 | `app/app.config.ts` |
 | 页面骨架 | `dashboardPanel` 的 `#body` 全局 `overflow-hidden min-h-0 p-0 gap-0`（滚动职责见 §3） | `app/app.config.ts` |
 
