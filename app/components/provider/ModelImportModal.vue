@@ -120,11 +120,13 @@ async function importSelected() {
 </script>
 
 <template>
+  <!-- body 为 flex 列：列表 flex-1 撑满、超视口时列表内部滚动；header 禁收缩（shrink-0），
+       否则主题自带的 min-h 显式高度会豁免 flexbox 的 min-content 保护，内容超高时 header 被压缩，标题与关闭按钮错位 -->
   <UModal
     v-model:open="open"
     :title="t('providerModels.fetchTitle')"
     :dismissible="!importing"
-    :ui="{body: 'no-scrollbar', footer: 'justify-end'}"
+    :ui="{header: 'shrink-0', body: 'no-scrollbar flex flex-col', footer: 'justify-end'}"
   >
     <template #body>
       <!-- 加载中：居中 spinner，与空态块同高 -->
@@ -148,8 +150,8 @@ async function importSelected() {
         <UEmpty :title="t('providerModels.fetchEmpty')" variant="naked"/>
       </div>
 
-      <!-- 模型勾选列表：搜索 + 全选 + 滚动列表 -->
-      <div v-else class="space-y-2">
+      <!-- 模型勾选列表：搜索 + 全选 + 滚动列表（flex 列撑满 body，模型多时列表区滚动而非截断） -->
+      <div v-else class="flex min-h-0 flex-1 flex-col gap-2">
         <UInput
           v-model="filter"
           icon="i-lucide-search"
@@ -168,7 +170,7 @@ async function importSelected() {
           </span>
         </div>
 
-        <div class="max-h-72 space-y-1.5 overflow-y-auto pe-0.5">
+        <div class="min-h-0 flex-1 space-y-1.5 overflow-y-auto pe-0.5">
           <UCheckbox
             v-for="item in filteredItems"
             :key="item.code"

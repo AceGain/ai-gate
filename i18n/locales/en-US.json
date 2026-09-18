@@ -213,7 +213,7 @@
     "effortMax": "Max",
     "inputModalPrefix": "In",
     "outputModalPrefix": "Out",
-    "fetchTitle": "Fetch from Model List",
+    "fetchTitle": "Fetch Models",
     "fetchAction": "Fetch",
     "fetchEmpty": "The provider returned an empty model list",
     "searchEmpty": "No matching models",

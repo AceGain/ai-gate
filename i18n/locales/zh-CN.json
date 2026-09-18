@@ -213,7 +213,7 @@
     "effortMax": "最大",
     "inputModalPrefix": "入",
     "outputModalPrefix": "出",
-    "fetchTitle": "从模型列表获取模型",
+    "fetchTitle": "获取模型",
     "fetchAction": "获取模型",
     "fetchEmpty": "供应商模型列表为空",
     "searchEmpty": "没有匹配的模型",
