@@ -27,6 +27,22 @@ export default defineAppConfig({
         content: 'bg-default shadow-xl border border-default ring-0 focus:outline-none pointer-events-auto'
       }
     },
+    // 禁用态表单控件：灰底 + 弱化文字 + 不透明度拉满（默认仅 opacity-75，只读灰化不明显）；经主题插槽覆盖以同时作用于 UInput/UTextarea/USelect
+    input: {
+      slots: {
+        base: 'disabled:bg-elevated disabled:text-dimmed disabled:opacity-100'
+      }
+    },
+    textarea: {
+      slots: {
+        base: 'disabled:bg-elevated disabled:text-dimmed disabled:opacity-100'
+      }
+    },
+    select: {
+      slots: {
+        base: 'disabled:bg-elevated disabled:text-dimmed disabled:opacity-100'
+      }
+    },
     // 页面骨架：body 不滚动（裁切 + min-h-0 允许收缩），滚动统一交给页面内容容器（见 docs/DESIGN.md §3）
     dashboardPanel: {
       slots: {

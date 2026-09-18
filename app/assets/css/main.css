@@ -44,16 +44,6 @@
   background: color-mix(in srgb, currentColor 30%, transparent);
 }
 
-/* 禁用态表单控件：置灰底色与文字，明确只读不可编辑（Nuxt UI 默认仅降低透明度，灰化不明显） */
-input:disabled,
-textarea:disabled,
-select:disabled {
-  background-color: var(--ui-bg-elevated);
-  color: var(--ui-text-dimmed);
-  opacity: 1;
-  cursor: not-allowed;
-}
-
 /* 隐藏滚动条类 */
 .no-scrollbar {
   scrollbar-width: none;
