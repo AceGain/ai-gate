@@ -123,7 +123,8 @@ async function importSelected() {
   <UModal
     v-model:open="open"
     :title="t('providerModels.fetchTitle')"
-    :ui="{content: 'sm:max-w-md', body: 'no-scrollbar', footer: 'justify-end'}"
+    :dismissible="!importing"
+    :ui="{body: 'no-scrollbar', footer: 'justify-end'}"
   >
     <template #body>
       <!-- 加载中：居中 spinner，与空态块同高 -->
@@ -206,7 +207,7 @@ async function importSelected() {
 
           <!-- 搜索无结果 -->
           <div v-if="!filteredItems.length" class="flex min-h-24 items-center justify-center">
-            <UEmpty :title="t('common.empty')" variant="naked"/>
+            <UEmpty :title="t('providerModels.searchEmpty')" variant="naked"/>
           </div>
         </div>
       </div>

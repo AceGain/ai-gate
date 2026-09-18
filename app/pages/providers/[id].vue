@@ -574,6 +574,7 @@ const tabs = computed<TabsItem[]>(() => [
                   <UButton
                     icon="i-lucide-download"
                     variant="ghost"
+                    :aria-label="t('providerModels.fetchAction')"
                     :title="t('providerModels.fetchTitle')"
                     @click="openImportModels"
                   >
