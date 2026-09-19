@@ -23,9 +23,10 @@ pnpm dev:all            # 前后端同时启动（concurrently -k，供 tauri de
 pnpm tauri dev          # 桌面开发（自动执行 pnpm dev:all 同时拉起前端 9255 与后端 9256）
 pnpm tauri build        # 桌面打包（自动执行 pnpm generate 产出到 dist/）
 pnpm typecheck          # 唯一验证手段（无 lint / test），前端 vue-tsc + 后端 tsc，提交前必跑
-pnpm db:generate        # 根据 server/src/schema/ 生成 Drizzle SQL 迁移文件
 pnpm db:studio          # 启动 Drizzle Studio 可视化管理 SQLite 数据库
 ```
+
+> 无数据库迁移机制：表结构以 `server/src/schema/index.ts` 为单源，变更表结构时手工执行 SQL 同步数据库。
 
 ## 目录与结构
 

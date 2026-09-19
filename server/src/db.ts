@@ -1,13 +1,12 @@
 /**
  * SQLite 数据库连接：@libsql/client + Drizzle ORM
  * 数据库文件位于 AI_GATE_DATA_DIR（默认 server/data，已被 gitignore）
- * 迁移目录位于 server/drizzle，支持 drizzle-kit 自动化管理
+ * 无自动迁移：表结构以 schema/index.ts 为单源，结构变更时手工执行 SQL 同步
  */
 import {mkdirSync} from 'node:fs'
 import path from 'node:path'
 import {createClient} from '@libsql/client'
 import {drizzle} from 'drizzle-orm/libsql'
-import {migrate} from 'drizzle-orm/libsql/migrator'
 import * as schema from './schema/index'
 
 const DATA_DIR = process.env.AI_GATE_DATA_DIR ?? path.resolve(process.cwd(), 'server', 'data')
@@ -27,13 +26,3 @@ await client.execute('PRAGMA foreign_keys = ON')
 
 /** Drizzle ORM 实例 */
 export const db = drizzle(client, {schema})
-
-// 服务启动时自动执行 Drizzle 迁移，确保表结构与 schema 保持最新
-// 基于 import.meta.dirname 安全定位迁移目录，避免依赖 process.cwd()
-const migrationsFolder = path.resolve(import.meta.dirname, '../drizzle')
-try {
-  await migrate(db, {migrationsFolder})
-} catch (err) {
-  console.error('[ai-gate] failed to run drizzle migrations:', err)
-  throw err
-}

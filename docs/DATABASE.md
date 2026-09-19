@@ -8,7 +8,7 @@
 | 数据库文件 | `server/data/ai-gate.db`（支持通过环境变量 `AI_GATE_DATA_DIR` 指定目录） |
 | 连接策略 | 进程级单例（`server/src/db.ts`），启用 WAL 模式，`busy_timeout = 5000` |
 | Schema 定义 | TypeScript 单源定义在 `server/src/schema/index.ts` |
-| 迁移机制 | `drizzle-kit` 自动化管理（产物位于 `server/drizzle/`），服务启动时自动同步 |
+| 表结构变更 | 无自动迁移；改 `schema/index.ts` 后手工执行 SQL 同步数据库 |
 | 命名约定 | 表名采用 `sys_` 前缀 + snake_case；字段名采用 snake_case |
 | 时间规范 | `CURRENT_TIMESTAMP`（UTC，格式 `YYYY-MM-DD HH:MM:SS`），由数据库缺省自动维护 |
 

@@ -14,7 +14,6 @@
     "typecheck": "nuxt typecheck && tsc -p server/tsconfig.json --noEmit",
     "generate:brand-icons": "node scripts/generate-brand-icons.mjs",
     "tauri": "tauri",
-    "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
