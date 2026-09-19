@@ -6,6 +6,7 @@
   },
   "nav": {
     "dashboard": "仪表盘",
+    "usage": "使用统计",
     "endpoints": "端点",
     "providers": "供应商",
     "virtualModels": "虚拟模型",
@@ -34,6 +35,65 @@
   },
   "dashboard": {
     "title": "仪表盘"
+  },
+  "usage": {
+    "title": "使用统计",
+    "range7d": "7 天",
+    "range30d": "30 天",
+    "range90d": "90 天",
+    "range180d": "180 天",
+    "range365d": "365 天",
+    "activity": {
+      "title": "每日活动",
+      "unit": "次请求",
+      "pastYear": "近一年",
+      "less": "少",
+      "more": "多",
+      "cellTitle": "{date} · {value} 次请求",
+      "ariaSummary": "近一年共 {total} 次请求，高峰为 {peak}"
+    },
+    "stats": {
+      "title": "统计",
+      "vsPrev": "较上周期",
+      "requests": "请求数",
+      "requestsHint": "日均 {value} 次",
+      "inputTokens": "输入 Tokens",
+      "outputTokens": "输出 Tokens",
+      "tokensHint": "日均 {value}",
+      "errorRate": "错误率",
+      "errorRateHint": "失败 {value} 次",
+      "topTokensModel": "用量最多模型",
+      "topTokensHint": "{value} Tokens · 占比 {percent}",
+      "topRequestsModel": "请求最多模型",
+      "topRequestsHint": "{value} 次",
+      "peakDay": "高峰日",
+      "peakDayHint": "{value} 次请求",
+      "totalLatency": "模型累计响应时长",
+      "totalLatencyHint": "日均 {value} 小时",
+      "hours": "小时"
+    },
+    "charts": {
+      "trend": "调用趋势",
+      "tokens": "Tokens",
+      "requests": "请求数",
+      "barTitle": "每日请求构成",
+      "donutTitle": "Token 占比",
+      "totalLabel": "合计",
+      "centerTokens": "总 Tokens"
+    },
+    "table": {
+      "byModel": "按模型",
+      "byProvider": "按供应商",
+      "byKey": "按密钥",
+      "model": "模型",
+      "provider": "供应商",
+      "key": "密钥",
+      "requests": "请求数",
+      "inputTokens": "输入 Tokens",
+      "outputTokens": "输出 Tokens",
+      "errorRate": "错误率",
+      "latency": "平均耗时"
+    }
   },
   "endpoints": {
     "title": "端点",

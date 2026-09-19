@@ -18,6 +18,11 @@ export const navRoutes: NavRoute[] = [
     to: '/'
   },
   {
+    labelKey: 'nav.usage',
+    icon: 'i-lucide-chart-line',
+    to: '/usage'
+  },
+  {
     labelKey: 'nav.endpoints',
     icon: 'i-lucide-route',
     to: '/endpoints'

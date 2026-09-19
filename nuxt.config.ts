@@ -4,7 +4,8 @@ export default defineNuxtConfig({
 
   modules: [
     '@nuxt/ui',
-    '@nuxtjs/i18n'
+    '@nuxtjs/i18n',
+    'nuxt-charts'
   ],
 
   // 国际化：支持简体中文（默认）和美式英语
@@ -59,6 +60,15 @@ export default defineNuxtConfig({
     // 其他环境变量可以在如下网页中获知：
     // https://v2.tauri.app/reference/environment-variables/
     envPrefix: ['VITE_', 'TAURI_'],
+    // nuxt-charts（vccs 引擎）以源码形式引用纯 CJS 依赖，需强制预打包以获得 default 导出互操作
+    optimizeDeps: {
+      include: [
+        'decimal.js-light',
+        'd3-hierarchy',
+        'd3-sankey',
+        'eventemitter3'
+      ]
+    },
     server: {
       // Tauri需要一个确定的端口
       strictPort: true,
