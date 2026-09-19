@@ -33,7 +33,8 @@ export type {
   SysModelType,
   SysModelModality,
   SysModelEffortLevel,
-  RemoteModelItem
+  RemoteModelItem,
+  RemoteModelKeyFetch
 } from '../../shared/sys-model'
 export type {SysKeyModel} from '../../shared/sys-key-model'
 

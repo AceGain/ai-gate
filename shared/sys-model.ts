@@ -73,6 +73,19 @@ export interface RemoteModelItem {
   name: string
 }
 
+/** 按单把密钥拉取上游模型列表的结果（models/remote 分组返回的条目） */
+export interface RemoteModelKeyFetch {
+  keyId: string
+  keyName: string
+  ok: boolean
+  /** 成功时的去重模型列表 */
+  models: RemoteModelItem[]
+  /** 失败时的错误码（UPSTREAM_TIMEOUT / UPSTREAM_UNREACHABLE / UPSTREAM_ERROR / UPSTREAM_INVALID_RESPONSE / KEY_INACTIVE） */
+  error?: string
+  /** 失败时的上游错误详情 */
+  detail?: string
+}
+
 export interface SysModelInput {
   code: string
   name?: string

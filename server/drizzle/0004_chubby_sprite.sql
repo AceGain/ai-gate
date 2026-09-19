@@ -1,0 +1,1 @@
+ALTER TABLE `sys_provider` DROP COLUMN `model_fetch_strategy`;

@@ -4,9 +4,11 @@
 import {Hono} from 'hono'
 import {newId} from '../../../shared/sys-provider'
 import {SYS_MODEL_DEFAULT_CATEGORY} from '../../../shared/sys-model'
-import type {RemoteModelItem, SysModelInput, SysModelReasoning, SysModelStatus, SysModelType} from '../../../shared/sys-model'
-import {insertModel, listEndpoints, listKeys, listModels, removeModel, reorderModels, updateModel} from '../store'
-import {extractUpstreamDetail, joinUrl} from '../upstream'
+import type {RemoteModelItem, RemoteModelKeyFetch, SysModelInput, SysModelReasoning, SysModelStatus, SysModelType} from '../../../shared/sys-model'
+import type {SysKey} from '../../../shared/sys-key'
+import {importModelsWithBindings, insertModel, listEndpoints, listKeys, listModels, removeModel, reorderModels, updateModel} from '../store'
+import type {ModelImportItem} from '../store'
+import {buildAuthHeaders, extractUpstreamDetail, joinUrl} from '../upstream'
 
 export const models = new Hono()
 
@@ -115,7 +117,52 @@ function extractRemoteModels(json: unknown): RemoteModelItem[] | null {
   return items
 }
 
-/** 从上游模型列表端点拉取可用模型（经服务端转发，规避浏览器跨域） */
+/** 单把密钥拉取的并发上限：避免密钥较多时瞬时打满上游限频 */
+const REMOTE_FETCH_CONCURRENCY = 4
+
+/** 受限并发遍历（保序返回结果） */
+async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = new Array(items.length)
+  let next = 0
+  async function worker(): Promise<void> {
+    while (next < items.length) {
+      const index = next++
+      results[index] = await fn(items[index]!)
+    }
+  }
+  await Promise.all(Array.from({length: Math.min(limit, items.length)}, () => worker()))
+  return results
+}
+
+/** 以单把密钥拉取上游模型列表；网络/超时/解析失败不影响其它密钥，以失败条目返回 */
+async function fetchModelsForKey(url: string, generate: string | undefined, key: SysKey): Promise<RemoteModelKeyFetch> {
+  const base: RemoteModelKeyFetch = {keyId: key.id, keyName: key.name, ok: false, models: []}
+  const headers = buildAuthHeaders(generate, key.secret)
+  let res: Response
+  try {
+    res = await fetch(url, {headers, signal: AbortSignal.timeout(15_000)})
+  } catch (err) {
+    if (err instanceof Error && err.name === 'TimeoutError') {
+      return {...base, error: 'UPSTREAM_TIMEOUT'}
+    }
+    console.warn('[ai-gate] 拉取上游模型列表失败:', url, err)
+    return {...base, error: 'UPSTREAM_UNREACHABLE'}
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    return {...base, error: 'UPSTREAM_ERROR', detail: extractUpstreamDetail(res.status, text)}
+  }
+  const json: unknown = await res.json().catch(() => null)
+  const items = extractRemoteModels(json)
+  if (!items) return {...base, error: 'UPSTREAM_INVALID_RESPONSE'}
+  return {keyId: key.id, keyName: key.name, ok: true, models: items}
+}
+
+/**
+ * 按密钥拉取上游模型列表（经服务端转发，规避浏览器跨域）：
+ * keys 查询参数（逗号分隔 id）指定密钥子集，缺省遍历全部启用且有效的密钥；
+ * 逐密钥分组返回，单把失败不影响整体
+ */
 models.get('/providers/:providerId/models/remote', async (c) => {
   const providerId = c.req.param('providerId')
   const endpoints = await listEndpoints(providerId)
@@ -124,24 +171,35 @@ models.get('/providers/:providerId/models/remote', async (c) => {
   if (!base?.path?.trim()) return c.json({error: 'MISSING_BASE_ENDPOINT'}, 400)
   if (!modelsEndpoint?.path?.trim()) return c.json({error: 'MISSING_MODELS_ENDPOINT'}, 400)
 
+  const defaultGenerate = endpoints.find(e => e.type === 'generate' && e.isDefault)
+    ?? endpoints.find(e => e.type === 'generate')
+
+  const allKeys = await listKeys(providerId)
+  const activeKeys = allKeys.filter(k => k.enabled && k.status === 'ACTIVE')
+  if (!activeKeys.length) return c.json({error: 'NO_ACTIVE_KEYS'}, 400)
+  const requestedIds = [...new Set(
+    c.req.query('keys')?.split(',').map(s => s.trim()).filter(Boolean) ?? []
+  )]
+  const targets = requestedIds.length
+    ? activeKeys.filter(k => requestedIds.includes(k.id))
+    : activeKeys
+
   const url = joinUrl(base.path.trim(), modelsEndpoint.path.trim())
-  const keys = await listKeys(providerId)
-  const key = keys.find(k => k.enabled && k.status === 'ACTIVE')
-  const headers: Record<string, string> = key ? {Authorization: `Bearer ${key.secret}`} : {}
+  const results = await mapWithConcurrency(targets, REMOTE_FETCH_CONCURRENCY,
+    key => fetchModelsForKey(url, defaultGenerate?.generate, key))
 
-  let res: Response
-  try {
-    res = await fetch(url, {headers, signal: AbortSignal.timeout(15_000)})
-  } catch (err) {
-    console.warn('[ai-gate] 拉取上游模型列表失败:', url, err)
-    return c.json({error: 'UPSTREAM_UNREACHABLE'}, 502)
+  // 请求中不可用（停用/失效/不存在）的密钥以失败条目返回，便于前端就地提示
+  for (const id of requestedIds) {
+    if (targets.some(k => k.id === id)) continue
+    results.push({
+      keyId: id,
+      keyName: allKeys.find(k => k.id === id)?.name ?? '',
+      ok: false,
+      models: [],
+      error: 'KEY_INACTIVE'
+    })
   }
-  if (!res.ok) return c.json({error: 'UPSTREAM_ERROR', detail: `HTTP ${res.status}`}, 502)
-
-  const json: unknown = await res.json().catch(() => null)
-  const items = extractRemoteModels(json)
-  if (!items) return c.json({error: 'UPSTREAM_INVALID_RESPONSE'}, 502)
-  return c.json({models: items})
+  return c.json({results})
 })
 
 /** 组装最小生成测试请求：按生成端点类型选择请求体与认证头 */
@@ -206,13 +264,14 @@ models.post('/providers/:providerId/models/:id/test', async (c) => {
   return c.json({ok: true, latencyMs})
 })
 
-/** 批量导入模型：跳过已存在的编码，其余以最小配置落库（类型、分组等后续在编辑弹窗完善） */
+/** 批量导入模型：跳过已存在编码，其余以最小配置落库；请求中的密钥-模型绑定随同一事务写入（只增不删，冲突忽略） */
 models.post('/providers/:providerId/models/import', async (c) => {
   const providerId = c.req.param('providerId')
   const body = await c.req.json<unknown>().catch(() => null)
-  const rawModels = (body as {models?: unknown} | null)?.models
+  const payload = (body ?? {}) as {models?: unknown, bindings?: unknown}
+  const rawModels = payload.models
   if (!Array.isArray(rawModels) || rawModels.length === 0) {
-    return c.json({error: 'Body must be {models: [{code, name?, type?}]}'}, 400)
+    return c.json({error: 'Body must be {models: [{code, name?, type?}], bindings?: [{keyId, codes: []}]}'}, 400)
   }
 
   const parsed: {code: string, name: string, type: SysModelType}[] = []
@@ -226,36 +285,52 @@ models.post('/providers/:providerId/models/import', async (c) => {
     parsed.push({code, name: typeof p.name === 'string' ? p.name.trim() : '', type: p.type})
   }
 
+  // 绑定校验：keyId 必须属于该供应商，codes 必须为字符串数组
+  const providerKeyIds = new Set((await listKeys(providerId)).map(k => k.id))
+  const codesByKeyId = new Map<string, Set<string>>()
+  if (payload.bindings !== undefined) {
+    if (!Array.isArray(payload.bindings)) {
+      return c.json({error: 'Invalid bindings: must be an array of {keyId, codes}'}, 400)
+    }
+    for (const raw of payload.bindings) {
+      const b = (raw ?? {}) as {keyId?: unknown, codes?: unknown}
+      if (typeof b.keyId !== 'string' || !providerKeyIds.has(b.keyId)) {
+        return c.json({error: 'Invalid bindings: unknown keyId'}, 400)
+      }
+      if (!Array.isArray(b.codes) || !b.codes.every(s => typeof s === 'string' && s.trim())) {
+        return c.json({error: 'Invalid bindings: codes must be a non-empty string array'}, 400)
+      }
+      codesByKeyId.set(b.keyId, new Set(b.codes as string[]))
+    }
+  }
+
   const endpoints = await listEndpoints(providerId)
   const defaultGenerate = endpoints.find(e => e.type === 'generate' && e.isDefault)
     ?? endpoints.find(e => e.type === 'generate')
   const initialGenerate = defaultGenerate?.generate || defaultGenerate?.path || ''
 
-  const existing = await listModels(providerId)
-  const existingCodes = new Set(existing.map(m => m.code))
-  let nextSort = existing.reduce((max, m) => Math.max(max, m.sort), -1) + 1
-
-  let imported = 0
-  let skipped = 0
-  for (const item of parsed) {
-    if (existingCodes.has(item.code)) {
-      skipped++
-      continue
-    }
-    await insertModel(newId(), providerId, {
+  const items: ModelImportItem[] = parsed.map(item => ({
+    input: {
       code: item.code,
       name: item.name,
       category: SYS_MODEL_DEFAULT_CATEGORY,
       type: item.type,
       inputModal: ['text'],
       outputModal: ['text'],
-      generates: initialGenerate ? [initialGenerate] : [],
-      sort: nextSort++
-    })
-    existingCodes.add(item.code)
-    imported++
+      generates: initialGenerate ? [initialGenerate] : []
+    },
+    keyIds: [...codesByKeyId.entries()]
+      .filter(([, codes]) => codes.has(item.code))
+      .map(([keyId]) => keyId)
+  }))
+
+  try {
+    const {imported, skipped, bindings} = await importModelsWithBindings(providerId, items)
+    return c.json({imported, skipped, bindings}, 201)
+  } catch (err) {
+    if (isUniqueViolation(err)) return c.json({error: 'Duplicate model code in batch'}, 409)
+    throw err
   }
-  return c.json({imported, skipped}, 201)
 })
 
 /** 新增 */

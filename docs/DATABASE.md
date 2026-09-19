@@ -305,6 +305,8 @@ CREATE INDEX IF NOT EXISTS idx_model_provider ON sys_model (provider_id, sort);
 
 记录 API 密钥与模型之间的可用性关联，支持多对多授权配置。
 
+写入纪律：仅由「获取模型」的保存动作（`POST .../models/import`）与运行时管理写入，只增不删、冲突忽略；只记录已验证事实（来自对应密钥的模型列表），未拉取过的密钥不建绑定。
+
 ### DDL
 
 ```sql

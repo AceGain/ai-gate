@@ -1,0 +1,1 @@
+ALTER TABLE `sys_provider` ADD `model_fetch_strategy` text DEFAULT 'AUTO' NOT NULL;

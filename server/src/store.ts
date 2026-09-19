@@ -9,7 +9,7 @@ import type {SysEndpoint, SysEndpointInput} from '../../shared/sys-endpoint'
 import type {SysKey, SysKeyInput} from '../../shared/sys-key'
 import type {SysModel, SysModelInput} from '../../shared/sys-model'
 import {db} from './db'
-import {sysEndpoint, sysKey, sysModel, sysProvider} from './schema/index'
+import {sysEndpoint, sysKey, sysKeyModel, sysModel, sysProvider} from './schema/index'
 
 /* =========================================================================
  * 供应商（sys_provider）
@@ -412,6 +412,73 @@ export async function reorderModels(items: {id: string, sort: number}[]): Promis
         .set({sort, updateTime: sql`CURRENT_TIMESTAMP`})
         .where(eq(sysModel.id, id))
     }
+  })
+}
+
+/** 导入条目：模型输入 + 报告该模型可用的密钥 id 集合 */
+export interface ModelImportItem {
+  input: SysModelInput
+  keyIds: string[]
+}
+
+/** 批量导入模型并落库密钥-模型绑定（单事务）：已存在编码跳过插入但仍合并新绑定；绑定只增不删，冲突忽略 */
+export async function importModelsWithBindings(
+  providerId: string,
+  items: ModelImportItem[]
+): Promise<{imported: number, skipped: number, bindings: number}> {
+  return await db.transaction(async (tx) => {
+    const existing = await tx.select()
+      .from(sysModel)
+      .where(eq(sysModel.providerId, providerId))
+    const modelIdByCode = new Map(existing.map(m => [m.code, m.id]))
+    let nextSort = existing.reduce((max, m) => Math.max(max, m.sort), -1) + 1
+
+    let imported = 0
+    let skipped = 0
+    const bindingRows: {providerId: string, keyId: string, modelId: string}[] = []
+    for (const item of items) {
+      let modelId = modelIdByCode.get(item.input.code)
+      if (modelId) {
+        skipped++
+      } else {
+        modelId = newId()
+        await tx.insert(sysModel)
+          .values({
+            id: modelId,
+            providerId,
+            code: item.input.code,
+            name: item.input.name ?? '',
+            category: item.input.category ?? '',
+            enabled: item.input.enabled !== false,
+            status: item.input.status ?? 'ACTIVE',
+            type: item.input.type,
+            inputModal: item.input.inputModal ?? ['text'],
+            outputModal: item.input.outputModal ?? ['text'],
+            generates: item.input.generates ?? [],
+            maxContext: item.input.maxContext ?? 0,
+            maxInput: item.input.maxInput ?? 0,
+            maxOutput: item.input.maxOutput ?? 0,
+            reasoning: item.input.reasoning ?? 'TOGGLE',
+            effortLevel: item.input.effortLevel ?? [],
+            sort: nextSort++,
+            description: item.input.description ?? ''
+          })
+        modelIdByCode.set(item.input.code, modelId)
+        imported++
+      }
+      for (const keyId of item.keyIds) {
+        bindingRows.push({providerId, keyId, modelId})
+      }
+    }
+
+    let bindings = 0
+    if (bindingRows.length) {
+      const res = await tx.insert(sysKeyModel)
+        .values(bindingRows)
+        .onConflictDoNothing()
+      bindings = res.rowsAffected
+    }
+    return {imported, skipped, bindings}
   })
 }
 

@@ -17,3 +17,11 @@ export function extractUpstreamDetail(status: number, text: string): string {
   } catch { /* 非 JSON 响应仅保留状态码 */ }
   return `HTTP ${status}`
 }
+
+/** 按默认生成端点类型选择上游鉴权风格（Anthropic Messages 用 x-api-key，其余用 Bearer） */
+export function buildAuthHeaders(generate: string | undefined, secret: string): Record<string, string> {
+  if (generate === 'Messages') {
+    return {'x-api-key': secret, 'anthropic-version': '2023-06-01'}
+  }
+  return {Authorization: `Bearer ${secret}`}
+}

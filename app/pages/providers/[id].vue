@@ -1001,7 +1001,7 @@ const tabs = computed<TabsItem[]>(() => [
     @saved="() => loadModels(provider!.id)"
   />
 
-  <!-- 从模型列表端点获取模型：拉取上游列表后批量导入 -->
+  <!-- 从模型列表端点获取模型：获取方式在弹窗内选择，勾选后随密钥关系批量导入 -->
   <ProviderModelImportModal
     v-if="provider"
     v-model:open="importModalOpen"

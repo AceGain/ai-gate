@@ -22,6 +22,20 @@
       "when": 1789731600000,
       "tag": "0002_default_model_category",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1789760737391,
+      "tag": "0003_aspiring_cloak",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1789806077493,
+      "tag": "0004_chubby_sprite",
+      "breakpoints": true
     }
   ]
 }

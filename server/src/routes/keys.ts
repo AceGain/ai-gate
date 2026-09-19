@@ -5,7 +5,7 @@ import {Hono} from 'hono'
 import {newId} from '../../../shared/sys-provider'
 import type {SysKeyInput, SysKeyStatus} from '../../../shared/sys-key'
 import {insertKey, listEndpoints, listKeys, removeKey, reorderKeys, updateKey} from '../store'
-import {extractUpstreamDetail, joinUrl} from '../upstream'
+import {buildAuthHeaders, extractUpstreamDetail, joinUrl} from '../upstream'
 
 export const keys = new Hono()
 
@@ -62,14 +62,6 @@ keys.post('/providers/:providerId/keys', async (c) => {
   return c.json(created, 201)
 })
 
-/** 组装密钥测试请求头：按默认生成端点类型选择认证风格（Anthropic Messages 用 x-api-key） */
-function buildKeyTestHeaders(generate: string | undefined, secret: string): Record<string, string> {
-  if (generate === 'Messages') {
-    return {'x-api-key': secret, 'anthropic-version': '2023-06-01'}
-  }
-  return {Authorization: `Bearer ${secret}`}
-}
-
 /** 测试单个密钥可用性：以最小 GET 请求打模型列表端点验证鉴权，返回延迟；失败返回错误码 + 详情 */
 keys.post('/providers/:providerId/keys/:id/test', async (c) => {
   const providerId = c.req.param('providerId')
@@ -85,7 +77,7 @@ keys.post('/providers/:providerId/keys/:id/test', async (c) => {
 
   const defaultGenerate = endpoints.find(e => e.type === 'generate' && e.isDefault)
     ?? endpoints.find(e => e.type === 'generate')
-  const headers = buildKeyTestHeaders(defaultGenerate?.generate, key.secret)
+  const headers = buildAuthHeaders(defaultGenerate?.generate, key.secret)
 
   const url = joinUrl(base.path.trim(), modelsEndpoint.path.trim())
   const startedAt = Date.now()

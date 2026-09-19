@@ -1,5 +1,5 @@
 import type {
-  RemoteModelItem,
+  RemoteModelKeyFetch,
   SysEndpoint,
   SysEndpointInput,
   SysKey,
@@ -159,17 +159,24 @@ export function useProviderConfig() {
 
   /* ---------------- 模型 (Models) ---------------- */
 
-  /** 拉取上游模型列表（经后端转发）；失败抛出，由调用方按 error 码就近展示 */
-  async function fetchRemoteModels(providerId: string): Promise<RemoteModelItem[]> {
-    const res = await $fetch<{models: RemoteModelItem[]}>(`${apiBase()}/api/providers/${providerId}/models/remote`)
-    return res.models ?? []
+  /** 按密钥拉取上游模型列表（经后端转发）：keyIds 缺省遍历全部可用密钥；整体请求失败抛出，单把密钥失败在结果条目中标记 */
+  async function fetchRemoteModels(providerId: string, keyIds?: string[]): Promise<RemoteModelKeyFetch[]> {
+    const query = keyIds?.length ? `?keys=${encodeURIComponent(keyIds.join(','))}` : ''
+    const res = await $fetch<{results: RemoteModelKeyFetch[]}>(
+      `${apiBase()}/api/providers/${providerId}/models/remote${query}`
+    )
+    return res.results ?? []
   }
 
-  /** 批量导入模型（后端跳过已存在编码）；成功后由调用方重新加载列表 */
-  async function importModels(providerId: string, inputs: SysModelInput[]): Promise<{imported: number, skipped: number}> {
-    return await $fetch<{imported: number, skipped: number}>(
+  /** 批量导入模型（后端跳过已存在编码）并落库密钥-模型绑定（只增不删）；成功后由调用方重新加载列表 */
+  async function importModels(
+    providerId: string,
+    inputs: SysModelInput[],
+    bindings: {keyId: string, codes: string[]}[] = []
+  ): Promise<{imported: number, skipped: number, bindings: number}> {
+    return await $fetch<{imported: number, skipped: number, bindings: number}>(
       `${apiBase()}/api/providers/${providerId}/models/import`,
-      {method: 'POST', body: {models: inputs}}
+      {method: 'POST', body: {models: inputs, bindings}}
     )
   }
 
