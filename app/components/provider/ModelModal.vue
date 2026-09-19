@@ -36,7 +36,7 @@ const form = reactive({
   code: '',
   name: '',
   category: '',
-  type: 'GenText' as SysModelType,
+  type: 'TEXT' as SysModelType,
   status: 'ACTIVE' as SysModelStatus,
   enabled: true,
   inputModal: ['text'] as SysModelModality[],
@@ -54,12 +54,12 @@ const showErrors = ref(false)
 const saving = ref(false)
 
 const typeOptions = computed<{label: string, value: SysModelType, icon: string}[]>(() => [
-  {label: t('providerModels.typeGenText'), value: 'GenText', icon: 'i-lucide-type'},
-  {label: t('providerModels.typeGenImage'), value: 'GenImage', icon: 'i-lucide-image'},
-  {label: t('providerModels.typeGenVideo'), value: 'GenVideo', icon: 'i-lucide-video'},
-  {label: t('providerModels.typeGenAudio'), value: 'GenAudio', icon: 'i-lucide-music'},
-  {label: t('providerModels.typeEmbedding'), value: 'Embedding', icon: 'i-lucide-binary'},
-  {label: t('providerModels.typeRerank'), value: 'Rerank', icon: 'i-lucide-arrow-up-down'}
+  {label: t('providerModels.typeText'), value: 'TEXT', icon: 'i-lucide-type'},
+  {label: t('providerModels.typeImage'), value: 'IMAGE', icon: 'i-lucide-image'},
+  {label: t('providerModels.typeVideo'), value: 'VIDEO', icon: 'i-lucide-video'},
+  {label: t('providerModels.typeAudio'), value: 'AUDIO', icon: 'i-lucide-music'},
+  {label: t('providerModels.typeEmbedding'), value: 'EMBEDDING', icon: 'i-lucide-binary'},
+  {label: t('providerModels.typeRerank'), value: 'RERANK', icon: 'i-lucide-arrow-up-down'}
 ])
 
 const reasoningOptions = computed(() => [
@@ -159,7 +159,7 @@ watch(open, (v) => {
   form.name = props.modelItem?.name ?? ''
   // 分组留空时回退到默认分组 Default（含历史空分组数据）
   form.category = props.modelItem?.category || SYS_MODEL_DEFAULT_CATEGORY
-  form.type = props.modelItem?.type ?? 'GenText'
+  form.type = props.modelItem?.type ?? 'TEXT'
   form.status = props.modelItem?.status ?? 'ACTIVE'
   form.enabled = props.modelItem?.enabled ?? true
   form.inputModal = props.modelItem?.inputModal?.length

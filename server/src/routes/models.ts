@@ -25,7 +25,7 @@ function isUniqueViolation(err: unknown): boolean {
   return false
 }
 
-const VALID_TYPES = new Set<string>(['GenText', 'GenImage', 'GenAudio', 'GenVideo', 'Embedding', 'Rerank'])
+const VALID_TYPES = new Set<string>(['TEXT', 'IMAGE', 'AUDIO', 'VIDEO', 'EMBEDDING', 'RERANK'])
 const VALID_REASONINGS = new Set<string>(['DISABLE', 'ALWAYS', 'SWITCH', 'TOGGLE'])
 
 function parseModelBody(raw: unknown): {data?: SysModelInput; error?: string} {
@@ -34,7 +34,7 @@ function parseModelBody(raw: unknown): {data?: SysModelInput; error?: string} {
     return {error: 'Invalid model: missing code'}
   }
   if (!p.type || !VALID_TYPES.has(p.type)) {
-    return {error: 'Invalid model: type must be GenText, GenImage, GenAudio, GenVideo, Embedding, or Rerank'}
+    return {error: 'Invalid model: type must be TEXT, IMAGE, AUDIO, VIDEO, EMBEDDING, or RERANK'}
   }
   return {
     data: {
@@ -280,7 +280,7 @@ models.post('/providers/:providerId/models/import', async (c) => {
     const code = typeof p.code === 'string' ? p.code.trim() : ''
     if (!code) return c.json({error: 'Invalid model: missing code'}, 400)
     if (!p.type || !VALID_TYPES.has(p.type)) {
-      return c.json({error: 'Invalid model: type must be GenText, GenImage, GenAudio, GenVideo, Embedding, or Rerank'}, 400)
+      return c.json({error: 'Invalid model: type must be TEXT, IMAGE, AUDIO, VIDEO, EMBEDDING, or RERANK'}, 400)
     }
     parsed.push({code, name: typeof p.name === 'string' ? p.name.trim() : '', type: p.type})
   }

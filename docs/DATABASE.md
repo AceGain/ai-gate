@@ -278,7 +278,7 @@ CREATE INDEX IF NOT EXISTS idx_model_provider ON sys_model (provider_id, sort);
 | `category` | TEXT | NOT NULL DEFAULT `''` | 模型分组/分类标签，未指定时后端归一为 `Default` |
 | `enabled` | INTEGER | NOT NULL DEFAULT 0 | 启用状态（0: 禁用, 1: 启用） |
 | `status` | TEXT | NOT NULL DEFAULT 'ACTIVE' | 模型状态：`ACTIVE`（正常）、`INVALID`（已失效） |
-| `type` | TEXT | NOT NULL | 模型类别枚举：`GenText`、`GenImage`、`GenAudio`、`GenVideo`、`Embedding`、`Rerank` |
+| `type` | TEXT | NOT NULL | 模型类别枚举：`TEXT`、`IMAGE`、`VIDEO`、`AUDIO`、`EMBEDDING`、`RERANK` |
 | `input_modal` | TEXT | NOT NULL DEFAULT `'["text"]'` | 输入模态列表，JSON 数组（如 `["text", "image"]`） |
 | `output_modal` | TEXT | NOT NULL DEFAULT `'["text"]'` | 输出模态列表，JSON 数组（如 `["text"]`） |
 | `generates` | TEXT | NOT NULL DEFAULT `'[]'` | 支持的生成端点类型列表，JSON 数组（如 `["Chat Completions"]`） |

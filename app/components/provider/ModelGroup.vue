@@ -101,17 +101,17 @@ useSortable(listEl, localItems, {
 /** 模型类型图标（与编辑弹窗的类型选项保持一致） */
 function modelTypeIcon(type: string): string {
   switch (type) {
-    case 'GenText':
+    case 'TEXT':
       return 'i-lucide-type'
-    case 'GenImage':
+    case 'IMAGE':
       return 'i-lucide-image'
-    case 'GenVideo':
+    case 'VIDEO':
       return 'i-lucide-video'
-    case 'GenAudio':
+    case 'AUDIO':
       return 'i-lucide-music'
-    case 'Embedding':
+    case 'EMBEDDING':
       return 'i-lucide-binary'
-    case 'Rerank':
+    case 'RERANK':
       return 'i-lucide-arrow-up-down'
     default:
       return 'i-lucide-type'
@@ -120,12 +120,12 @@ function modelTypeIcon(type: string): string {
 
 function getModelTypeLabel(type: string): string {
   const map: Record<string, string> = {
-    GenText: t('providerModels.typeGenText'),
-    GenImage: t('providerModels.typeGenImage'),
-    GenAudio: t('providerModels.typeGenAudio'),
-    GenVideo: t('providerModels.typeGenVideo'),
-    Embedding: t('providerModels.typeEmbedding'),
-    Rerank: t('providerModels.typeRerank')
+    TEXT: t('providerModels.typeText'),
+    IMAGE: t('providerModels.typeImage'),
+    AUDIO: t('providerModels.typeAudio'),
+    VIDEO: t('providerModels.typeVideo'),
+    EMBEDDING: t('providerModels.typeEmbedding'),
+    RERANK: t('providerModels.typeRerank')
   }
   return map[type] || type
 }

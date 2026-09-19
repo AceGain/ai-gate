@@ -198,10 +198,10 @@ async function importSelected() {
   const inputs: SysModelInput[] = [
     ...importableItems.value
       .filter(i => selected.value.has(i.code))
-      .map(i => ({code: i.code, name: i.name, type: 'GenText'} as SysModelInput)),
+      .map(i => ({code: i.code, name: i.name, type: 'TEXT'} as SysModelInput)),
     ...mergedItems.value
       .filter(i => existingCodes.value.has(i.code))
-      .map(i => ({code: i.code, name: i.name, type: 'GenText'} as SysModelInput))
+      .map(i => ({code: i.code, name: i.name, type: 'TEXT'} as SysModelInput))
   ]
   // 绑定 = 每把成功密钥 × 其报告的模型（保守原则：只记录已验证事实，未拉取密钥不建绑定）
   const bindings = okResults.value.map(r => ({

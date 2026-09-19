@@ -6,12 +6,12 @@
 export type SysModelStatus = 'ACTIVE' | 'INVALID'
 
 export type SysModelType =
-  | 'GenText'
-  | 'GenImage'
-  | 'GenAudio'
-  | 'GenVideo'
-  | 'Embedding'
-  | 'Rerank'
+  | 'TEXT'
+  | 'IMAGE'
+  | 'VIDEO'
+  | 'AUDIO'
+  | 'EMBEDDING'
+  | 'RERANK'
 
 export type SysModelReasoning = 'DISABLE' | 'ALWAYS' | 'SWITCH' | 'TOGGLE'
 
