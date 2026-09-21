@@ -6,7 +6,6 @@
   },
   "nav": {
     "dashboard": "Dashboard",
-    "usage": "Usage",
     "endpoints": "Endpoint",
     "providers": "Provider",
     "virtualModels": "Virtual Model",
@@ -35,65 +34,6 @@
   },
   "dashboard": {
     "title": "Dashboard"
-  },
-  "usage": {
-    "title": "Usage Statistics",
-    "range7d": "7 days",
-    "range30d": "30 days",
-    "range90d": "90 days",
-    "range180d": "180 days",
-    "range365d": "365 days",
-    "activity": {
-      "title": "Daily Activity",
-      "unit": "requests",
-      "pastYear": "past year",
-      "less": "Less",
-      "more": "More",
-      "cellTitle": "{date} · {value} requests",
-      "ariaSummary": "{total} requests in the past year, peak at {peak}"
-    },
-    "stats": {
-      "title": "Statistics",
-      "vsPrev": "vs previous period",
-      "requests": "Requests",
-      "requestsHint": "{value} per day",
-      "inputTokens": "Input Tokens",
-      "outputTokens": "Output Tokens",
-      "tokensHint": "{value} per day",
-      "errorRate": "Error Rate",
-      "errorRateHint": "{value} failed",
-      "topTokensModel": "Top Model by Tokens",
-      "topTokensHint": "{value} tokens · {percent} share",
-      "topRequestsModel": "Top Model by Requests",
-      "topRequestsHint": "{value} requests",
-      "peakDay": "Peak Day",
-      "peakDayHint": "{value} requests",
-      "totalLatency": "Cumulative Response Time",
-      "totalLatencyHint": "{value} h per day",
-      "hours": "h"
-    },
-    "charts": {
-      "trend": "Call Trends",
-      "tokens": "Tokens",
-      "requests": "Requests",
-      "barTitle": "Daily Request Composition",
-      "donutTitle": "Token Share",
-      "totalLabel": "Total",
-      "centerTokens": "Total Tokens"
-    },
-    "table": {
-      "byModel": "By Model",
-      "byProvider": "By Provider",
-      "byKey": "By Key",
-      "model": "Model",
-      "provider": "Provider",
-      "key": "Key",
-      "requests": "Requests",
-      "inputTokens": "Input Tokens",
-      "outputTokens": "Output Tokens",
-      "errorRate": "Error Rate",
-      "latency": "Avg Latency"
-    }
   },
   "endpoints": {
     "title": "Endpoint",
