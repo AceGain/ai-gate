@@ -11,6 +11,7 @@ export interface NavRoute {
   to: string
 }
 
+// 顺序约定：按数据流排列 —— 总览 → 供给侧（供应商/路由）→ 网关（虚拟模型）→ 分发面（Agent/Skills/MCP）
 export const navRoutes: NavRoute[] = [
   {
     labelKey: 'nav.dashboard',
@@ -18,18 +19,33 @@ export const navRoutes: NavRoute[] = [
     to: '/'
   },
   {
-    labelKey: 'nav.endpoints',
-    icon: 'i-lucide-route',
-    to: '/endpoints'
-  },
-  {
     labelKey: 'nav.providers',
     icon: 'i-lucide-server',
     to: '/providers'
   },
   {
+    labelKey: 'nav.endpoints',
+    icon: 'i-lucide-route',
+    to: '/endpoints'
+  },
+  {
     labelKey: 'nav.virtualModels',
     icon: 'i-lucide-layers',
     to: '/models'
+  },
+  {
+    labelKey: 'nav.agent',
+    icon: 'i-lucide-bot',
+    to: '/agent'
+  },
+  {
+    labelKey: 'nav.skills',
+    icon: 'i-lucide-sparkles',
+    to: '/skills'
+  },
+  {
+    labelKey: 'nav.mcp',
+    icon: 'i-lucide-plug',
+    to: '/mcp'
   }
 ]

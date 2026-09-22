@@ -6,8 +6,11 @@
   },
   "nav": {
     "dashboard": "仪表盘",
-    "endpoints": "端点",
+    "endpoints": "路由",
     "providers": "供应商",
+    "skills": "Skills",
+    "mcp": "MCP",
+    "agent": "Agent",
     "virtualModels": "虚拟模型",
     "settings": "设置",
     "goTo": "跳转"
@@ -36,7 +39,7 @@
     "title": "仪表盘"
   },
   "endpoints": {
-    "title": "端点",
+    "title": "路由",
     "add": "新增"
   },
   "providers": {
@@ -252,6 +255,18 @@
   },
   "virtualModels": {
     "title": "虚拟模型",
+    "add": "新增"
+  },
+  "skills": {
+    "title": "Skills",
+    "add": "新增"
+  },
+  "mcp": {
+    "title": "MCP",
+    "add": "新增"
+  },
+  "agent": {
+    "title": "Agent",
     "add": "新增"
   },
   "settings": {

@@ -6,8 +6,11 @@
   },
   "nav": {
     "dashboard": "Dashboard",
-    "endpoints": "Endpoint",
+    "endpoints": "Route",
     "providers": "Provider",
+    "skills": "Skills",
+    "mcp": "MCP",
+    "agent": "Agent",
     "virtualModels": "Virtual Model",
     "settings": "Settings",
     "goTo": "Go to"
@@ -36,7 +39,7 @@
     "title": "Dashboard"
   },
   "endpoints": {
-    "title": "Endpoint",
+    "title": "Route",
     "add": "New"
   },
   "providers": {
@@ -252,6 +255,18 @@
   },
   "virtualModels": {
     "title": "Virtual Model",
+    "add": "New"
+  },
+  "skills": {
+    "title": "Skills",
+    "add": "New"
+  },
+  "mcp": {
+    "title": "MCP",
+    "add": "New"
+  },
+  "agent": {
+    "title": "Agent",
     "add": "New"
   },
   "settings": {
