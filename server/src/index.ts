@@ -7,6 +7,7 @@ import {providers} from './routes/providers'
 import {endpoints} from './routes/endpoints'
 import {keys} from './routes/keys'
 import {models} from './routes/models'
+import {v1} from './routes/v1'
 
 const app = new Hono()
 
@@ -16,6 +17,7 @@ app.route('/api', providers)
 app.route('/api', endpoints)
 app.route('/api', keys)
 app.route('/api', models)
+app.route('/v1', v1)
 
 app.onError((err, c) => {
   console.error('[ai-gate] uncaught error:', err)

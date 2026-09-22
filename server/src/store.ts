@@ -415,6 +415,36 @@ export async function reorderModels(items: {id: string, sort: number}[]): Promis
   })
 }
 
+/* =========================================================================
+ * 对外网关（/v1）
+ * ========================================================================= */
+
+/** 网关模型聚合视图的行结构（启用供应商 × 启用且有效的模型） */
+export interface GatewayModelRow {
+  providerCode: string
+  modelCode: string
+  modelName: string
+  createTime: string
+}
+
+/** 聚合对外可见模型：启用供应商下启用且状态有效的模型（供应商 sort 升序，模型 sort 升序） */
+export async function listGatewayModels(): Promise<GatewayModelRow[]> {
+  return await db.select({
+    providerCode: sysProvider.code,
+    modelCode: sysModel.code,
+    modelName: sysModel.name,
+    createTime: sysModel.createTime
+  })
+    .from(sysModel)
+    .innerJoin(sysProvider, eq(sysModel.providerId, sysProvider.id))
+    .where(and(
+      eq(sysProvider.enabled, true),
+      eq(sysModel.enabled, true),
+      eq(sysModel.status, 'ACTIVE')
+    ))
+    .orderBy(asc(sysProvider.sort), asc(sysProvider.createTime), asc(sysModel.sort), asc(sysModel.createTime))
+}
+
 /** 导入条目：模型输入 + 报告该模型可用的密钥 id 集合 */
 export interface ModelImportItem {
   input: SysModelInput
