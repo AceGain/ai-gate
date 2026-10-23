@@ -1,0 +1,14 @@
+{
+  "name": "ai-gate",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:web": "pnpm --filter @ai-gate/web dev",
+    "dev:desktop": "pnpm --filter @ai-gate/desktop tauri dev",
+    "dev:server": "pnpm --filter @ai-gate/server dev",
+    "dev:hub": "pnpm --filter @ai-gate/hub dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck"
+  }
+}
