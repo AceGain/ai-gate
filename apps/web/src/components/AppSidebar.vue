@@ -13,9 +13,7 @@ import {
   PhRows,
   PhSquaresFour,
 } from '@phosphor-icons/vue'
-import { computed, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import SearchForm from '@/components/SearchForm.vue'
 import {
   Sidebar,
   SidebarContent,
@@ -31,7 +29,6 @@ import {
 const props = defineProps<SidebarProps>()
 
 const route = useRoute()
-const searchQuery = ref('')
 
 interface NavItem {
   title: string
@@ -81,13 +78,6 @@ const navItems: NavItem[] = [
     icon: PhChartBar,
   },
 ]
-
-const filteredNavItems = computed(() => {
-  const keyword = searchQuery.value.trim().toLowerCase()
-  if (!keyword)
-    return navItems
-  return navItems.filter(item => item.title.toLowerCase().includes(keyword))
-})
 </script>
 
 <template>
@@ -108,14 +98,13 @@ const filteredNavItems = computed(() => {
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
-      <SearchForm v-model="searchQuery" />
     </SidebarHeader>
 
     <SidebarContent>
-      <SidebarGroup>
+      <SidebarGroup class="pt-0">
         <SidebarGroupContent>
-          <SidebarMenu>
-            <SidebarMenuItem v-for="item in filteredNavItems" :key="item.url">
+          <SidebarMenu class="gap-0.5">
+            <SidebarMenuItem v-for="item in navItems" :key="item.url">
               <SidebarMenuButton
                 as-child
                 :is-active="route.path === item.url"
