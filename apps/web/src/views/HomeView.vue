@@ -1,5 +1,3 @@
 <template>
-  <div>
-    <h1>Welcome to your new project</h1>
-  </div>
+  <div class="flex flex-1 flex-col" />
 </template>
