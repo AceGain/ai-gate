@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import type { HTMLAttributes, Ref } from 'vue'
-import { defaultDocument, useEventListener, useMediaQuery, useVModel } from '@vueuse/core'
+import { defaultDocument, useEventListener, useLocalStorage, useMediaQuery, useVModel } from '@vueuse/core'
 import { cn } from 'cn'
 import { TooltipProvider } from 'reka-ui'
 import { computed, ref } from 'vue'
-import { provideSidebarContext, SIDEBAR_COOKIE_MAX_AGE, SIDEBAR_COOKIE_NAME, SIDEBAR_KEYBOARD_SHORTCUT, SIDEBAR_WIDTH, SIDEBAR_WIDTH_ICON } from './utils'
+import { clampSidebarWidth, provideSidebarContext, SIDEBAR_COOKIE_MAX_AGE, SIDEBAR_COOKIE_NAME, SIDEBAR_KEYBOARD_SHORTCUT, SIDEBAR_WIDTH_DEFAULT, SIDEBAR_WIDTH_ICON, SIDEBAR_WIDTH_STORAGE_KEY } from './utils'
 
 const props = withDefaults(defineProps<{
   defaultOpen?: boolean
@@ -54,6 +54,23 @@ useEventListener('keydown', (event: KeyboardEvent) => {
 // This makes it easier to style the sidebar with Tailwind classes.
 const state = computed(() => open.value ? 'expanded' : 'collapsed')
 
+// Drag-adjustable desktop width, persisted across reloads.
+const width = useLocalStorage(SIDEBAR_WIDTH_STORAGE_KEY, SIDEBAR_WIDTH_DEFAULT, {
+  listenToStorageChanges: false,
+})
+const savedWidth = Number(width.value)
+width.value = Number.isFinite(savedWidth) ? clampSidebarWidth(savedWidth) : SIDEBAR_WIDTH_DEFAULT
+
+function setWidth(value: number) {
+  width.value = clampSidebarWidth(value)
+}
+
+const isResizing = ref(false)
+
+function setResizing(value: boolean) {
+  isResizing.value = value
+}
+
 provideSidebarContext({
   state,
   open,
@@ -62,6 +79,10 @@ provideSidebarContext({
   openMobile,
   setOpenMobile,
   toggleSidebar,
+  width,
+  setWidth,
+  isResizing,
+  setResizing,
 })
 </script>
 
@@ -70,10 +91,11 @@ provideSidebarContext({
     <div
       data-slot="sidebar-wrapper"
       :style="{
-        '--sidebar-width': SIDEBAR_WIDTH,
+        '--sidebar-width': `${width}px`,
         '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
       }"
-      :class="cn('group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full', props.class)"
+      :data-resizing="isResizing || undefined"
+      :class="cn('group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full data-resizing:cursor-col-resize data-resizing:select-none', props.class)"
       v-bind="$attrs"
     >
       <slot />
