@@ -11,8 +11,8 @@ CREATE TABLE t_provider (
   status TEXT NOT NULL DEFAULT 'ACTIVE', -- 状态；ACTIVE：正常，INACTIVE：不可用，ERROR：异常；
   remark TEXT DEFAULT NULL,
   sort INTEGER NOT NULL DEFAULT 0,
-  create_time TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  update_time TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  create_time TEXT NOT NULL,
+  update_time TEXT NOT NULL
 );
 
 CREATE INDEX t_provider_idx_code ON t_provider (code);
@@ -30,8 +30,8 @@ CREATE TABLE t_endpoint (
   path TEXT NOT NULL, -- 路径，例如：BASE 对应 https://apihub.agnes-ai.com，MODEL 对应 /v1/models，GEN 对应 /v1/chat/completions、/v1/responses、/v1/message；
   is_default BOOLEAN NOT NULL DEFAULT FALSE,
   sort INTEGER NOT NULL DEFAULT 0,
-  create_time TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  update_time TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  create_time TEXT NOT NULL,
+  update_time TEXT NOT NULL
 );
 
 CREATE INDEX t_endpoint_idx_kind_type ON t_endpoint (kind, type);
@@ -52,8 +52,8 @@ CREATE TABLE t_model (
   config TEXT NOT NULL CHECK (json_valid(config)), -- 模型配置
   remark TEXT DEFAULT NULL,
   sort INTEGER NOT NULL DEFAULT 0,
-  create_time TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  update_time TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  create_time TEXT NOT NULL,
+  update_time TEXT NOT NULL
 );
 
 CREATE UNIQUE INDEX t_model_uq_provider_code ON t_model (provider_id, code);
