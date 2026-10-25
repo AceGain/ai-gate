@@ -24,7 +24,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
 } from '@/components/ui/sidebar'
 
 const props = defineProps<SidebarProps>()
@@ -136,7 +135,5 @@ const navItems: NavItem[] = [
         </SidebarMenuItem>
       </SidebarMenu>
     </SidebarFooter>
-
-    <SidebarRail />
   </Sidebar>
 </template>
