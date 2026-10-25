@@ -17,7 +17,13 @@ const router = createRouter({
         {
           path: 'providers',
           name: 'providers',
-          component: () => import('@/views/HomeView.vue'),
+          component: () => import('@/views/ProvidersView.vue'),
+          meta: { title: '供应商' },
+        },
+        {
+          path: 'providers/:id',
+          name: 'provider-detail',
+          component: () => import('@/views/ProviderDetailView.vue'),
           meta: { title: '供应商' },
         },
         {

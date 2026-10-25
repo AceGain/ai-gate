@@ -24,6 +24,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
 } from '@/components/ui/sidebar'
 
 const props = defineProps<SidebarProps>()
@@ -107,7 +108,7 @@ const navItems: NavItem[] = [
             <SidebarMenuItem v-for="item in navItems" :key="item.url">
               <SidebarMenuButton
                 as-child
-                :is-active="route.path === item.url"
+                :is-active="route.path === item.url || route.path.startsWith(`${item.url}/`)"
               >
                 <RouterLink :to="item.url">
                   <component :is="item.icon" />
@@ -135,5 +136,7 @@ const navItems: NavItem[] = [
         </SidebarMenuItem>
       </SidebarMenu>
     </SidebarFooter>
+
+    <SidebarRail />
   </Sidebar>
 </template>

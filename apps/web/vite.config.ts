@@ -13,10 +13,21 @@ export default defineConfig({
     },
   },
   clearScreen: false,
+  // 品牌图标等 PNG 一律外置为资源文件，按需加载，避免内联撑大 JS 产物
+  build: {
+    assetsInlineLimit: 0,
+  },
   server: {
     port: 1420,
     strictPort: true,
-    host: host || false,
+    host: host || '127.0.0.1',
+    // 开发期将 /api 代理到本地 Hono 后端（生产同源部署或经 VITE_API_BASE 指向）
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:3000',
+        changeOrigin: true,
+      },
+    },
     hmr: host
       ? {
           protocol: 'ws',
