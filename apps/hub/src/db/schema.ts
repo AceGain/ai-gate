@@ -1,5 +1,7 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
+// 模板域（T 域）：t_ 前缀 = 模板，与出站域（server 的 s_）、入站域（预留的 r_）
+// 职责与领域不同，即使结构暂时相同也不得互相简化合并
 // 本文件是 sql/schema.sql 的 Drizzle 镜像，两者必须同步修改；
 // 列的业务含义见 schema.sql 内的注释
 
@@ -57,9 +59,9 @@ export const tModel = sqliteTable('t_model', {
   ...timestamps(),
 })
 
-export type Provider = typeof tProvider.$inferSelect
-export type NewProvider = typeof tProvider.$inferInsert
-export type Endpoint = typeof tEndpoint.$inferSelect
-export type NewEndpoint = typeof tEndpoint.$inferInsert
-export type Model = typeof tModel.$inferSelect
-export type NewModel = typeof tModel.$inferInsert
+export type TProvider = typeof tProvider.$inferSelect
+export type NewTProvider = typeof tProvider.$inferInsert
+export type TEndpoint = typeof tEndpoint.$inferSelect
+export type NewTEndpoint = typeof tEndpoint.$inferInsert
+export type TModel = typeof tModel.$inferSelect
+export type NewTModel = typeof tModel.$inferInsert

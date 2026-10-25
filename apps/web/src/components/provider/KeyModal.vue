@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ApiKey, ApiKeyInput } from '@ai-gate/shared'
+import type { SKey, SKeyInput } from '@ai-gate/shared'
 import { computed, reactive, ref, watch } from 'vue'
 import { PhFloppyDisk } from '@phosphor-icons/vue'
 import { toast } from 'vue-sonner'
@@ -18,10 +18,10 @@ import { Input } from '@/components/ui/input'
 
 const props = defineProps<{
   providerId: number
-  keyItem: ApiKey | null
+  keyItem: SKey | null
 }>()
 
-const emit = defineEmits<{saved: [keyItem: ApiKey]}>()
+const emit = defineEmits<{saved: [keyItem: SKey]}>()
 
 const open = defineModel<boolean>('open', {default: false})
 
@@ -62,7 +62,7 @@ async function save() {
     return
   }
   saving.value = true
-  const input: ApiKeyInput = {
+  const input: SKeyInput = {
     name: form.name.trim(),
     secret: form.secret.trim(),
     // 新增默认启用；编辑时透传旧值（开关已移至列表行内）

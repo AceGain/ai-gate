@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ApiKey, Endpoint, EndpointType, Model } from '@ai-gate/shared'
+import type { SKey, SEndpoint, EndpointType, SModel } from '@ai-gate/shared'
 import { GEN_ENDPOINT_TYPES, MODEL_DEFAULT_CATEGORY } from '@ai-gate/shared'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -83,7 +83,7 @@ const editModalOpen = ref(false)
 
 /* ---------------- 2. 端点操作与弹窗 ---------------- */
 const endpointModalOpen = ref(false)
-const editingEndpoint = ref<Endpoint | null>(null)
+const editingEndpoint = ref<SEndpoint | null>(null)
 const endpointModalType = ref<EndpointType>('generate')
 
 const baseEndpoint = computed(() => endpoints.value.find(e => e.type === 'base'))
@@ -112,13 +112,13 @@ function openEditModelsEndpoint() {
   endpointModalOpen.value = true
 }
 
-function openEditEndpoint(ep: Endpoint) {
+function openEditEndpoint(ep: SEndpoint) {
   editingEndpoint.value = ep
   endpointModalType.value = ep.type
   endpointModalOpen.value = true
 }
 
-async function confirmDeleteEndpoint(ep: Endpoint) {
+async function confirmDeleteEndpoint(ep: SEndpoint) {
   const confirmed = await confirmDialog({
     title: '删除端点',
     description: `确定删除端点「${ep.path}」？`,
@@ -128,7 +128,7 @@ async function confirmDeleteEndpoint(ep: Endpoint) {
   }
 }
 
-async function handleToggleDefault(ep: Endpoint) {
+async function handleToggleDefault(ep: SEndpoint) {
   if (!provider.value) return
   const nextDefault = !ep.isDefault
   try {
@@ -152,7 +152,7 @@ async function handleCopy(text: string) {
 
 /* ---------------- 3. 密钥弹窗与操作 ---------------- */
 const keyModalOpen = ref(false)
-const editingKey = ref<ApiKey | null>(null)
+const editingKey = ref<SKey | null>(null)
 const revealedKeys = ref<Set<number>>(new Set())
 
 function toggleReveal(id: number) {
@@ -171,7 +171,7 @@ function maskSecret(secret: string): string {
 const copiedKeyId = ref<number | null>(null)
 let copyTimer: ReturnType<typeof setTimeout> | null = null
 
-async function handleCopyKey(k: ApiKey) {
+async function handleCopyKey(k: SKey) {
   await copy(k.secret)
   copiedKeyId.value = k.id
   if (copyTimer) clearTimeout(copyTimer)
@@ -204,12 +204,12 @@ function openCreateKey() {
   keyModalOpen.value = true
 }
 
-function openEditKey(k: ApiKey) {
+function openEditKey(k: SKey) {
   editingKey.value = k
   keyModalOpen.value = true
 }
 
-async function confirmDeleteKey(k: ApiKey) {
+async function confirmDeleteKey(k: SKey) {
   const confirmed = await confirmDialog({
     title: '删除密钥',
     description: `确定删除密钥「${k.name}」？`,
@@ -219,7 +219,7 @@ async function confirmDeleteKey(k: ApiKey) {
   }
 }
 
-async function handleToggleKeyEnabled(k: ApiKey, enabled: boolean) {
+async function handleToggleKeyEnabled(k: SKey, enabled: boolean) {
   if (!provider.value) return
   await store.updateKey(provider.value.id, k.id, {
     name: k.name,
@@ -252,7 +252,7 @@ function keyTestErrorMessage(code: string | undefined, detail?: string): string 
   }
 }
 
-async function runKeyTest(k: ApiKey) {
+async function runKeyTest(k: SKey) {
   if (!provider.value || testingKeyId.value) return
   testingKeyId.value = k.id
   try {
@@ -287,7 +287,7 @@ useSortable(keyListEl, keys, {
 
 /* ---------------- 4. 模型弹窗与操作 ---------------- */
 const modelModalOpen = ref(false)
-const editingModel = ref<Model | null>(null)
+const editingModel = ref<SModel | null>(null)
 const importModalOpen = ref(false)
 
 function openCreateModel() {
@@ -299,12 +299,12 @@ function openImportModels() {
   importModalOpen.value = true
 }
 
-function openEditModel(m: Model) {
+function openEditModel(m: SModel) {
   editingModel.value = m
   modelModalOpen.value = true
 }
 
-async function confirmDeleteModel(m: Model) {
+async function confirmDeleteModel(m: SModel) {
   const label = m.name || m.code
   const confirmed = await confirmDialog({
     title: '删除模型',
@@ -315,7 +315,7 @@ async function confirmDeleteModel(m: Model) {
   }
 }
 
-async function handleToggleModelEnabled(m: Model, enabled: boolean) {
+async function handleToggleModelEnabled(m: SModel, enabled: boolean) {
   if (!provider.value) return
   await store.updateModel(provider.value.id, m.id, {
     code: m.code,
@@ -339,8 +339,8 @@ async function handleToggleModelEnabled(m: Model, enabled: boolean) {
 
 /* 模型按「模型分组」(category) 分组展示：分组按首现顺序排列（空分组由后端归一为 Default） */
 const modelGroups = computed(() => {
-  const groups: {key: string, label: string, items: Model[]}[] = []
-  const map = new Map<string, {key: string, label: string, items: Model[]}>()
+  const groups: {key: string, label: string, items: SModel[]}[] = []
+  const map = new Map<string, {key: string, label: string, items: SModel[]}>()
   for (const m of models.value) {
     const category = (m.category || '').trim() || MODEL_DEFAULT_CATEGORY
     let group = map.get(category)
@@ -359,7 +359,7 @@ function handleModelGroupReorder(ids: number[]) {
   if (!provider.value) return
   const idSet = new Set(ids)
   const byId = new Map(models.value.map(m => [m.id, m] as const))
-  const ordered = ids.map(id => byId.get(id)).filter((m): m is Model => !!m)
+  const ordered = ids.map(id => byId.get(id)).filter((m): m is SModel => !!m)
   const firstIndex = models.value.findIndex(m => idSet.has(m.id))
   if (firstIndex < 0 || ordered.length !== idSet.size) return
   const others = models.value.filter(m => !idSet.has(m.id))

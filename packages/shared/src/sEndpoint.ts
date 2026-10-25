@@ -1,14 +1,14 @@
 /**
- * 供应商端点共享类型与校验：s_endpoint 表的前后端共用结构
+ * 出站供应商端点（S 域）共享类型与校验：s_endpoint 表的前后端共用结构
  * API 沿用功能语义命名：type（base/models/generate 三类）+ generate（生成端点类型），
  * 服务端存储时映射为表的 kind（BASE/MODEL/GEN）+ type（Chat Completions/Responses/Messages）
  */
 import * as v from 'valibot'
 
-/** 端点类别：base = 基地址，models = 模型列表，generate = 生成路径 */
+/** 端点类别（跨域取值词汇）：base = 基地址，models = 模型列表，generate = 生成路径 */
 export type EndpointType = 'base' | 'models' | 'generate'
 
-/** 固定支持的生成端点类型 */
+/** 固定支持的生成端点类型（跨域取值词汇） */
 export const GEN_ENDPOINT_TYPES = [
   'Chat Completions',
   'Responses',
@@ -24,8 +24,8 @@ export const GEN_ENDPOINT_DEFAULT_PATHS: Record<GenEndpointType, string> = {
   'Messages': '/v1/messages',
 }
 
-/** 端点（s_endpoint 行结构的 camelCase 形态，API 载荷） */
-export interface Endpoint {
+/** 出站供应商端点（s_endpoint 行结构的 camelCase 形态，API 载荷） */
+export interface SEndpoint {
   id: number
   providerId: number
   type: EndpointType
@@ -38,8 +38,8 @@ export interface Endpoint {
   updateTime: string
 }
 
-/** 新增/更新端点的可写字段 */
-export interface EndpointInput {
+/** 新增/更新出站端点的可写字段 */
+export interface SEndpointInput {
   type: EndpointType
   generate?: string
   path: string
@@ -49,7 +49,7 @@ export interface EndpointInput {
 const requiredText = v.pipe(v.string(), v.trim(), v.minLength(1))
 
 /** 端点请求体：generate 仅 generate 类别必填 */
-export const EndpointInputSchema = v.pipe(
+export const SEndpointInputSchema = v.pipe(
   v.object({
     type: v.picklist(['base', 'models', 'generate']),
     generate: v.optional(v.string(), ''),

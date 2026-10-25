@@ -1,4 +1,5 @@
 -- ai-gate hub 数据库表结构（SQLite）
+-- 模板域（T 域）：t_ 前缀 = 模板（出站域为 s_，入站域预留 r_，即使结构暂时相同也不得合并）
 -- 全量建表语句：t_provider（供应商）、t_endpoint（端点）、t_model（模型）
 
 -- 供应商

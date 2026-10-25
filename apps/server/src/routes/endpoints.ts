@@ -1,8 +1,8 @@
 /**
- * 供应商端点 API（/api/providers/:providerId/endpoints）：s_endpoint 表的 CRUD
+ * 出站供应商端点（S 域）API（/api/providers/:providerId/endpoints）：s_endpoint 表的 CRUD
  */
 import {Hono} from 'hono'
-import {EndpointInputSchema} from '@ai-gate/shared'
+import {SEndpointInputSchema} from '@ai-gate/shared'
 import {
   getEndpoint,
   getEndpointByGenerate,
@@ -34,7 +34,7 @@ endpoints.post('/providers/:providerId/endpoints', async (c) => {
   const providerId = parseId(c.req.param('providerId'))
   if (!providerId) return c.json({error: 'Provider not found'}, 404)
   const body = await c.req.json<unknown>().catch(() => null)
-  const {data, error} = parseBody(EndpointInputSchema, body)
+  const {data, error} = parseBody(SEndpointInputSchema, body)
   if (!data) return c.json({error: `Invalid endpoint: ${error!}`}, 400)
 
   if (data.type === 'generate') {
@@ -58,7 +58,7 @@ endpoints.put('/providers/:providerId/endpoints/:id', async (c) => {
   if (!existingEp) return c.json({error: 'Endpoint not found'}, 404)
 
   const body = await c.req.json<unknown>().catch(() => null)
-  const {data, error} = parseBody(EndpointInputSchema, body)
+  const {data, error} = parseBody(SEndpointInputSchema, body)
   if (!data) return c.json({error: `Invalid endpoint: ${error!}`}, 400)
 
   if (data.type === 'generate') {

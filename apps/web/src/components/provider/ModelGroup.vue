@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Model } from '@ai-gate/shared'
+import type { SModel } from '@ai-gate/shared'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useSortable } from '@vueuse/integrations/useSortable'
 import {
@@ -33,14 +33,14 @@ import { Switch } from '@/components/ui/switch'
 const props = defineProps<{
   providerId: number
   label: string
-  items: Model[]
+  items: SModel[]
 }>()
 
 const emit = defineEmits<{
   reorder: [ids: number[]]
-  edit: [item: Model]
-  remove: [item: Model]
-  toggle: [item: Model, enabled: boolean]
+  edit: [item: SModel]
+  remove: [item: SModel]
+  toggle: [item: SModel, enabled: boolean]
 }>()
 
 const store = useProvidersStore()
@@ -66,7 +66,7 @@ function testErrorMessage(code: string | undefined, detail?: string): string {
   }
 }
 
-async function runTest(m: Model) {
+async function runTest(m: SModel) {
   if (testingId.value) return
   testingId.value = m.id
   try {
@@ -85,12 +85,12 @@ async function runTest(m: Model) {
 const isOpen = ref(true)
 
 /** 显示名：未设置时回退模型编码 */
-function displayName(m: Model): string {
+function displayName(m: SModel): string {
   return m.name || m.code
 }
 
 /* 拖拽排序绑定本地副本，结束后把新顺序上报父级统一持久化 */
-const localItems = ref<Model[]>([...props.items])
+const localItems = ref<SModel[]>([...props.items])
 watch(() => props.items, (v) => {
   localItems.value = [...v]
 })

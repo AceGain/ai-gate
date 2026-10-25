@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Endpoint, EndpointInput, EndpointType } from '@ai-gate/shared'
+import type { SEndpoint, SEndpointInput, EndpointType } from '@ai-gate/shared'
 import { GEN_ENDPOINT_TYPES, GEN_ENDPOINT_DEFAULT_PATHS } from '@ai-gate/shared'
 import { computed, reactive, ref, watch } from 'vue'
 import { useClipboard } from '@vueuse/core'
@@ -24,14 +24,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 const props = withDefaults(defineProps<{
   providerId: number
-  endpoint: Endpoint | null
+  endpoint: SEndpoint | null
   defaultType?: EndpointType
-  existingEndpoints?: Endpoint[]
+  existingEndpoints?: SEndpoint[]
 }>(), {
   defaultType: 'generate',
 })
 
-const emit = defineEmits<{saved: [endpoint: Endpoint]}>()
+const emit = defineEmits<{saved: [endpoint: SEndpoint]}>()
 
 const open = defineModel<boolean>('open', {default: false})
 
@@ -159,7 +159,7 @@ async function save() {
   }
   saving.value = true
   const isDefault = props.endpoint ? props.endpoint.isDefault : false
-  const input: EndpointInput = {
+  const input: SEndpointInput = {
     type: form.type,
     generate: form.type === 'generate' ? form.generate.trim() : '',
     path: form.path.trim(),

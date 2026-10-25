@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { GenEndpointType, Provider } from '@ai-gate/shared'
+import type { GenEndpointType, SProvider } from '@ai-gate/shared'
 import { GEN_ENDPOINT_TYPES, GEN_ENDPOINT_DEFAULT_PATHS } from '@ai-gate/shared'
 import { computed, reactive, ref, watch } from 'vue'
 import { PhFloppyDisk } from '@phosphor-icons/vue'
@@ -29,10 +29,10 @@ import ProviderIconPicker from './ProviderIconPicker.vue'
  */
 const props = defineProps<{
   /** 编辑目标；null = 新增 */
-  provider: Provider | null
+  provider: SProvider | null
 }>()
 
-const emit = defineEmits<{saved: [provider: Provider]}>()
+const emit = defineEmits<{saved: [provider: SProvider]}>()
 
 const open = defineModel<boolean>('open', {default: false})
 

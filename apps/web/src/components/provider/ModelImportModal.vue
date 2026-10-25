@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Model, ModelInput, RemoteModelItem, RemoteModelKeyFetch } from '@ai-gate/shared'
+import type { SModel, SModelInput, SRemoteModelItem, SRemoteModelKeyFetch } from '@ai-gate/shared'
 import { computed, ref, watch } from 'vue'
 import {
   PhArrowsClockwise,
@@ -34,7 +34,7 @@ import AppLoading from '@/components/AppLoading.vue'
  */
 const props = defineProps<{
   providerId: number
-  existingModels?: Model[]
+  existingModels?: SModel[]
 }>()
 
 const emit = defineEmits<{saved: [count: number]}>()
@@ -50,7 +50,7 @@ const errorCode = ref<string | null>(null)
 /** 本次拉取使用的密钥 id 集合：全部选中即等价于「获取所有」 */
 const selectedKeyIds = ref<number[]>([])
 /** 逐密钥拉取结果（含失败条目） */
-const keyResults = ref<RemoteModelKeyFetch[]>([])
+const keyResults = ref<SRemoteModelKeyFetch[]>([])
 /** 是否已执行过至少一次获取：决定结果区展示还是引导提示 */
 const fetched = ref(false)
 const selected = ref<Set<string>>(new Set())
@@ -64,7 +64,7 @@ const multiKey = computed(() => okResults.value.length > 1)
 
 const existingCodes = computed(() => new Set((props.existingModels ?? []).map(m => m.code)))
 
-interface MergedItem extends RemoteModelItem {
+interface MergedItem extends SRemoteModelItem {
   /** 报告该模型可用的密钥 id（按拉取顺序去重） */
   keyIds: number[]
 }
@@ -178,7 +178,7 @@ const errorMessage = computed(() => {
 })
 
 /** 单把密钥拉取失败的就近文案 */
-function keyFetchErrorText(r: RemoteModelKeyFetch): string {
+function keyFetchErrorText(r: SRemoteModelKeyFetch): string {
   switch (r.error) {
     case 'KEY_INACTIVE':
       return '密钥已停用或失效'
@@ -199,13 +199,13 @@ async function importSelected() {
   if (!selectedCount.value || importing.value) return
   importing.value = true
   // 待导入 = 勾选的新模型 + 拉取到的已存在模型（后者仅用于补全密钥关系，不会重复插入）
-  const inputs: ModelInput[] = [
+  const inputs: SModelInput[] = [
     ...importableItems.value
       .filter(i => selected.value.has(i.code))
-      .map(i => ({code: i.code, name: i.name, type: 'TEXT'} as ModelInput)),
+      .map(i => ({code: i.code, name: i.name, type: 'TEXT'} as SModelInput)),
     ...mergedItems.value
       .filter(i => existingCodes.value.has(i.code))
-      .map(i => ({code: i.code, name: i.name, type: 'TEXT'} as ModelInput)),
+      .map(i => ({code: i.code, name: i.name, type: 'TEXT'} as SModelInput)),
   ]
   // 绑定 = 每把成功密钥 × 其报告的模型（保守原则：只记录已验证事实，未拉取密钥不建绑定）
   const bindings = okResults.value.map(r => ({

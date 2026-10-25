@@ -1,5 +1,7 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
 
+// 出站域（S 域）：s_ 前缀 = 出站（对接的上游供应商），与模板域（hub 的 t_）、
+// 入站域（预留的 r_）职责与领域不同，即使结构暂时相同也不得互相简化合并
 // 本文件是 sql/schema.sql 的 Drizzle 镜像，两者必须同步修改；
 // 列的业务含义见 schema.sql 内的注释
 
@@ -80,13 +82,13 @@ export const sRelat = sqliteTable('s_relat', {
   model_id: text('model_id').notNull(),
 })
 
-export type Provider = typeof sProvider.$inferSelect
-export type NewProvider = typeof sProvider.$inferInsert
-export type Endpoint = typeof sEndpoint.$inferSelect
-export type NewEndpoint = typeof sEndpoint.$inferInsert
-export type ApiKey = typeof sKey.$inferSelect
-export type NewApiKey = typeof sKey.$inferInsert
-export type Model = typeof sModel.$inferSelect
-export type NewModel = typeof sModel.$inferInsert
-export type Relat = typeof sRelat.$inferSelect
-export type NewRelat = typeof sRelat.$inferInsert
+export type SProvider = typeof sProvider.$inferSelect
+export type NewSProvider = typeof sProvider.$inferInsert
+export type SEndpoint = typeof sEndpoint.$inferSelect
+export type NewSEndpoint = typeof sEndpoint.$inferInsert
+export type SKey = typeof sKey.$inferSelect
+export type NewSKey = typeof sKey.$inferInsert
+export type SModel = typeof sModel.$inferSelect
+export type NewSModel = typeof sModel.$inferInsert
+export type SRelat = typeof sRelat.$inferSelect
+export type NewSRelat = typeof sRelat.$inferInsert

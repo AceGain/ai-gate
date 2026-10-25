@@ -1,11 +1,11 @@
 /**
- * 供应商模型 API（/api/providers/:providerId/models）：s_model 表的 CRUD
+ * 出站供应商模型（S 域）API（/api/providers/:providerId/models）：s_model 表的 CRUD
  * + 上游模型列表拉取 / 单模型测试 / 批量导入（含密钥-模型绑定 s_relat）
  */
 import {Hono} from 'hono'
-import type {RemoteModelItem, RemoteModelKeyFetch} from '@ai-gate/shared'
-import {ModelImportSchema, ModelInputSchema, MODEL_DEFAULT_CATEGORY, ReorderSchema} from '@ai-gate/shared'
-import type {ApiKey, ModelInput, ModelType} from '@ai-gate/shared'
+import type {SRemoteModelItem, SRemoteModelKeyFetch} from '@ai-gate/shared'
+import {SModelImportSchema, SModelInputSchema, MODEL_DEFAULT_CATEGORY, SReorderSchema} from '@ai-gate/shared'
+import type {SKey, SModelInput, ModelType} from '@ai-gate/shared'
 import {
   importModelsWithBindings,
   insertModel,
@@ -16,7 +16,7 @@ import {
   reorderModels,
   updateModel,
 } from '../store.js'
-import type {ModelImportItem} from '../store.js'
+import type {SModelImportItem} from '../store.js'
 import {buildAuthHeaders, extractUpstreamDetail, joinUrl} from '../upstream.js'
 import {isUniqueViolation, parseBody, parseId} from './providers.js'
 
@@ -32,7 +32,7 @@ models.get('/providers/:providerId/models', (c) => {
 /** 批量排序（须在 PUT /:id 之前注册） */
 models.put('/providers/:providerId/models/reorder', async (c) => {
   const body = await c.req.json<unknown>().catch(() => null)
-  const {data, error} = parseBody(ReorderSchema, body)
+  const {data, error} = parseBody(SReorderSchema, body)
   if (!data) return c.json({error: error!}, 400)
   reorderModels(data)
   return c.json({ok: true})
@@ -50,7 +50,7 @@ function firstNonEmptyString(...values: unknown[]): string | null {
  * 从上游响应解析模型列表：兼容 OpenAI 风格 {data: [...]}、{models: [...]} 与裸数组；
  * 条目编码取 id/code/name，显示名取 display_name/displayName；结构无法识别时返回 null
  */
-function extractRemoteModels(json: unknown): RemoteModelItem[] | null {
+function extractRemoteModels(json: unknown): SRemoteModelItem[] | null {
   let arr: unknown[] | null = null
   if (Array.isArray(json)) {
     arr = json
@@ -61,7 +61,7 @@ function extractRemoteModels(json: unknown): RemoteModelItem[] | null {
   }
   if (!arr) return null
 
-  const items: RemoteModelItem[] = []
+  const items: SRemoteModelItem[] = []
   const seen = new Set<string>()
   for (const entry of arr) {
     if (!entry || typeof entry !== 'object') continue
@@ -92,8 +92,8 @@ async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T)
 }
 
 /** 以单把密钥拉取上游模型列表；网络/超时/解析失败不影响其它密钥，以失败条目返回 */
-async function fetchModelsForKey(url: string, generate: string | undefined, key: ApiKey): Promise<RemoteModelKeyFetch> {
-  const base: RemoteModelKeyFetch = {keyId: key.id, keyName: key.name, ok: false, models: []}
+async function fetchModelsForKey(url: string, generate: string | undefined, key: SKey): Promise<SRemoteModelKeyFetch> {
+  const base: SRemoteModelKeyFetch = {keyId: key.id, keyName: key.name, ok: false, models: []}
   const headers = buildAuthHeaders(generate, key.secret)
   let res: Response
   try {
@@ -228,7 +228,7 @@ models.post('/providers/:providerId/models/import', async (c) => {
   const providerId = parseId(c.req.param('providerId'))
   if (!providerId) return c.json({error: 'Provider not found'}, 404)
   const body = await c.req.json<unknown>().catch(() => null)
-  const {data, error} = parseBody(ModelImportSchema, body)
+  const {data, error} = parseBody(SModelImportSchema, body)
   if (!data) return c.json({error: `Invalid import payload: ${error!}`}, 400)
   if (!data.models.length) {
     return c.json({error: 'Body must be {models: [{code, name?, type?}], bindings?: [{keyId, codes: []}]}'}, 400)
@@ -247,7 +247,7 @@ models.post('/providers/:providerId/models/import', async (c) => {
     ?? endpoints.find(e => e.type === 'generate')
   const initialGenerate = defaultGenerate?.generate || ''
 
-  const items: ModelImportItem[] = data.models.map(item => ({
+  const items: SModelImportItem[] = data.models.map(item => ({
     input: {
       code: item.code,
       name: item.name,
@@ -256,7 +256,7 @@ models.post('/providers/:providerId/models/import', async (c) => {
       inputModal: ['text'],
       outputModal: ['text'],
       generates: initialGenerate ? [initialGenerate] : [],
-    } satisfies ModelInput,
+    } satisfies SModelInput,
     keyIds: (data.bindings ?? [])
       .filter(binding => binding.codes.includes(item.code))
       .map(binding => binding.keyId),
@@ -276,7 +276,7 @@ models.post('/providers/:providerId/models', async (c) => {
   const providerId = parseId(c.req.param('providerId'))
   if (!providerId) return c.json({error: 'Provider not found'}, 404)
   const body = await c.req.json<unknown>().catch(() => null)
-  const {data, error} = parseBody(ModelInputSchema, body)
+  const {data, error} = parseBody(SModelInputSchema, body)
   if (!data) return c.json({error: `Invalid model: ${error!}`}, 400)
 
   try {
@@ -292,7 +292,7 @@ models.put('/providers/:providerId/models/:id', async (c) => {
   const id = parseId(c.req.param('id'))
   if (!id) return c.json({error: 'Model not found'}, 404)
   const body = await c.req.json<unknown>().catch(() => null)
-  const {data, error} = parseBody(ModelInputSchema, body)
+  const {data, error} = parseBody(SModelInputSchema, body)
   if (!data) return c.json({error: `Invalid model: ${error!}`}, 400)
 
   try {

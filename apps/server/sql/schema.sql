@@ -1,4 +1,5 @@
 -- ai-gate server 数据库表结构（SQLite）
+-- 出站域（S 域）：s_ 前缀 = 出站（对接的上游供应商；模板域为 hub 的 t_，入站域预留 r_，即使结构暂时相同也不得合并）
 -- 全量建表语句：s_provider（供应商）、s_endpoint（端点）、s_key（密钥）、s_model（模型）、s_relat（供应商-密钥-模型；关系速查）
 
 -- 供应商

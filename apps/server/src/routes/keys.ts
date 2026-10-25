@@ -1,8 +1,8 @@
 /**
- * 供应商密钥 API（/api/providers/:providerId/keys）：s_key 表的 CRUD + 可用性测试
+ * 出站供应商密钥（S 域）API（/api/providers/:providerId/keys）：s_key 表的 CRUD + 可用性测试
  */
 import {Hono} from 'hono'
-import {ApiKeyInputSchema, ReorderSchema} from '@ai-gate/shared'
+import {SKeyInputSchema, SReorderSchema} from '@ai-gate/shared'
 import {
   insertKey,
   listEndpoints,
@@ -26,7 +26,7 @@ keys.get('/providers/:providerId/keys', (c) => {
 /** 批量排序（须在 PUT /:id 之前注册） */
 keys.put('/providers/:providerId/keys/reorder', async (c) => {
   const body = await c.req.json<unknown>().catch(() => null)
-  const {data, error} = parseBody(ReorderSchema, body)
+  const {data, error} = parseBody(SReorderSchema, body)
   if (!data) return c.json({error: error!}, 400)
   reorderKeys(data)
   return c.json({ok: true})
@@ -37,7 +37,7 @@ keys.post('/providers/:providerId/keys', async (c) => {
   const providerId = parseId(c.req.param('providerId'))
   if (!providerId) return c.json({error: 'Provider not found'}, 404)
   const body = await c.req.json<unknown>().catch(() => null)
-  const {data, error} = parseBody(ApiKeyInputSchema, body)
+  const {data, error} = parseBody(SKeyInputSchema, body)
   if (!data) return c.json({error: `Invalid key: ${error!}`}, 400)
 
   return c.json(insertKey(providerId, data), 201)
@@ -86,7 +86,7 @@ keys.put('/providers/:providerId/keys/:id', async (c) => {
   const id = parseId(c.req.param('id'))
   if (!id) return c.json({error: 'Key not found'}, 404)
   const body = await c.req.json<unknown>().catch(() => null)
-  const {data, error} = parseBody(ApiKeyInputSchema, body)
+  const {data, error} = parseBody(SKeyInputSchema, body)
   if (!data) return c.json({error: `Invalid key: ${error!}`}, 400)
 
   const updated = updateKey(id, data)

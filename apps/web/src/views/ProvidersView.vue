@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Provider } from '@ai-gate/shared'
+import type { SProvider } from '@ai-gate/shared'
 import { nextTick, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSortable } from '@vueuse/integrations/useSortable'
@@ -27,25 +27,25 @@ const {confirmDialog} = useConfirmDialog()
 
 /** 新增/编辑弹窗状态（editing 为 null = 新增） */
 const modalOpen = ref(false)
-const editing = ref<Provider | null>(null)
+const editing = ref<SProvider | null>(null)
 
 function openCreate() {
   editing.value = null
   modalOpen.value = true
 }
 
-function openEdit(p: Provider) {
+function openEdit(p: SProvider) {
   editing.value = p
   modalOpen.value = true
 }
 
 /** 配置入口：进入供应商配置详情页 */
-function openConfig(p: Provider) {
+function openConfig(p: SProvider) {
   void router.push(`/providers/${p.id}`)
 }
 
 /** 删除：二次确认 */
-async function confirmRemove(p: Provider) {
+async function confirmRemove(p: SProvider) {
   const confirmed = await confirmDialog({
     title: '删除供应商',
     description: `删除后供应商「${p.name || p.code}」将无法恢复，确定删除？`,

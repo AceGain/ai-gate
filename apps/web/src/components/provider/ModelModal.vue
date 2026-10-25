@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type {
-  Endpoint,
-  Model,
-  ModelInput,
+  SEndpoint,
+  SModel,
+  SModelInput,
   ModelEffortLevel,
   ModelReasoning,
   ModelStatus,
@@ -46,11 +46,11 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
 const props = defineProps<{
   providerId: number
-  modelItem: Model | null
-  existingEndpoints?: Endpoint[]
+  modelItem: SModel | null
+  existingEndpoints?: SEndpoint[]
 }>()
 
-const emit = defineEmits<{saved: [modelItem: Model]}>()
+const emit = defineEmits<{saved: [modelItem: SModel]}>()
 
 const open = defineModel<boolean>('open', {default: false})
 
@@ -231,7 +231,7 @@ async function save() {
     return
   }
   saving.value = true
-  const input: ModelInput = {
+  const input: SModelInput = {
     code: form.code.trim(),
     // 显示名允许为空，列表展示时回退到模型编码
     name: form.name.trim(),

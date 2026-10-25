@@ -1,10 +1,10 @@
 /**
- * 供应商 API（/api/providers）：s_provider 表的逐条 CRUD
+ * 出站供应商（S 域）API（/api/providers）：s_provider 表的逐条 CRUD
  * id 与时间戳由服务端/数据库维护；code 冲突返回 409，记录不存在返回 404
  */
 import {Hono} from 'hono'
 import * as v from 'valibot'
-import {ProviderCreateSchema, ProviderUpdateSchema, ReorderSchema} from '@ai-gate/shared'
+import {SProviderCreateSchema, SProviderUpdateSchema, SReorderSchema} from '@ai-gate/shared'
 import {
   getProvider,
   insertProvider,
@@ -46,7 +46,7 @@ providers.get('/providers', (c) => {
 /** 批量排序（列表拖拽后的持久化）；须注册在 PUT /:id 之前，避免 "reorder" 被当作 :id */
 providers.put('/providers/reorder', async (c) => {
   const body = await c.req.json<unknown>().catch(() => null)
-  const {data, error} = parseBody(ReorderSchema, body)
+  const {data, error} = parseBody(SReorderSchema, body)
   if (!data) return c.json({error: error!}, 400)
   reorderProviders(data)
   return c.json({ok: true})
@@ -64,7 +64,7 @@ providers.get('/providers/:id', (c) => {
 /** 新增：事务内初始化 base/models 端点与可选的生成端点、初始密钥 */
 providers.post('/providers', async (c) => {
   const body = await c.req.json<unknown>().catch(() => null)
-  const {data, error} = parseBody(ProviderCreateSchema, body)
+  const {data, error} = parseBody(SProviderCreateSchema, body)
   if (!data) return c.json({error: `Invalid provider entry: ${error!}`}, 400)
 
   try {
@@ -80,7 +80,7 @@ providers.put('/providers/:id', async (c) => {
   const id = parseId(c.req.param('id'))
   if (!id) return c.json({error: 'Provider not found'}, 404)
   const body = await c.req.json<unknown>().catch(() => null)
-  const {data, error} = parseBody(ProviderUpdateSchema, body)
+  const {data, error} = parseBody(SProviderUpdateSchema, body)
   if (!data) return c.json({error: `Invalid provider entry: ${error!}`}, 400)
 
   try {
