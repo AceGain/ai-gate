@@ -197,12 +197,12 @@ async function save() {
     :open="open"
     @update:open="v => open = v"
   >
-    <DialogContent class="max-h-[calc(100%-4rem)] sm:max-w-md">
+    <DialogContent class="max-h-[calc(100vh-4rem)] sm:max-w-md">
       <DialogHeader>
         <DialogTitle>{{ props.provider ? '修改供应商' : '新增供应商' }}</DialogTitle>
       </DialogHeader>
 
-      <FieldGroup class="min-h-0 overflow-y-auto">
+      <FieldGroup class="min-h-0 overflow-y-auto pr-1">
         <!-- 显示图标：居中展示，点击选择/上传 -->
         <div class="flex justify-center pb-1">
           <ProviderIconPicker

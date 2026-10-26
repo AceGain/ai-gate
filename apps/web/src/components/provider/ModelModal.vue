@@ -274,12 +274,12 @@ async function save() {
     :open="open"
     @update:open="v => open = v"
   >
-    <DialogContent class="max-h-[calc(100%-4rem)] sm:max-w-lg">
+    <DialogContent class="max-h-[calc(100vh-4rem)] sm:max-w-lg">
       <DialogHeader>
         <DialogTitle>{{ props.modelItem ? '编辑模型' : '新增模型' }}</DialogTitle>
       </DialogHeader>
 
-      <FieldGroup class="min-h-0 overflow-y-auto">
+      <FieldGroup class="min-h-0 overflow-y-auto pr-1">
         <!-- 基础配置：常用必要项 -->
         <!-- 模型编码供应商内唯一，创建后不可修改：编辑态只读禁用 -->
         <Field :data-invalid="!!codeError">

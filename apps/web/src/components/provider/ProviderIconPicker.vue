@@ -117,12 +117,12 @@ watch(open, (v) => {
       :open="open"
       @update:open="v => open = v"
     >
-      <DialogContent class="max-h-[calc(100%-4rem)] sm:max-w-md">
+      <DialogContent class="max-h-[calc(100vh-4rem)] sm:max-w-md">
         <DialogHeader>
           <DialogTitle>更换图标</DialogTitle>
         </DialogHeader>
 
-        <div class="flex min-h-0 flex-col gap-2.5 overflow-y-auto">
+        <div class="flex min-h-0 flex-col gap-2.5 overflow-y-auto pr-1">
           <!-- 搜索框 -->
           <InputGroup>
             <InputGroupAddon align="inline-start">

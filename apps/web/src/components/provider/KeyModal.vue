@@ -91,12 +91,12 @@ async function save() {
     :open="open"
     @update:open="v => open = v"
   >
-    <DialogContent class="max-h-[calc(100%-4rem)] sm:max-w-md">
+    <DialogContent class="max-h-[calc(100vh-4rem)] sm:max-w-md">
       <DialogHeader>
         <DialogTitle>{{ props.keyItem ? '编辑密钥' : '新增密钥' }}</DialogTitle>
       </DialogHeader>
 
-      <FieldGroup class="min-h-0 overflow-y-auto">
+      <FieldGroup class="min-h-0 overflow-y-auto pr-1">
         <Field :data-invalid="!!nameError">
           <FieldLabel>密钥名称 <span class="text-destructive">*</span></FieldLabel>
           <Input

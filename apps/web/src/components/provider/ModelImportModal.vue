@@ -233,7 +233,7 @@ async function importSelected() {
     :open="open"
     @update:open="v => open = v"
   >
-    <DialogContent class="max-h-[calc(100%-4rem)] sm:max-w-md">
+    <DialogContent class="max-h-[calc(100vh-4rem)] sm:max-w-md">
       <DialogHeader class="shrink-0">
         <DialogTitle>获取模型</DialogTitle>
       </DialogHeader>

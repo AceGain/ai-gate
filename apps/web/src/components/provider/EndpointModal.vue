@@ -187,7 +187,7 @@ async function save() {
     :open="open"
     @update:open="v => open = v"
   >
-    <DialogContent class="max-h-[calc(100%-4rem)] sm:max-w-md">
+    <DialogContent class="max-h-[calc(100vh-4rem)] sm:max-w-md">
       <DialogHeader>
         <DialogTitle>{{ modalTitle }}</DialogTitle>
         <DialogDescription v-if="form.type === 'generate' && !props.endpoint && availableGenerates.length === 0">
@@ -195,7 +195,7 @@ async function save() {
         </DialogDescription>
       </DialogHeader>
 
-      <FieldGroup class="min-h-0 overflow-y-auto">
+      <FieldGroup class="min-h-0 overflow-y-auto pr-1">
         <!-- 端点类型：修改时只读不可操作；新增 generate 时展示下拉选择 -->
         <Field :data-invalid="!props.endpoint ? !!generateError : false">
           <FieldLabel>
