@@ -4,6 +4,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn-vue/tailwind.css";
+/* vue-sonner 自身样式：缺了它 Toaster 容器会以静态布局参与文档流，弹出 toast 时把页面撑出滚动条 */
+@import "vue-sonner/style.css";
 
 @custom-variant dark (&:is(.dark *));
 
