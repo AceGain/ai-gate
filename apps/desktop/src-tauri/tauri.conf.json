@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "identifier": "cn.acegain.ai-gate",
   "build": {
-    "beforeDevCommand": "pnpm --parallel --filter @ai-gate/server --filter @ai-gate/web dev",
+    "beforeDevCommand": "pnpm -w run dev:web",
     "devUrl": "http://127.0.0.1:1420",
     "beforeBuildCommand": "pnpm --filter @ai-gate/web build",
     "frontendDist": "../../web/dist"
