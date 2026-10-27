@@ -25,6 +25,7 @@ import {
   PhTrashSimple,
 } from '@phosphor-icons/vue'
 import { useConfirmDialog } from '@/composables/useConfirmDialog'
+import { useBreadcrumb } from '@/composables/useBreadcrumb'
 import { toast } from 'vue-sonner'
 import { ApiError } from '@/lib/api'
 import { useProvidersStore } from '@/stores/providers'
@@ -54,6 +55,11 @@ const {providers, endpoints, keys, models, configLoading} = storeToRefs(store)
 
 const id = computed(() => Number(route.params.id))
 const provider = computed(() => providers.value.find(p => p.id === id.value))
+
+useBreadcrumb(() => [
+  { label: '供应商', to: '/providers' },
+  { label: provider.value?.name || provider.value?.code || '配置' },
+])
 
 const loadingProvider = ref(false)
 

@@ -24,7 +24,13 @@ const router = createRouter({
           path: 'providers/:id',
           name: 'provider-detail',
           component: () => import('@/views/ProviderDetailView.vue'),
-          meta: { title: '供应商' },
+          meta: {
+            title: '配置',
+            breadcrumbs: [
+              { label: '供应商', to: '/providers' },
+              { label: '配置' },
+            ],
+          },
         },
         {
           path: 'routes',
