@@ -274,7 +274,7 @@ async function importSelected() {
   >
     <DialogContent class="max-h-[calc(100vh-4rem)] sm:max-w-md">
       <DialogHeader class="shrink-0">
-        <DialogTitle>获取模型</DialogTitle>
+        <DialogTitle>导入模型</DialogTitle>
       </DialogHeader>
 
       <!-- 工具栏：密钥下拉多选 + 获取按钮，任何状态下常驻 -->
@@ -354,15 +354,11 @@ async function importSelected() {
             v-if="loading"
             data-icon="inline-start"
           />
-          <PhArrowsClockwise
-            v-else-if="fetched"
-            data-icon="inline-start"
-          />
           <PhDownloadSimple
             v-else
             data-icon="inline-start"
           />
-          {{ fetched ? '刷新' : '获取' }}
+          加载
         </Button>
       </div>
 
@@ -391,7 +387,7 @@ async function importSelected() {
           v-else-if="!fetched"
           class="flex flex-1 items-center justify-center"
         >
-          <AppEmpty title="选好密钥后点击「获取」拉取模型列表" />
+          <AppEmpty title="选好密钥后点击「加载」拉取模型列表" />
         </div>
 
         <template v-else>

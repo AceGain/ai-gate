@@ -518,12 +518,12 @@ function urlParts(path?: string) {
           <template v-else-if="activeTab === 'models'">
             <Button
               variant="ghost"
-              aria-label="获取模型"
-              title="获取模型"
+              aria-label="导入模型"
+              title="导入模型"
               @click="openImportModels"
             >
               <PhDownloadSimple data-icon="inline-start" />
-              <span class="hidden sm:inline">获取模型</span>
+              <span class="hidden sm:inline">导入模型</span>
             </Button>
             <Button
               variant="ghost"
