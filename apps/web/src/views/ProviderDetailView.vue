@@ -422,7 +422,7 @@ function urlParts(path?: string) {
     class="mx-auto flex min-w-0 w-full max-w-5xl flex-1 flex-col"
   >
     <!-- 1. 顶部档案区：图标 + 名称/描述 + 返回与启用控制 -->
-    <div class="flex shrink-0 items-center justify-between gap-4 pb-4">
+    <div class="flex shrink-0 items-center justify-between gap-4 pb-3">
       <!-- 左侧：图标 + 名称/编码 + 描述 -->
       <div class="flex min-w-0 items-center gap-3.5">
         <ProviderIcon
@@ -479,7 +479,7 @@ function urlParts(path?: string) {
       v-model="activeTab"
       class="flex min-h-0 flex-1 flex-col"
     >
-      <div class="flex shrink-0 items-center justify-between gap-2 pb-3">
+      <div class="flex shrink-0 items-center justify-between gap-2">
         <TabsList>
           <TabsTrigger value="endpoints">
             <PhPath data-icon="inline-start" />
@@ -546,7 +546,7 @@ function urlParts(path?: string) {
 
         <div
           v-else
-          class="divide-y"
+          class="border-y divide-y"
         >
           <!-- 固定端点 1: Base URL -->
           <div class="group hover:bg-muted/30 flex items-center justify-between gap-4 px-2 py-2.5 transition-colors">
