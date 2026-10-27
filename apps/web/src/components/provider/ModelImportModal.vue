@@ -320,20 +320,18 @@ async function importSelected() {
               <div
                 v-for="k in activeKeys"
                 :key="k.id"
-                class="hover:bg-accent hover:text-accent-foreground relative flex w-full cursor-pointer items-center py-1.5 pr-8 pl-2 text-xs select-none outline-none transition-colors"
+                class="hover:bg-accent hover:text-accent-foreground flex cursor-pointer items-center gap-2 px-2 py-1.5 text-xs select-none transition-colors"
                 @click="toggleKey(k.id)"
               >
+                <Checkbox
+                  :model-value="selectedKeyIds.includes(k.id)"
+                  class="pointer-events-none"
+                />
                 <span
-                  class="truncate flex-1"
+                  class="truncate flex-1 text-xs"
                   :title="k.name"
                 >
                   {{ k.name }}
-                </span>
-                <span
-                  v-if="selectedKeyIds.includes(k.id)"
-                  class="text-foreground absolute right-2 flex size-4 items-center justify-center"
-                >
-                  <PhCheck class="size-4" />
                 </span>
               </div>
             </div>
