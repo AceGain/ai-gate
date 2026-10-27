@@ -300,12 +300,12 @@ async function importSelected() {
           </PopoverTrigger>
 
           <PopoverContent
-            class="w-64 p-1.5 text-xs"
+            class="w-64 p-1 text-xs max-h-72 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             align="start"
           >
             <div
               v-if="activeKeys.length > 1"
-              class="flex items-center justify-between border-b pb-1.5 mb-1 px-1.5 select-none"
+              class="flex items-center justify-between border-b px-2 py-1.5 text-xs select-none"
             >
               <span class="text-muted-foreground">选择密钥</span>
               <button
@@ -316,21 +316,25 @@ async function importSelected() {
                 {{ selectedKeyIds.length === activeKeys.length ? '取消全选' : '全选' }}
               </button>
             </div>
-            <div class="flex flex-col gap-0.5 max-h-56 overflow-y-auto">
+            <div class="flex flex-col py-0.5">
               <div
                 v-for="k in activeKeys"
                 :key="k.id"
-                class="hover:bg-accent hover:text-accent-foreground flex cursor-pointer items-center gap-2 px-2 py-1.5 select-none transition-colors"
+                class="hover:bg-accent hover:text-accent-foreground relative flex w-full cursor-pointer items-center py-1.5 pr-8 pl-2 text-xs select-none outline-none transition-colors"
                 @click="toggleKey(k.id)"
               >
-                <Checkbox
-                  :model-value="selectedKeyIds.includes(k.id)"
-                  @update:model-value="() => toggleKey(k.id)"
-                />
                 <span
-                  class="truncate flex-1 text-xs"
+                  class="truncate flex-1"
                   :title="k.name"
-                >{{ k.name }}</span>
+                >
+                  {{ k.name }}
+                </span>
+                <span
+                  v-if="selectedKeyIds.includes(k.id)"
+                  class="text-foreground absolute right-2 flex size-4 items-center justify-center"
+                >
+                  <PhCheck class="size-4" />
+                </span>
               </div>
             </div>
           </PopoverContent>
