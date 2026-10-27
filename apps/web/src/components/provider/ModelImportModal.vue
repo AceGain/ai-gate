@@ -23,7 +23,13 @@ import {
 } from '@/components/ui/dialog'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Spinner } from '@/components/ui/spinner'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+} from '@/components/ui/select'
 import AppEmpty from '@/components/AppEmpty.vue'
 import AppLoading from '@/components/AppLoading.vue'
 
@@ -90,6 +96,29 @@ const mergedItems = computed<MergedItem[]>(() => {
 })
 
 const keyNameById = computed(() => new Map(store.keys.map(k => [k.id, k.name])))
+
+/** 下拉框摘要文案：全部选中显示「全部密钥 (N)」，否则显示已选数量；悬停展示明细 */
+const keySelectSummary = computed(() => {
+  if (!selectedKeyIds.value.length) return '请选择密钥'
+  if (selectedKeyIds.value.length === activeKeys.value.length) {
+    return activeKeys.value.length > 1
+      ? `全部密钥 (${selectedKeyIds.value.length})`
+      : '全部密钥'
+  }
+  return `已选 ${selectedKeyIds.value.length} 个密钥`
+})
+
+const keySelectSummaryTitle = computed(() =>
+  selectedKeyIds.value.map(id => keyNameById.value.get(id) ?? String(id)).join('、'),
+)
+
+function toggleSelectAllKeys() {
+  if (selectedKeyIds.value.length === activeKeys.value.length) {
+    selectedKeyIds.value = []
+  } else {
+    selectedKeyIds.value = activeKeys.value.map(k => k.id)
+  }
+}
 
 const filteredItems = computed(() => {
   const kw = filter.value.trim().toLowerCase()
@@ -238,34 +267,70 @@ async function importSelected() {
         <DialogTitle>获取模型</DialogTitle>
       </DialogHeader>
 
-      <!-- 工具栏：密钥勾选 + 获取按钮，任何状态下常驻 -->
-      <div class="flex shrink-0 flex-col gap-2">
-        <ToggleGroup
+      <!-- 工具栏：密钥下拉多选 + 获取按钮，任何状态下常驻 -->
+      <div class="flex shrink-0 items-center gap-2">
+        <Select
           v-if="activeKeys.length"
           v-model="selectedKeyIds"
-          type="multiple"
-          class="flex-wrap"
+          multiple
         >
-          <ToggleGroupItem
-            v-for="k in activeKeys"
-            :key="k.id"
-            :value="k.id"
+          <SelectTrigger
+            class="h-8 min-w-0 flex-1"
+            aria-label="选择密钥"
           >
-            <PhKey data-icon="inline-start" />
-            {{ k.name }}
-          </ToggleGroupItem>
-        </ToggleGroup>
+            <div class="flex min-w-0 items-center gap-2 truncate">
+              <PhKey class="text-muted-foreground size-3.5 shrink-0" />
+              <span
+                class="truncate text-xs"
+                :title="keySelectSummaryTitle"
+              >
+                {{ keySelectSummary }}
+              </span>
+            </div>
+          </SelectTrigger>
+          <SelectContent class="min-w-60">
+            <div
+              v-if="activeKeys.length > 1"
+              class="flex items-center justify-between border-b px-2 py-1.5 text-xs select-none"
+            >
+              <span class="text-muted-foreground">选择密钥</span>
+              <button
+                type="button"
+                class="text-primary hover:underline cursor-pointer"
+                @click.stop="toggleSelectAllKeys"
+              >
+                {{ selectedKeyIds.length === activeKeys.length ? '取消全选' : '全选' }}
+              </button>
+            </div>
+            <SelectGroup>
+              <SelectItem
+                v-for="k in activeKeys"
+                :key="k.id"
+                :value="k.id"
+              >
+                <span
+                  class="truncate text-xs"
+                  :title="k.name"
+                >{{ k.name }}</span>
+              </SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
         <span
           v-else
-          class="text-muted-foreground text-xs"
+          class="text-muted-foreground min-w-0 flex-1 text-xs"
         >没有可用密钥，请先在「密钥」标签页添加并启用</span>
+
         <Button
           variant="outline"
-          class="shrink-0 self-start"
+          class="shrink-0"
           :disabled="refetchDisabled || loading"
           @click="load"
         >
-          <Spinner v-if="loading" data-icon="inline-start" />
+          <Spinner
+            v-if="loading"
+            data-icon="inline-start"
+          />
           <PhArrowsClockwise
             v-else
             data-icon="inline-start"
