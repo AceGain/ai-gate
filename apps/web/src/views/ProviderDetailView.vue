@@ -399,6 +399,21 @@ function urlParts(path?: string) {
 </script>
 
 <template>
+  <!-- 头部最右侧：返回供应商列表入口 -->
+  <Teleport
+    defer
+    to="#header-actions"
+  >
+    <Button
+      variant="ghost"
+      size="sm"
+      @click="router.push('/providers')"
+    >
+      <PhArrowLeft data-icon="inline-start" />
+      返回
+    </Button>
+  </Teleport>
+
   <!-- 详情加载中 -->
   <AppLoading v-if="loadingProvider && !provider" />
 
@@ -444,17 +459,8 @@ function urlParts(path?: string) {
         </div>
       </div>
 
-      <!-- 右侧：返回 + 启用状态开关 -->
-      <div class="flex shrink-0 items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label="返回"
-          title="返回"
-          @click="router.push('/providers')"
-        >
-          <PhArrowLeft />
-        </Button>
+      <!-- 右侧：启用状态开关 -->
+      <div class="flex shrink-0 items-center">
         <div class="bg-muted/40 flex items-center gap-1.5 border px-2 py-1 text-xs">
           <span class="text-muted-foreground">
             {{ provider.enabled ? '启用' : '停用' }}
