@@ -3,7 +3,8 @@ import type { SModel, SModelInput, SRemoteModelItem, SRemoteModelKeyFetch } from
 import { computed, ref, watch } from 'vue'
 import {
   PhArrowsClockwise,
-  PhDownload,
+  PhDownloadSimple,
+  PhFloppyDisk,
   PhKey,
   PhMagnifyingGlass,
   PhWarning,
@@ -353,11 +354,11 @@ async function importSelected() {
             v-if="loading"
             data-icon="inline-start"
           />
-          <PhArrowsClockwise
+          <PhDownloadSimple
             v-else
             data-icon="inline-start"
           />
-          {{ fetched ? '重新获取' : '获取' }}
+          {{ fetched ? '刷新' : '获取' }}
         </Button>
       </div>
 
@@ -508,11 +509,11 @@ async function importSelected() {
           @click="importSelected"
         >
           <Spinner v-if="importing" data-icon="inline-start" />
-          <PhDownload
+          <PhFloppyDisk
             v-else
             data-icon="inline-start"
           />
-          导入
+          保存
         </Button>
       </DialogFooter>
     </DialogContent>
