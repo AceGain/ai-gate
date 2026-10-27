@@ -24,12 +24,10 @@ import {
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Spinner } from '@/components/ui/spinner'
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-} from '@/components/ui/select'
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import AppEmpty from '@/components/AppEmpty.vue'
 import AppLoading from '@/components/AppLoading.vue'
 
@@ -118,6 +116,17 @@ function toggleSelectAllKeys() {
   } else {
     selectedKeyIds.value = activeKeys.value.map(k => k.id)
   }
+}
+
+function toggleKey(id: number) {
+  const next = [...selectedKeyIds.value]
+  const idx = next.indexOf(id)
+  if (idx >= 0) {
+    next.splice(idx, 1)
+  } else {
+    next.push(id)
+  }
+  selectedKeyIds.value = next
 }
 
 const filteredItems = computed(() => {
@@ -269,29 +278,34 @@ async function importSelected() {
 
       <!-- 工具栏：密钥下拉多选 + 获取按钮，任何状态下常驻 -->
       <div class="flex shrink-0 items-center gap-2">
-        <Select
-          v-if="activeKeys.length"
-          v-model="selectedKeyIds"
-          multiple
-        >
-          <SelectTrigger
-            class="h-8 min-w-0 flex-1"
-            aria-label="选择密钥"
+        <Popover v-if="activeKeys.length">
+          <PopoverTrigger as-child>
+            <Button
+              variant="outline"
+              role="combobox"
+              class="h-8 min-w-0 flex-1 justify-between px-2.5 text-xs font-normal select-none"
+              :aria-label="keySelectSummary"
+            >
+              <div class="flex min-w-0 items-center gap-2 truncate">
+                <PhKey class="text-muted-foreground size-3.5 shrink-0" />
+                <span
+                  class="truncate text-xs"
+                  :title="keySelectSummaryTitle"
+                >
+                  {{ keySelectSummary }}
+                </span>
+              </div>
+              <PhCaretDown class="text-muted-foreground size-3.5 shrink-0 opacity-70" />
+            </Button>
+          </PopoverTrigger>
+
+          <PopoverContent
+            class="w-64 p-1.5 text-xs"
+            align="start"
           >
-            <div class="flex min-w-0 items-center gap-2 truncate">
-              <PhKey class="text-muted-foreground size-3.5 shrink-0" />
-              <span
-                class="truncate text-xs"
-                :title="keySelectSummaryTitle"
-              >
-                {{ keySelectSummary }}
-              </span>
-            </div>
-          </SelectTrigger>
-          <SelectContent class="min-w-60">
             <div
               v-if="activeKeys.length > 1"
-              class="flex items-center justify-between border-b px-2 py-1.5 text-xs select-none"
+              class="flex items-center justify-between border-b pb-1.5 mb-1 px-1.5 select-none"
             >
               <span class="text-muted-foreground">选择密钥</span>
               <button
@@ -302,20 +316,26 @@ async function importSelected() {
                 {{ selectedKeyIds.length === activeKeys.length ? '取消全选' : '全选' }}
               </button>
             </div>
-            <SelectGroup>
-              <SelectItem
+            <div class="flex flex-col gap-0.5 max-h-56 overflow-y-auto">
+              <div
                 v-for="k in activeKeys"
                 :key="k.id"
-                :value="k.id"
+                class="hover:bg-accent hover:text-accent-foreground flex cursor-pointer items-center gap-2 px-2 py-1.5 select-none transition-colors"
+                @click="toggleKey(k.id)"
               >
+                <Checkbox
+                  :model-value="selectedKeyIds.includes(k.id)"
+                  @update:model-value="() => toggleKey(k.id)"
+                />
                 <span
-                  class="truncate text-xs"
+                  class="truncate flex-1 text-xs"
                   :title="k.name"
                 >{{ k.name }}</span>
-              </SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <span
           v-else
           class="text-muted-foreground min-w-0 flex-1 text-xs"
