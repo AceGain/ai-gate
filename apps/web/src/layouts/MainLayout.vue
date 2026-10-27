@@ -37,8 +37,12 @@ const pageTitle = computed(() => (route.meta.title as string) || '概览')
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
+        <div
+          id="header-actions"
+          class="ml-auto flex items-center gap-2"
+        />
       </header>
-      <div class="flex flex-1 flex-col p-4">
+      <div class="flex min-w-0 flex-1 flex-col p-4">
         <RouterView />
       </div>
     </SidebarInset>

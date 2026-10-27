@@ -398,7 +398,7 @@ function urlParts(path?: string) {
 
   <div
     v-else-if="provider"
-    class="mx-auto flex w-full max-w-5xl flex-1 flex-col"
+    class="mx-auto flex min-w-0 w-full max-w-5xl flex-1 flex-col"
   >
     <!-- 1. 顶部档案区：图标 + 名称/描述 + 返回与启用控制 -->
     <div class="flex shrink-0 items-center justify-between gap-4 pb-4">

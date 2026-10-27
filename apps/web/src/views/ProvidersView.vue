@@ -79,31 +79,38 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col">
-    <!-- 操作栏：右侧新增入口 -->
-    <div class="flex shrink-0 items-center justify-end pb-3">
-      <Button @click="openCreate">
-        <PhPlus data-icon="inline-start" />
-        新增
-      </Button>
-    </div>
+  <!-- 头部最右侧：新增供应商入口 -->
+  <Teleport
+    defer
+    to="#header-actions"
+  >
+    <Button
+      variant="ghost"
+      size="sm"
+      @click="openCreate"
+    >
+      <PhPlus data-icon="inline-start" />
+      新增
+    </Button>
+  </Teleport>
 
+  <div class="flex min-w-0 flex-1 flex-col">
     <!-- 加载中 -->
     <AppLoading v-if="loading && !providers.length" />
 
     <!-- 有数据：一行一条卡片行 -->
     <div
       v-else-if="providers.length"
-      class="min-h-0 flex-1 overflow-y-auto"
+      class="min-h-0 min-w-0 flex-1 overflow-y-auto"
     >
       <div
         ref="listEl"
-        class="flex flex-col gap-2 pb-1"
+        class="flex min-w-0 flex-col gap-2 pb-1"
       >
         <div
           v-for="p in providers"
           :key="p.id"
-          class="group hover:border-primary/40 hover:bg-muted/30 flex min-h-16 items-center gap-3 border px-3.5 py-2.5 transition-colors select-none"
+          class="group hover:border-primary/40 hover:bg-muted/30 flex min-h-16 min-w-0 items-center gap-3 border px-3.5 py-2.5 transition-colors select-none"
         >
           <!-- 拖拽手柄（扩大命中区，hover 高亮）：排序唯一入口 -->
           <div
