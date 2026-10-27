@@ -354,6 +354,10 @@ async function importSelected() {
             v-if="loading"
             data-icon="inline-start"
           />
+          <PhArrowsClockwise
+            v-else-if="fetched"
+            data-icon="inline-start"
+          />
           <PhDownloadSimple
             v-else
             data-icon="inline-start"
