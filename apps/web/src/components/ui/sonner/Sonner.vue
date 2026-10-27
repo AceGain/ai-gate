@@ -24,16 +24,21 @@ const delegatedProps = reactiveOmit(props, 'class', 'toastOptions')
       '--normal-bg': 'var(--popover)',
       '--normal-text': 'var(--popover-foreground)',
       '--normal-border': 'var(--border)',
-      '--border-radius': 'var(--radius)',
+      '--border-radius': 'var(--radius, 0)',
       '--gray2': 'hsl(var(--popover) / 0.9)',
       '--gray3': 'var(--border)',
       '--gray4': 'var(--border)',
       '--gray5': 'var(--border)',
       '--gray12': 'var(--popover-foreground)',
     }"
-    :toast-options="props.toastOptions ?? {
+    :toast-options="{
+      ...props.toastOptions,
       classes: {
         toast: 'rounded-none',
+        actionButton: 'rounded-none',
+        cancelButton: 'rounded-none',
+        closeButton: 'rounded-none',
+        ...props.toastOptions?.classes,
       },
     }"
     v-bind="delegatedProps"
