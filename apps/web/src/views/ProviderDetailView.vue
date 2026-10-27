@@ -806,6 +806,7 @@ function urlParts(path?: string) {
             <!-- 右侧操作按钮：启用开关 + 测试 + 编辑 + 删除 -->
             <div class="flex shrink-0 items-center gap-1">
               <Switch
+                size="sm"
                 :model-value="k.enabled"
                 aria-label="切换启用状态"
                 @update:model-value="v => handleToggleKeyEnabled(k, !!v)"
