@@ -7,18 +7,70 @@
 /* vue-sonner 自身样式：缺了它 Toaster 容器会以静态布局参与文档流，弹出 toast 时把页面撑出滚动条 */
 @import "vue-sonner/style.css";
 
-/* 遵循项目 radius: 0 设计规范，重置 sonner 及其子元素圆角 */
+/* 遵循项目 Lyra 风格（直角、ring-1 细轮廓、紧凑排版与微阴影），深度重置 vue-sonner 样式 */
 [data-sonner-toaster] {
-  --border-radius: var(--radius, 0);
+  --border-radius: 0px !important;
+  font-family: var(--font-sans);
 }
 
-[data-sonner-toaster] [data-sonner-toast] {
-  border-radius: var(--radius, 0);
+[data-sonner-toast][data-styled='true'] {
+  border-radius: 0px !important;
+  border: none !important;
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent) !important;
+  padding: 10px 34px 10px 12px !important;
+  font-size: 0.75rem !important; /* 12px text-xs */
+  line-height: 1.25rem !important;
+  gap: 8px !important;
+  background: var(--popover) !important;
+  color: var(--popover-foreground) !important;
+  position: relative !important;
 }
 
-[data-sonner-toaster] [data-button],
-[data-sonner-toaster] [data-close-button] {
-  border-radius: var(--radius, 0);
+[data-sonner-toast][data-styled='true'] [data-title] {
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  color: var(--popover-foreground) !important;
+  line-height: 1.25rem !important;
+}
+
+[data-sonner-toast][data-styled='true'] [data-description] {
+  font-size: 0.75rem !important;
+  color: var(--muted-foreground) !important;
+  line-height: 1.25rem !important;
+}
+
+[data-sonner-toast][data-styled='true'] [data-button],
+[data-sonner-toast][data-styled='true'] [data-cancel] {
+  border-radius: 0px !important;
+  height: 1.5rem !important; /* h-6 */
+  padding: 0 0.5rem !important; /* px-2 */
+  font-size: 0.75rem !important; /* text-xs */
+  font-weight: 500 !important;
+  border: 1px solid var(--border) !important;
+}
+
+[data-sonner-toast][data-styled='true'] [data-close-button] {
+  border-radius: 0px !important;
+  top: 8px !important;
+  right: 8px !important;
+  left: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  width: 1.25rem !important; /* 20px */
+  height: 1.25rem !important; /* 20px */
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  color: var(--muted-foreground) !important;
+  opacity: 0.7;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+[data-sonner-toast][data-styled='true'] [data-close-button]:hover {
+  opacity: 1;
+  background: var(--muted) !important;
+  border-color: var(--border) !important;
+  color: var(--foreground) !important;
 }
 
 @custom-variant dark (&:is(.dark *));

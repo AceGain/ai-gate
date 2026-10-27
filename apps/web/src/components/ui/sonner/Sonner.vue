@@ -3,17 +3,23 @@ import type { ToasterProps } from 'vue-sonner'
 
 import {
   PhCheckCircle,
-  PhInfo,
   PhCircleNotch,
-  PhWarningOctagon,
+  PhInfo,
   PhWarning,
+  PhWarningOctagon,
   PhX,
 } from '@phosphor-icons/vue'
 import { reactiveOmit } from '@vueuse/core'
 import { cn } from 'cn'
 import { Toaster as Sonner } from 'vue-sonner'
 
-const props = defineProps<ToasterProps>()
+const props = withDefaults(defineProps<ToasterProps>(), {
+  expand: true,
+  gap: 8,
+  visibleToasts: 4,
+  closeButton: true,
+})
+
 const delegatedProps = reactiveOmit(props, 'class', 'toastOptions')
 </script>
 
@@ -23,8 +29,8 @@ const delegatedProps = reactiveOmit(props, 'class', 'toastOptions')
     :style="{
       '--normal-bg': 'var(--popover)',
       '--normal-text': 'var(--popover-foreground)',
-      '--normal-border': 'var(--border)',
-      '--border-radius': 'var(--radius, 0)',
+      '--normal-border': 'transparent',
+      '--border-radius': '0px',
       '--gray2': 'hsl(var(--popover) / 0.9)',
       '--gray3': 'var(--border)',
       '--gray4': 'var(--border)',
@@ -34,9 +40,11 @@ const delegatedProps = reactiveOmit(props, 'class', 'toastOptions')
     :toast-options="{
       ...props.toastOptions,
       classes: {
-        toast: 'rounded-none',
-        actionButton: 'rounded-none',
-        cancelButton: 'rounded-none',
+        toast: 'rounded-none font-sans text-xs',
+        title: 'text-xs font-medium text-foreground',
+        description: 'text-xs text-muted-foreground',
+        actionButton: 'rounded-none text-xs font-medium',
+        cancelButton: 'rounded-none text-xs font-medium',
         closeButton: 'rounded-none',
         ...props.toastOptions?.classes,
       },
@@ -44,24 +52,24 @@ const delegatedProps = reactiveOmit(props, 'class', 'toastOptions')
     v-bind="delegatedProps"
   >
     <template #success-icon>
-      <PhCheckCircle class="size-4" />
+      <PhCheckCircle class="text-success size-4 shrink-0" />
     </template>
     <template #info-icon>
-      <PhInfo class="size-4" />
+      <PhInfo class="text-primary size-4 shrink-0" />
     </template>
     <template #warning-icon>
-      <PhWarning class="size-4" />
+      <PhWarning class="text-warning size-4 shrink-0" />
     </template>
     <template #error-icon>
-      <PhWarningOctagon class="size-4" />
+      <PhWarningOctagon class="text-destructive size-4 shrink-0" />
     </template>
     <template #loading-icon>
       <div>
-        <PhCircleNotch class="size-4 animate-spin" />
+        <PhCircleNotch class="text-muted-foreground size-4 shrink-0 animate-spin" />
       </div>
     </template>
     <template #close-icon>
-      <PhX class="size-4" />
+      <PhX class="size-3.5" />
     </template>
   </Sonner>
 </template>
