@@ -191,6 +191,7 @@ const typeMeta = computed(() => new Map<string, {icon: typeof PhTextT, label: st
 
             <div class="flex shrink-0 items-center gap-1">
               <Switch
+                size="sm"
                 :model-value="m.enabled"
                 aria-label="切换启用状态"
                 @update:model-value="v => emit('toggle', m, !!v)"

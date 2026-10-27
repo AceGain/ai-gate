@@ -140,8 +140,9 @@ onBeforeUnmount(() => {
             >{{ p.remark }}</p>
           </div>
 
-          <!-- 启用开关 -->
+          <!-- 启用开关（紧凑型小尺寸，高 14px / 宽 24px，与 28px 按钮协调） -->
           <Switch
+            size="sm"
             :model-value="p.enabled"
             aria-label="切换启用状态"
             class="shrink-0"
