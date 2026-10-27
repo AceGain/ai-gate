@@ -4,11 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev:web": "pnpm concurrently -k \"pnpm --filter @ai-gate/web dev\" \"pnpm --filter @ai-gate/server dev\"",
+    "dev:web": "concurrently -k -n web,server -c cyan,green --pad-prefix \"pnpm --filter @ai-gate/web dev\" \"pnpm --filter @ai-gate/server dev\"",
     "dev:desktop": "pnpm --filter @ai-gate/desktop tauri dev",
     "dev:server": "pnpm --filter @ai-gate/server dev",
     "dev:hub": "pnpm --filter @ai-gate/hub dev",
     "build": "pnpm -r build",
+    "build:web": "pnpm --filter @ai-gate/web build",
+    "build:desktop": "pnpm --filter @ai-gate/desktop tauri build",
+    "build:server": "pnpm --filter @ai-gate/server build",
+    "build:hub": "pnpm --filter @ai-gate/hub build",
     "typecheck": "pnpm -r typecheck"
   },
   "devDependencies": {
