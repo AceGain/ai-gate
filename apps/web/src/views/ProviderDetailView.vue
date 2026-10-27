@@ -478,26 +478,14 @@ function urlParts(path?: string) {
           <TabsTrigger value="endpoints">
             <PhPath data-icon="inline-start" />
             端点
-            <span
-              v-if="endpoints.length"
-              class="text-muted-foreground"
-            >{{ endpoints.length }}</span>
           </TabsTrigger>
           <TabsTrigger value="keys">
             <PhKey data-icon="inline-start" />
             密钥
-            <span
-              v-if="keys.length"
-              class="text-muted-foreground"
-            >{{ keys.length }}</span>
           </TabsTrigger>
           <TabsTrigger value="models">
             <PhSparkle data-icon="inline-start" />
             模型
-            <span
-              v-if="models.length"
-              class="text-muted-foreground"
-            >{{ models.length }}</span>
           </TabsTrigger>
         </TabsList>
 
