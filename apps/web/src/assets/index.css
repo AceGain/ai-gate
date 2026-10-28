@@ -152,6 +152,9 @@
   --sidebar-accent-foreground: oklch(0.228 0.013 107.4);
   --sidebar-border: oklch(0.93 0.007 106.5);
   --sidebar-ring: oklch(0.737 0.021 106.9);
+  --scrollbar-thumb: color-mix(in oklch, var(--foreground) 18%, transparent);
+  --scrollbar-thumb-hover: color-mix(in oklch, var(--foreground) 32%, transparent);
+  --scrollbar-track: transparent;
 }
 
 .dark {
@@ -188,6 +191,9 @@
   --sidebar-accent-foreground: oklch(0.988 0.003 106.5);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.58 0.031 107.3);
+  --scrollbar-thumb: color-mix(in oklch, var(--foreground) 20%, transparent);
+  --scrollbar-thumb-hover: color-mix(in oklch, var(--foreground) 38%, transparent);
+  --scrollbar-track: transparent;
 }
 
 @layer base {
@@ -206,4 +212,48 @@
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+
+  /* 自定义全局纤细极简滚动条 */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 9999px;
+    transition: background-color 0.15s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }
+
+/* 遵循 CSS Scrollbars 规范（Firefox 等现代标准浏览器） */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+}
+
+/* 工具类：隐藏滚动条但保留滚动能力 */
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+
+
