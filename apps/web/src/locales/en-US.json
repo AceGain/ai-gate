@@ -198,7 +198,6 @@
     "searchPlaceholder": "Search models…",
     "selectedCount": "{count} selected",
     "exists": "Already added",
-    "supportedKeys": "Keys supporting this model: {keys}",
     "availableKeys": "{count} key available | {count} keys available",
     "noMatches": "No matching models"
   },

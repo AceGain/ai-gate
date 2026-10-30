@@ -198,7 +198,6 @@
     "searchPlaceholder": "搜尋模型…",
     "selectedCount": "已選擇 {count} 個",
     "exists": "已存在",
-    "supportedKeys": "支援此模型的金鑰：{keys}",
     "availableKeys": "{count} 把金鑰可用",
     "noMatches": "沒有符合的模型"
   },

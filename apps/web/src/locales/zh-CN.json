@@ -198,7 +198,6 @@
     "searchPlaceholder": "搜索模型...",
     "selectedCount": "已选 {count} 个",
     "exists": "已存在",
-    "supportedKeys": "支持该模型的密钥：{keys}",
     "availableKeys": "{count} 把密钥可用",
     "noMatches": "没有匹配的模型"
   },

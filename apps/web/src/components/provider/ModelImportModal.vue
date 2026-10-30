@@ -522,7 +522,7 @@ async function importSelected() {
                   <span
                     v-if="multiKey"
                     class="text-muted-foreground flex shrink-0 items-center gap-1.5 text-xs"
-                    :title="t('importModels.supportedKeys', { keys: item.keyIds.map(id => keyNameById.get(id) || id).join('、') })"
+                    :title="item.keyIds.map(id => keyNameById.get(id) || id).join('、')"
                   >
                     <span
                       v-if="item.name && item.name !== item.code"
