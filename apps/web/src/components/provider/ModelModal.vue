@@ -21,6 +21,7 @@ import {
   PhTextT,
   PhVideoCamera,
   PhWaveform,
+  PhX,
 } from '@phosphor-icons/vue'
 import { toast } from 'vue-sonner'
 import { ApiError } from '@/lib/api'
@@ -569,6 +570,7 @@ async function save() {
           :disabled="saving"
           @click="open = false"
         >
+          <PhX data-icon="inline-start" aria-hidden="true" />
           取消
         </Button>
         <Button

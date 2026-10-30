@@ -8,6 +8,7 @@ import {
   PhKey,
   PhMagnifyingGlass,
   PhWarning,
+  PhX,
 } from '@phosphor-icons/vue'
 import { toast } from 'vue-sonner'
 import { ApiError } from '@/lib/api'
@@ -502,6 +503,7 @@ async function importSelected() {
           :disabled="importing"
           @click="open = false"
         >
+          <PhX data-icon="inline-start" aria-hidden="true" />
           取消
         </Button>
         <Button

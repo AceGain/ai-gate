@@ -3,7 +3,7 @@ import type { SEndpoint, SEndpointInput, EndpointType } from '@ai-gate/shared'
 import { GEN_ENDPOINT_TYPES, GEN_ENDPOINT_DEFAULT_PATHS } from '@ai-gate/shared'
 import { computed, reactive, ref, watch } from 'vue'
 import { useClipboard } from '@vueuse/core'
-import { PhCopy, PhFloppyDisk } from '@phosphor-icons/vue'
+import { PhCopy, PhFloppyDisk, PhX } from '@phosphor-icons/vue'
 import { toast } from 'vue-sonner'
 import { ApiError } from '@/lib/api'
 import { useProvidersStore } from '@/stores/providers'
@@ -284,6 +284,7 @@ async function save() {
           :disabled="saving"
           @click="open = false"
         >
+          <PhX data-icon="inline-start" aria-hidden="true" />
           取消
         </Button>
         <Button

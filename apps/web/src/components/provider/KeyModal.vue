@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { SKey, SKeyInput } from '@ai-gate/shared'
 import { computed, reactive, ref, watch } from 'vue'
-import { PhFloppyDisk } from '@phosphor-icons/vue'
+import { PhFloppyDisk, PhX } from '@phosphor-icons/vue'
 import { toast } from 'vue-sonner'
 import { useProvidersStore } from '@/stores/providers'
 import { Button } from '@/components/ui/button'
@@ -138,6 +138,7 @@ async function save() {
           :disabled="saving"
           @click="open = false"
         >
+          <PhX data-icon="inline-start" aria-hidden="true" />
           取消
         </Button>
         <Button
