@@ -303,7 +303,8 @@ async function importSelected() {
     :open="open"
     @update:open="v => open = v"
   >
-    <DialogContent class="sm:max-w-md">
+    <!-- 以初始空态高度为下限；矮屏下仍遵循 DialogContent 的视口高度上限。 -->
+    <DialogContent class="min-h-[min(276px,calc(100dvh-2rem))] sm:min-h-[min(276px,calc(100dvh-4rem))] sm:max-w-md">
       <DialogHeader class="shrink-0">
         <DialogTitle>{{ t('importModels.title') }}</DialogTitle>
       </DialogHeader>
@@ -409,7 +410,7 @@ async function importSelected() {
         </Button>
       </div>
 
-      <!-- 结果随内容自然增高，达到弹窗高度上限后在列表内滚动。 -->
+      <!-- 少量结果保持初始高度，长列表自然增高，达到上限后在列表内滚动。 -->
       <!-- 搜索与选择统计固定，状态与结果共用唯一的滚动区域。 -->
       <div v-if="!loading && !errorCode && fetched && mergedItems.length" class="flex shrink-0 flex-col gap-2">
         <InputGroup>
@@ -436,11 +437,12 @@ async function importSelected() {
 
       <DialogBody
         ref="resultsBody"
+        class="flex-auto"
         content-class="flex flex-col gap-2"
         :aria-label="t('importModels.title')"
       >
         <!-- 拉取中 -->
-        <AppLoading v-if="loading" />
+        <AppLoading v-if="loading" class="flex-1" />
 
         <!-- 拉取失败：错误文案 + 重试入口 -->
         <div
