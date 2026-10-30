@@ -13,9 +13,9 @@
     "windows": [
       {
         "title": "AI Gate",
-        "width": 960,
+        "width": 900,
         "height": 600,
-        "minWidth": 960,
+        "minWidth": 900,
         "minHeight": 600
       }
     ],
