@@ -8,6 +8,7 @@ import { useProvidersStore } from '@/stores/providers'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -40,6 +41,7 @@ const form = reactive({
 
 const showErrors = ref(false)
 const saving = ref(false)
+const formBody = ref<InstanceType<typeof DialogBody> | null>(null)
 
 watch(open, (v) => {
   if (!v) return
@@ -62,6 +64,7 @@ const canSave = computed(() => !!form.name.trim() && !!form.secret.trim() && !sa
 async function save() {
   if (!canSave.value) {
     showErrors.value = true
+    await formBody.value?.focusFirstInvalid()
     toast.error(t('validation.checkForm'))
     return
   }
@@ -95,46 +98,48 @@ async function save() {
     :open="open"
     @update:open="v => open = v"
   >
-    <DialogContent class="max-h-[calc(100vh-4rem)] sm:max-w-md">
+    <DialogContent class="sm:max-w-md">
       <DialogHeader>
         <DialogTitle>{{ props.keyItem ? t('keys.edit') : t('keys.create') }}</DialogTitle>
       </DialogHeader>
 
-      <FieldGroup class="min-h-0 overflow-y-auto pr-1">
-        <Field :data-invalid="!!nameError">
-          <FieldLabel>{{ t('keys.name') }} <span class="text-destructive">*</span></FieldLabel>
-          <Input
-            v-model="form.name"
-            :aria-invalid="!!nameError || undefined"
-            :placeholder="t('keys.namePlaceholder')"
-          />
-          <FieldError v-if="nameError">
-            {{ nameError }}
-          </FieldError>
-        </Field>
+      <DialogBody ref="formBody" :aria-label="props.keyItem ? t('keys.edit') : t('keys.create')">
+        <FieldGroup>
+          <Field :data-invalid="!!nameError">
+            <FieldLabel>{{ t('keys.name') }} <span class="text-destructive">*</span></FieldLabel>
+            <Input
+              v-model="form.name"
+              :aria-invalid="!!nameError || undefined"
+              :placeholder="t('keys.namePlaceholder')"
+            />
+            <FieldError v-if="nameError">
+              {{ nameError }}
+            </FieldError>
+          </Field>
 
-        <Field :data-invalid="!!secretError">
-          <FieldLabel>{{ t('keys.secret') }} <span class="text-destructive">*</span></FieldLabel>
-          <Input
-            v-model="form.secret"
-            type="password"
-            :aria-invalid="!!secretError || undefined"
-            :placeholder="t('keys.secretPlaceholder')"
-          />
-          <FieldError v-if="secretError">
-            {{ secretError }}
-          </FieldError>
-        </Field>
+          <Field :data-invalid="!!secretError">
+            <FieldLabel>{{ t('keys.secret') }} <span class="text-destructive">*</span></FieldLabel>
+            <Input
+              v-model="form.secret"
+              type="password"
+              :aria-invalid="!!secretError || undefined"
+              :placeholder="t('keys.secretPlaceholder')"
+            />
+            <FieldError v-if="secretError">
+              {{ secretError }}
+            </FieldError>
+          </Field>
 
-        <Field>
-          <FieldLabel>{{ t('keys.expiresAt') }}</FieldLabel>
-          <Input
-            v-model="form.expireTime"
-            type="date"
-          />
-          <FieldDescription>{{ t('keys.expiryHint') }}</FieldDescription>
-        </Field>
-      </FieldGroup>
+          <Field>
+            <FieldLabel>{{ t('keys.expiresAt') }}</FieldLabel>
+            <Input
+              v-model="form.expireTime"
+              type="date"
+            />
+            <FieldDescription>{{ t('keys.expiryHint') }}</FieldDescription>
+          </Field>
+        </FieldGroup>
+      </DialogBody>
 
       <DialogFooter>
         <Button

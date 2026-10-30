@@ -2,15 +2,17 @@
 import { apiErrorMessage } from '@/lib/apiErrorMessage'
 import type { GenEndpointType, SProvider } from '@ai-gate/shared'
 import { GEN_ENDPOINT_TYPES, GEN_ENDPOINT_DEFAULT_PATHS } from '@ai-gate/shared'
-import { computed, reactive, ref, watch } from 'vue'
-import { PhFloppyDisk, PhX } from '@phosphor-icons/vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { PhArrowLeft, PhCamera, PhFloppyDisk, PhX } from '@phosphor-icons/vue'
 import { toast } from 'vue-sonner'
 import { ApiError } from '@/lib/api'
 import { useProvidersStore } from '@/stores/providers'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -22,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { defaultProviderIcon } from '@/utils/brandIcons'
 import ProviderIconPicker from './ProviderIconPicker.vue'
+import ProviderIcon from './ProviderIcon.vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -41,6 +44,35 @@ const emit = defineEmits<{saved: [provider: SProvider]}>()
 const open = defineModel<boolean>('open', {default: false})
 
 const store = useProvidersStore()
+const pickingIcon = ref(false)
+const iconTrigger = ref<InstanceType<typeof Button> | null>(null)
+const modalTitle = computed(() => props.provider ? t('providers.edit') : t('providers.create'))
+let formScrollTop = 0
+
+function openIconPicker() {
+  formScrollTop = formBody.value?.viewport?.scrollTop ?? 0
+  pickingIcon.value = true
+}
+
+async function returnToForm() {
+  pickingIcon.value = false
+  await nextTick()
+  if (!open.value) return
+  const viewport = formBody.value?.viewport
+  if (viewport) viewport.scrollTop = formScrollTop
+  iconTrigger.value?.$el?.focus({ preventScroll: true })
+}
+
+function selectIcon(icon: string) {
+  form.icon = icon
+  void returnToForm()
+}
+
+function handleEscape(event: KeyboardEvent) {
+  if (!pickingIcon.value) return
+  event.preventDefault()
+  void returnToForm()
+}
 
 const form = reactive({
   code: '',
@@ -62,6 +94,8 @@ const showErrors = ref(false)
 
 /** 打开时按模式重置表单 */
 watch(open, (v) => {
+  pickingIcon.value = false
+  formScrollTop = 0
   if (!v) return
   form.code = props.provider?.code ?? ''
   form.name = props.provider?.name ?? ''
@@ -144,6 +178,7 @@ const secretError = computed(() =>
 )
 
 const saving = ref(false)
+const formBody = ref<InstanceType<typeof DialogBody> | null>(null)
 const canSave = computed(() =>
   !codeInvalidReason.value &&
   !!form.name.trim() &&
@@ -156,6 +191,7 @@ const canSave = computed(() =>
 async function save() {
   if (!canSave.value) {
     showErrors.value = true
+    await formBody.value?.focusFirstInvalid()
     toast.error(t('validation.checkForm'))
     return
   }
@@ -186,6 +222,7 @@ async function save() {
   } catch (err) {
     if (err instanceof ApiError && (err.status === 409 || err.code === 'DUPLICATE_PROVIDER_CODE')) {
       serverCodeError.value = true
+      await formBody.value?.focusFirstInvalid()
     } else {
       console.warn('[ai-gate] 保存供应商失败', err)
       toast.error(apiErrorMessage(err))
@@ -201,139 +238,163 @@ async function save() {
     :open="open"
     @update:open="v => open = v"
   >
-    <DialogContent class="max-h-[calc(100vh-4rem)] sm:max-w-md">
+    <DialogContent class="sm:max-w-md" @escape-key-down="handleEscape">
       <DialogHeader>
-        <DialogTitle>{{ props.provider ? t('providers.edit') : t('providers.create') }}</DialogTitle>
+        <div v-if="pickingIcon" class="flex items-center gap-2 pr-6">
+          <Button variant="ghost" size="icon-sm" :aria-label="t('common.back')" @click="returnToForm">
+            <PhArrowLeft />
+          </Button>
+          <div class="flex min-w-0 flex-col gap-1">
+            <DialogTitle>{{ t('icons.change') }}</DialogTitle>
+            <DialogDescription>{{ modalTitle }}</DialogDescription>
+          </div>
+        </div>
+        <DialogTitle v-else>{{ modalTitle }}</DialogTitle>
       </DialogHeader>
 
-      <FieldGroup class="min-h-0 overflow-y-auto pr-1">
-        <!-- 显示图标：居中展示，点击选择/上传 -->
-        <div class="flex justify-center pb-1">
-          <ProviderIconPicker
-            v-model="form.icon"
-            :name="form.name"
-          />
-        </div>
+      <ProviderIconPicker v-if="pickingIcon" :selected-icon="form.icon" @select="selectIcon" />
 
-        <!-- 编码全局唯一，创建后不可修改：编辑态只读禁用 -->
-        <Field :data-invalid="!!codeError">
-          <FieldLabel>{{ t('providers.code') }} <span class="text-destructive">*</span></FieldLabel>
-          <Input
-            v-model="form.code"
-            :aria-invalid="!!codeError || undefined"
-            :placeholder="t('providers.codePlaceholder')"
-            :disabled="!!props.provider"
-          />
-          <FieldError v-if="codeError">
-            {{ codeError }}
-          </FieldError>
-        </Field>
+      <template v-else>
+        <DialogBody ref="formBody" :aria-label="props.provider ? t('providers.edit') : t('providers.create')">
+          <FieldGroup>
+            <!-- 显示图标：居中展示，点击选择/上传 -->
+            <div class="flex justify-center pb-1">
+              <Button
+                ref="iconTrigger"
+                variant="outline"
+                size="icon-lg"
+                class="group relative size-14 shrink-0 p-0"
+                :aria-label="t('icons.change')"
+                @click="openIconPicker"
+              >
+                <ProviderIcon :icon="form.icon" :name="form.name || '?'" size="xl" />
+                <span class="bg-muted/80 absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                  <PhCamera />
+                </span>
+              </Button>
+            </div>
 
-        <Field :data-invalid="!!nameError">
-          <FieldLabel>{{ t('common.name') }} <span class="text-destructive">*</span></FieldLabel>
-          <Input
-            v-model="form.name"
-            :aria-invalid="!!nameError || undefined"
-            :placeholder="t('providers.namePlaceholder')"
-          />
-          <FieldError v-if="nameError">
-            {{ nameError }}
-          </FieldError>
-        </Field>
+            <!-- 编码全局唯一，创建后不可修改：编辑态只读禁用 -->
+            <Field :data-invalid="!!codeError">
+              <FieldLabel>{{ t('providers.code') }} <span class="text-destructive">*</span></FieldLabel>
+              <Input
+                v-model="form.code"
+                :aria-invalid="!!codeError || undefined"
+                :placeholder="t('providers.codePlaceholder')"
+                :disabled="!!props.provider"
+              />
+              <FieldError v-if="codeError">
+                {{ codeError }}
+              </FieldError>
+            </Field>
 
-        <Field
-          v-if="!props.provider"
-          :data-invalid="!!baseUrlError"
-        >
-          <FieldLabel>Base URL <span class="text-destructive">*</span></FieldLabel>
-          <Input
-            v-model="form.baseUrl"
-            :aria-invalid="!!baseUrlError || undefined"
-            :placeholder="t('endpoints.basePlaceholder')"
-          />
-          <FieldError v-if="baseUrlError">
-            {{ baseUrlError }}
-          </FieldError>
-        </Field>
+            <Field :data-invalid="!!nameError">
+              <FieldLabel>{{ t('common.name') }} <span class="text-destructive">*</span></FieldLabel>
+              <Input
+                v-model="form.name"
+                :aria-invalid="!!nameError || undefined"
+                :placeholder="t('providers.namePlaceholder')"
+              />
+              <FieldError v-if="nameError">
+                {{ nameError }}
+              </FieldError>
+            </Field>
 
-        <template v-if="!props.provider">
-          <!-- 初始生成端点：端点类型 + 端点地址（默认路径自动填充） -->
-          <Field>
-            <FieldLabel>{{ t('endpoints.type') }}</FieldLabel>
-            <Select v-model="form.generate">
-              <SelectTrigger class="w-full">
-                <SelectValue :placeholder="t('validation.selectEndpointType')" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem
-                  v-for="item in GEN_ENDPOINT_TYPES"
-                  :key="item"
-                  :value="item"
-                >
-                  {{ item }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
+            <Field
+              v-if="!props.provider"
+              :data-invalid="!!baseUrlError"
+            >
+              <FieldLabel>Base URL <span class="text-destructive">*</span></FieldLabel>
+              <Input
+                v-model="form.baseUrl"
+                :aria-invalid="!!baseUrlError || undefined"
+                :placeholder="t('endpoints.basePlaceholder')"
+              />
+              <FieldError v-if="baseUrlError">
+                {{ baseUrlError }}
+              </FieldError>
+            </Field>
 
-          <Field :data-invalid="!!generatePathError">
-            <FieldLabel>{{ t('endpoints.path') }} <span class="text-destructive">*</span></FieldLabel>
-            <Input
-              v-model="form.generatePath"
-              :aria-invalid="!!generatePathError || undefined"
-              :placeholder="generatePathPlaceholder"
+            <template v-if="!props.provider">
+              <!-- 初始生成端点：端点类型 + 端点地址（默认路径自动填充） -->
+              <Field>
+                <FieldLabel>{{ t('endpoints.type') }}</FieldLabel>
+                <Select v-model="form.generate">
+                  <SelectTrigger class="w-full">
+                    <SelectValue :placeholder="t('validation.selectEndpointType')" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem
+                      v-for="item in GEN_ENDPOINT_TYPES"
+                      :key="item"
+                      :value="item"
+                    >
+                      {{ item }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              <Field :data-invalid="!!generatePathError">
+                <FieldLabel>{{ t('endpoints.path') }} <span class="text-destructive">*</span></FieldLabel>
+                <Input
+                  v-model="form.generatePath"
+                  :aria-invalid="!!generatePathError || undefined"
+                  :placeholder="generatePathPlaceholder"
+                />
+                <FieldError v-if="generatePathError">
+                  {{ generatePathError }}
+                </FieldError>
+              </Field>
+
+              <!-- 初始密钥：创建后可在供应商详情页管理 -->
+              <Field :data-invalid="!!secretError">
+                <FieldLabel>{{ t('keys.title') }} <span class="text-destructive">*</span></FieldLabel>
+                <Input
+                  v-model="form.secret"
+                  type="password"
+                  :aria-invalid="!!secretError || undefined"
+                  :placeholder="t('keys.secretPlaceholder')"
+                />
+                <FieldError v-if="secretError">
+                  {{ secretError }}
+                </FieldError>
+              </Field>
+            </template>
+
+            <Field>
+              <FieldLabel>{{ t('common.description') }}</FieldLabel>
+              <Textarea
+                v-model="form.remark"
+                :rows="2"
+                :placeholder="t('common.optional')"
+              />
+            </Field>
+          </FieldGroup>
+        </DialogBody>
+
+        <DialogFooter>
+          <Button
+            variant="outline"
+            :disabled="saving"
+            @click="open = false"
+          >
+            <PhX data-icon="inline-start" aria-hidden="true" />
+            {{ t('common.cancel') }}
+          </Button>
+          <Button
+            :disabled="saving"
+            @click="save"
+          >
+            <Spinner v-if="saving" data-icon="inline-start" />
+            <PhFloppyDisk
+              v-else
+              data-icon="inline-start"
             />
-            <FieldError v-if="generatePathError">
-              {{ generatePathError }}
-            </FieldError>
-          </Field>
-
-          <!-- 初始密钥：创建后可在供应商详情页管理 -->
-          <Field :data-invalid="!!secretError">
-            <FieldLabel>{{ t('keys.title') }} <span class="text-destructive">*</span></FieldLabel>
-            <Input
-              v-model="form.secret"
-              type="password"
-              :aria-invalid="!!secretError || undefined"
-              :placeholder="t('keys.secretPlaceholder')"
-            />
-            <FieldError v-if="secretError">
-              {{ secretError }}
-            </FieldError>
-          </Field>
-        </template>
-
-        <Field>
-          <FieldLabel>{{ t('common.description') }}</FieldLabel>
-          <Textarea
-            v-model="form.remark"
-            :rows="2"
-            :placeholder="t('common.optional')"
-          />
-        </Field>
-      </FieldGroup>
-
-      <DialogFooter>
-        <Button
-          variant="outline"
-          :disabled="saving"
-          @click="open = false"
-        >
-          <PhX data-icon="inline-start" aria-hidden="true" />
-          {{ t('common.cancel') }}
-        </Button>
-        <Button
-          :disabled="saving"
-          @click="save"
-        >
-          <Spinner v-if="saving" data-icon="inline-start" />
-          <PhFloppyDisk
-            v-else
-            data-icon="inline-start"
-          />
-          {{ t('common.save') }}
-        </Button>
-      </DialogFooter>
+            {{ t('common.save') }}
+          </Button>
+        </DialogFooter>
+      </template>
     </DialogContent>
   </Dialog>
 </template>

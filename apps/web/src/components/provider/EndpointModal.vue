@@ -11,6 +11,7 @@ import { splitUrl } from '@/utils/url'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -54,6 +55,7 @@ const form = reactive({
 
 const showErrors = ref(false)
 const saving = ref(false)
+const formBody = ref<InstanceType<typeof DialogBody> | null>(null)
 
 /** 基地址端点（用于拼接完整端点预览） */
 const baseEndpoint = computed(() => {
@@ -157,6 +159,7 @@ async function handleCopyPreview() {
 async function save() {
   if (!canSave.value) {
     showErrors.value = true
+    await formBody.value?.focusFirstInvalid()
     toast.error(t('validation.checkForm'))
     return
   }
@@ -189,7 +192,7 @@ async function save() {
     :open="open"
     @update:open="v => open = v"
   >
-    <DialogContent class="max-h-[calc(100vh-4rem)] sm:max-w-md">
+    <DialogContent class="sm:max-w-md">
       <DialogHeader>
         <DialogTitle>{{ modalTitle }}</DialogTitle>
         <DialogDescription v-if="form.type === 'generate' && !props.endpoint && availableGenerates.length === 0">
@@ -197,88 +200,90 @@ async function save() {
         </DialogDescription>
       </DialogHeader>
 
-      <FieldGroup class="min-h-0 overflow-y-auto pr-1">
-        <!-- 端点类型：修改时只读不可操作；新增 generate 时展示下拉选择 -->
-        <Field :data-invalid="!props.endpoint ? !!generateError : false">
-          <FieldLabel>
-            {{ t('endpoints.type') }}
-            <span
-              v-if="!props.endpoint && form.type === 'generate'"
-              class="text-destructive"
-            >*</span>
-          </FieldLabel>
-          <Input
-            v-if="props.endpoint"
-            :model-value="endpointTypeDisplay"
-            disabled
-          />
-          <Select
-            v-else
-            v-model="form.generate"
-          >
-            <SelectTrigger
-              class="w-full"
-              :disabled="availableGenerates.length === 0"
-            >
-              <SelectValue :placeholder="t('validation.selectEndpointType')" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem
-                v-for="item in availableGenerates"
-                :key="item"
-                :value="item"
-              >
-                {{ item }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <FieldError v-if="!props.endpoint && generateError">
-            {{ generateError }}
-          </FieldError>
-        </Field>
-
-        <!-- 端点地址输入框 -->
-        <Field :data-invalid="!!pathError">
-          <FieldLabel>{{ t('endpoints.path') }} <span class="text-destructive">*</span></FieldLabel>
-          <Input
-            v-model="form.path"
-            :aria-invalid="!!pathError || undefined"
-            :placeholder="pathPlaceholder"
-            :disabled="form.type === 'generate' && !props.endpoint && availableGenerates.length === 0"
-          />
-          <FieldError v-if="pathError">
-            {{ pathError }}
-          </FieldError>
-        </Field>
-
-        <!-- 完整端点地址预览 -->
-        <Field>
-          <FieldLabel>{{ t('endpoints.preview') }}</FieldLabel>
-          <div class="bg-muted/40 flex min-h-8 items-center justify-between gap-2 border px-2.5 py-1.5">
-            <code
-              class="min-w-0 flex-1 truncate text-xs select-all"
-              :title="previewUrlParts.fullUrl || t('common.noData')"
-            >
+      <DialogBody ref="formBody" :aria-label="modalTitle">
+        <FieldGroup>
+          <!-- 端点类型：修改时只读不可操作；新增 generate 时展示下拉选择 -->
+          <Field :data-invalid="!props.endpoint ? !!generateError : false">
+            <FieldLabel>
+              {{ t('endpoints.type') }}
               <span
-                v-if="previewUrlParts.basePart"
-                class="text-muted-foreground"
-              >{{ previewUrlParts.basePart }}</span>
-              <span :class="previewUrlParts.basePart ? 'font-medium' : 'text-muted-foreground'">{{ previewUrlParts.pathPart || (!previewUrlParts.fullUrl ? t('common.noData') : '') }}</span>
-            </code>
-            <Button
-              v-if="previewUrlParts.fullUrl"
-              variant="ghost"
-              size="icon-sm"
-              class="shrink-0"
-              :title="t('common.copy')"
-              :aria-label="t('common.copy')"
-              @click="handleCopyPreview"
+                v-if="!props.endpoint && form.type === 'generate'"
+                class="text-destructive"
+              >*</span>
+            </FieldLabel>
+            <Input
+              v-if="props.endpoint"
+              :model-value="endpointTypeDisplay"
+              disabled
+            />
+            <Select
+              v-else
+              v-model="form.generate"
             >
-              <PhCopy />
-            </Button>
-          </div>
-        </Field>
-      </FieldGroup>
+              <SelectTrigger
+                class="w-full"
+                :disabled="availableGenerates.length === 0"
+              >
+                <SelectValue :placeholder="t('validation.selectEndpointType')" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
+                  v-for="item in availableGenerates"
+                  :key="item"
+                  :value="item"
+                >
+                  {{ item }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <FieldError v-if="!props.endpoint && generateError">
+              {{ generateError }}
+            </FieldError>
+          </Field>
+
+          <!-- 端点地址输入框 -->
+          <Field :data-invalid="!!pathError">
+            <FieldLabel>{{ t('endpoints.path') }} <span class="text-destructive">*</span></FieldLabel>
+            <Input
+              v-model="form.path"
+              :aria-invalid="!!pathError || undefined"
+              :placeholder="pathPlaceholder"
+              :disabled="form.type === 'generate' && !props.endpoint && availableGenerates.length === 0"
+            />
+            <FieldError v-if="pathError">
+              {{ pathError }}
+            </FieldError>
+          </Field>
+
+          <!-- 完整端点地址预览 -->
+          <Field>
+            <FieldLabel>{{ t('endpoints.preview') }}</FieldLabel>
+            <div class="bg-muted/40 flex min-h-8 items-center justify-between gap-2 border px-2.5 py-1.5">
+              <code
+                class="min-w-0 flex-1 truncate text-xs select-all"
+                :title="previewUrlParts.fullUrl || t('common.noData')"
+              >
+                <span
+                  v-if="previewUrlParts.basePart"
+                  class="text-muted-foreground"
+                >{{ previewUrlParts.basePart }}</span>
+                <span :class="previewUrlParts.basePart ? 'font-medium' : 'text-muted-foreground'">{{ previewUrlParts.pathPart || (!previewUrlParts.fullUrl ? t('common.noData') : '') }}</span>
+              </code>
+              <Button
+                v-if="previewUrlParts.fullUrl"
+                variant="ghost"
+                size="icon-sm"
+                class="shrink-0"
+                :title="t('common.copy')"
+                :aria-label="t('common.copy')"
+                @click="handleCopyPreview"
+              >
+                <PhCopy />
+              </Button>
+            </div>
+          </Field>
+        </FieldGroup>
+      </DialogBody>
 
       <DialogFooter>
         <Button

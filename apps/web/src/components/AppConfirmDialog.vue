@@ -2,6 +2,7 @@
 import { toValue } from 'vue'
 import { PhWarning } from '@phosphor-icons/vue'
 import { useConfirmDialog } from '@/composables/useConfirmDialog'
+import { DialogBody } from '@/components/ui/dialog'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,8 +34,9 @@ function handleOpenChange(open: boolean) {
     <AlertDialogContent
       v-if="state"
       size="sm"
+      class="flex max-h-[calc(100dvh-2rem)] flex-col max-sm:w-[calc(100%-2rem)] sm:max-h-[calc(100dvh-4rem)]"
     >
-      <AlertDialogHeader>
+      <AlertDialogHeader class="shrink-0">
         <AlertDialogTitle class="flex items-center gap-2">
           <PhWarning
             class="size-4 shrink-0"
@@ -42,11 +44,17 @@ function handleOpenChange(open: boolean) {
           />
           {{ toValue(state.title) }}
         </AlertDialogTitle>
-        <AlertDialogDescription v-if="state.description">
+      </AlertDialogHeader>
+      <DialogBody
+        v-if="state.description"
+        :aria-label="toValue(state.title)"
+        content-class="text-center wrap-anywhere"
+      >
+        <AlertDialogDescription>
           {{ toValue(state.description) }}
         </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
+      </DialogBody>
+      <AlertDialogFooter class="shrink-0">
         <AlertDialogCancel @click="settle(false)">
           {{ toValue(state.cancelText) }}
         </AlertDialogCancel>

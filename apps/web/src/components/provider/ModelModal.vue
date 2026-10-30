@@ -36,6 +36,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -86,6 +87,7 @@ const form = reactive({
 
 const showErrors = ref(false)
 const saving = ref(false)
+const formBody = ref<InstanceType<typeof DialogBody> | null>(null)
 
 const typeOptions = computed(() => [
   {label: t('models.types.text'), value: 'TEXT', icon: PhTextT},
@@ -241,6 +243,7 @@ const canSave = computed(() => !!form.code.trim() && isModelType(form.type) && !
 async function save() {
   if (!canSave.value) {
     showErrors.value = true
+    await formBody.value?.focusFirstInvalid()
     toast.error(t('validation.checkForm'))
     return
   }
@@ -288,298 +291,300 @@ async function save() {
     :open="open"
     @update:open="v => open = v"
   >
-    <DialogContent class="max-h-[calc(100vh-4rem)] sm:max-w-lg">
+    <DialogContent class="sm:max-w-lg">
       <DialogHeader>
         <DialogTitle>{{ props.modelItem ? t('models.edit') : t('models.create') }}</DialogTitle>
       </DialogHeader>
 
-      <FieldGroup class="min-h-0 overflow-y-auto pr-1">
-        <!-- 基础配置：常用必要项 -->
-        <!-- 模型编码供应商内唯一，创建后不可修改：编辑态只读禁用 -->
-        <Field :data-invalid="!!codeError">
-          <FieldLabel>{{ t('models.code') }} <span class="text-destructive">*</span></FieldLabel>
-          <Input
-            v-model="form.code"
-            :aria-invalid="!!codeError || undefined"
-            :placeholder="t('models.codePlaceholder')"
-            :disabled="!!props.modelItem"
-          />
-          <FieldError v-if="codeError">
-            {{ codeError }}
-          </FieldError>
-        </Field>
+      <DialogBody ref="formBody" :aria-label="props.modelItem ? t('models.edit') : t('models.create')">
+        <FieldGroup>
+          <!-- 基础配置：常用必要项 -->
+          <!-- 模型编码供应商内唯一，创建后不可修改：编辑态只读禁用 -->
+          <Field :data-invalid="!!codeError">
+            <FieldLabel>{{ t('models.code') }} <span class="text-destructive">*</span></FieldLabel>
+            <Input
+              v-model="form.code"
+              :aria-invalid="!!codeError || undefined"
+              :placeholder="t('models.codePlaceholder')"
+              :disabled="!!props.modelItem"
+            />
+            <FieldError v-if="codeError">
+              {{ codeError }}
+            </FieldError>
+          </Field>
 
-        <Field>
-          <FieldLabel>{{ t('models.displayName') }}</FieldLabel>
-          <Input
-            v-model="form.name"
-            :placeholder="t('models.namePlaceholder')"
-          />
-        </Field>
+          <Field>
+            <FieldLabel>{{ t('models.displayName') }}</FieldLabel>
+            <Input
+              v-model="form.name"
+              :placeholder="t('models.namePlaceholder')"
+            />
+          </Field>
 
-        <Field>
-          <FieldLabel>{{ t('models.category') }}</FieldLabel>
-          <Input
-            v-model="form.category"
-            :placeholder="t('models.categoryPlaceholder')"
-          />
-        </Field>
+          <Field>
+            <FieldLabel>{{ t('models.category') }}</FieldLabel>
+            <Input
+              v-model="form.category"
+              :placeholder="t('models.categoryPlaceholder')"
+            />
+          </Field>
 
-        <Field>
-          <FieldLabel>{{ t('models.type') }}</FieldLabel>
-          <ToggleGroup
-            :model-value="form.type"
-            type="single"
-            variant="outline"
-            :spacing="2"
-            class="grid w-full grid-cols-2 sm:grid-cols-4"
-            @update:model-value="updateModelType"
-          >
-            <ToggleGroupItem
-              v-for="item in typeOptions"
-              :key="item.value"
-              :value="item.value"
+          <Field>
+            <FieldLabel>{{ t('models.type') }}</FieldLabel>
+            <ToggleGroup
+              :model-value="form.type"
+              type="single"
+              variant="outline"
+              :spacing="2"
+              class="grid w-full grid-cols-2 sm:grid-cols-4"
+              @update:model-value="updateModelType"
             >
-              <component :is="item.icon" data-icon="inline-start" />
-              {{ item.label }}
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </Field>
+              <ToggleGroupItem
+                v-for="item in typeOptions"
+                :key="item.value"
+                :value="item.value"
+              >
+                <component :is="item.icon" data-icon="inline-start" />
+                {{ item.label }}
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </Field>
 
-        <!-- 额外配置：模态、Token 限制、推理、生成端点等可选扩展 -->
-        <Collapsible v-model:open="isAdvancedOpen">
-          <CollapsibleTrigger
-            as-child
-            class="group w-full"
-          >
-            <Button
-              variant="ghost"
-              class="justify-between px-0 py-2"
+          <!-- 额外配置：模态、Token 限制、推理、生成端点等可选扩展 -->
+          <Collapsible v-model:open="isAdvancedOpen">
+            <CollapsibleTrigger
+              as-child
+              class="group w-full"
             >
-              <span class="flex items-center gap-2">
-                <PhSlidersHorizontal class="text-muted-foreground size-4 transition-colors group-hover:text-foreground" />
-                <span class="text-foreground text-xs font-medium">{{ t('models.advanced') }}</span>
-              </span>
-              <PhCaretDown class="text-muted-foreground size-4 transition-transform group-data-[state=open]:rotate-180" />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div class="flex flex-col gap-5 pt-3">
-              <!-- 1. 模态支持：ToggleGroup 多选（与模型类型同款交互） -->
-              <Field>
-                <FieldLabel>{{ t('models.inputModalities') }}</FieldLabel>
-                <ToggleGroup
-                  v-model="form.inputModal"
-                  type="multiple"
-                  variant="outline"
-                  :spacing="2"
-                  class="grid w-full grid-cols-3 sm:grid-cols-5"
-                >
-                  <ToggleGroupItem
-                    v-for="item in modalityOptions"
-                    :key="item.value"
-                    :value="item.value"
+              <Button
+                variant="ghost"
+                class="justify-between px-0 py-2"
+              >
+                <span class="flex items-center gap-2">
+                  <PhSlidersHorizontal class="text-muted-foreground size-4 transition-colors group-hover:text-foreground" />
+                  <span class="text-foreground text-xs font-medium">{{ t('models.advanced') }}</span>
+                </span>
+                <PhCaretDown class="text-muted-foreground size-4 transition-transform group-data-[state=open]:rotate-180" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div class="flex flex-col gap-5 pt-3">
+                <!-- 1. 模态支持：ToggleGroup 多选（与模型类型同款交互） -->
+                <Field>
+                  <FieldLabel>{{ t('models.inputModalities') }}</FieldLabel>
+                  <ToggleGroup
+                    v-model="form.inputModal"
+                    type="multiple"
+                    variant="outline"
+                    :spacing="2"
+                    class="grid w-full grid-cols-3 sm:grid-cols-5"
                   >
-                    <component :is="item.icon" data-icon="inline-start" />
-                    {{ item.label }}
-                  </ToggleGroupItem>
-                </ToggleGroup>
-              </Field>
-
-              <Field>
-                <FieldLabel>{{ t('models.outputModalities') }}</FieldLabel>
-                <ToggleGroup
-                  v-model="form.outputModal"
-                  type="multiple"
-                  variant="outline"
-                  :spacing="2"
-                  class="grid w-full grid-cols-3 sm:grid-cols-5"
-                >
-                  <ToggleGroupItem
-                    v-for="item in modalityOptions"
-                    :key="item.value"
-                    :value="item.value"
-                  >
-                    <component :is="item.icon" data-icon="inline-start" />
-                    {{ item.label }}
-                  </ToggleGroupItem>
-                </ToggleGroup>
-              </Field>
-
-              <!-- 2. Token 限制与快捷输入（输入框 + 预设按钮） -->
-              <Field>
-                <FieldLabel>{{ t('models.contextWindow') }}</FieldLabel>
-                <div class="flex items-center gap-2">
-                  <Input
-                    v-model.number="form.maxContext"
-                    type="number"
-                    :placeholder="t('models.tokenPlaceholder')"
-                    :min="0"
-                  >
-                  </Input>
-                  <div class="flex shrink-0 items-center gap-1">
-                    <Button
-                      v-for="p in contextPresets"
-                      :key="p.value"
-                      type="button"
-                      size="xs"
-                      :variant="form.maxContext === p.value ? 'secondary' : 'ghost'"
-                      class="cursor-pointer font-mono"
-                      @click="form.maxContext = form.maxContext === p.value ? '' : p.value"
-                    >
-                      {{ p.label }}
-                    </Button>
-                  </div>
-                </div>
-              </Field>
-
-              <Field>
-                <FieldLabel>{{ t('models.maxInputTokens') }}</FieldLabel>
-                <div class="flex items-center gap-2">
-                  <Input
-                    v-model.number="form.maxInput"
-                    type="number"
-                    :placeholder="t('models.tokenPlaceholder')"
-                    :min="0"
-                  >
-                  </Input>
-                  <div class="flex shrink-0 items-center gap-1">
-                    <Button
-                      v-for="p in inputPresets"
-                      :key="p.value"
-                      type="button"
-                      size="xs"
-                      :variant="form.maxInput === p.value ? 'secondary' : 'ghost'"
-                      class="cursor-pointer font-mono"
-                      @click="form.maxInput = form.maxInput === p.value ? '' : p.value"
-                    >
-                      {{ p.label }}
-                    </Button>
-                  </div>
-                </div>
-              </Field>
-
-              <Field>
-                <FieldLabel>{{ t('models.maxOutputTokens') }}</FieldLabel>
-                <div class="flex items-center gap-2">
-                  <Input
-                    v-model.number="form.maxOutput"
-                    type="number"
-                    :placeholder="t('models.tokenPlaceholder')"
-                    :min="0"
-                  >
-                  </Input>
-                  <div class="flex shrink-0 items-center gap-1">
-                    <Button
-                      v-for="p in outputPresets"
-                      :key="p.value"
-                      type="button"
-                      size="xs"
-                      :variant="form.maxOutput === p.value ? 'secondary' : 'ghost'"
-                      class="cursor-pointer font-mono"
-                      @click="form.maxOutput = form.maxOutput === p.value ? '' : p.value"
-                    >
-                      {{ p.label }}
-                    </Button>
-                  </div>
-                </div>
-              </Field>
-
-              <!-- 推理模式 -->
-              <Field>
-                <FieldLabel>{{ t('models.reasoningMode') }}</FieldLabel>
-                <Select v-model="form.reasoning">
-                  <SelectTrigger class="w-full">
-                    <SelectValue :placeholder="t('models.selectReasoningMode')" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem
-                      v-for="item in reasoningOptions"
+                    <ToggleGroupItem
+                      v-for="item in modalityOptions"
                       :key="item.value"
                       :value="item.value"
                     >
+                      <component :is="item.icon" data-icon="inline-start" />
                       {{ item.label }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </Field>
 
-              <!-- 推理档位：平铺复选，仅档位调节模式下动态展示 -->
-              <Field v-if="form.reasoning === 'TOGGLE'">
-                <FieldLabel>{{ t('models.reasoningEffort') }}</FieldLabel>
-                <div class="flex flex-wrap items-center gap-x-4 gap-y-2 pt-0.5">
-                  <label
-                    v-for="item in effortLevelOptions"
-                    :key="item.value"
-                    class="flex cursor-pointer items-center gap-1.5 text-xs select-none"
+                <Field>
+                  <FieldLabel>{{ t('models.outputModalities') }}</FieldLabel>
+                  <ToggleGroup
+                    v-model="form.outputModal"
+                    type="multiple"
+                    variant="outline"
+                    :spacing="2"
+                    class="grid w-full grid-cols-3 sm:grid-cols-5"
                   >
-                    <Checkbox
-                      :model-value="form.effortLevel.includes(item.value)"
-                      @update:model-value="() => {
-                        const idx = form.effortLevel.indexOf(item.value)
-                        if (idx >= 0) form.effortLevel.splice(idx, 1)
-                        else form.effortLevel.push(item.value)
-                      }"
-                    />
-                    {{ item.label }}
-                  </label>
-                </div>
-              </Field>
+                    <ToggleGroupItem
+                      v-for="item in modalityOptions"
+                      :key="item.value"
+                      :value="item.value"
+                    >
+                      <component :is="item.icon" data-icon="inline-start" />
+                      {{ item.label }}
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </Field>
 
-              <!-- 3. 支持生成端点列表（展示完整路径）：整卡可点的复选行 -->
-              <Field>
-                <FieldLabel>{{ t('endpoints.type') }}</FieldLabel>
-                <div
-                  v-if="generateEndpointList.length"
-                  class="flex flex-col gap-1.5 pt-0.5"
-                >
-                  <label
-                    v-for="ep in generateEndpointList"
-                    :key="ep.id"
-                    class="hover:bg-muted/50 flex cursor-pointer items-center gap-2.5 border px-2.5 py-1.5 transition-colors select-none"
-                    :class="form.generates.includes(ep.type) ? 'border-primary/40 bg-primary/5' : ''"
-                  >
-                    <Checkbox
-                      :model-value="form.generates.includes(ep.type)"
-                      @update:model-value="() => toggleGenerate(ep.type)"
-                    />
-                    <span class="flex min-w-0 flex-1 items-center gap-2">
-                      <span class="text-xs font-semibold shrink-0">{{ ep.type }}</span>
-                      <Badge
-                        v-if="ep.isDefault"
-                        variant="secondary"
-                        class="shrink-0"
+                <!-- 2. Token 限制与快捷输入（输入框 + 预设按钮） -->
+                <Field>
+                  <FieldLabel>{{ t('models.contextWindow') }}</FieldLabel>
+                  <div class="flex items-center gap-2">
+                    <Input
+                      v-model.number="form.maxContext"
+                      type="number"
+                      :placeholder="t('models.tokenPlaceholder')"
+                      :min="0"
+                    >
+                    </Input>
+                    <div class="flex shrink-0 items-center gap-1">
+                      <Button
+                        v-for="p in contextPresets"
+                        :key="p.value"
+                        type="button"
+                        size="xs"
+                        :variant="form.maxContext === p.value ? 'secondary' : 'ghost'"
+                        class="cursor-pointer font-mono"
+                        @click="form.maxContext = form.maxContext === p.value ? '' : p.value"
                       >
-                        {{ t('common.default') }}
-                      </Badge>
-                      <span
-                        class="text-muted-foreground min-w-0 flex-1 truncate font-mono text-xs select-all"
-                        :title="ep.fullUrl"
-                      >{{ ep.path || t('common.noData') }}</span>
-                    </span>
-                  </label>
-                </div>
-                <div
-                  v-else
-                  class="text-muted-foreground flex items-center justify-center border border-dashed bg-muted/20 p-4 text-xs"
-                >
-                  {{ t('models.noGenerateEndpoints') }}
-                </div>
-              </Field>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+                        {{ p.label }}
+                      </Button>
+                    </div>
+                  </div>
+                </Field>
 
-        <!-- 描述：识别性补充说明，不属能力配置；恒可见收尾于表单 -->
-        <Field>
-          <FieldLabel>{{ t('common.description') }}</FieldLabel>
-          <Textarea
-            v-model="form.remark"
-            :rows="2"
-            :placeholder="t('common.optional')"
-          />
-        </Field>
-      </FieldGroup>
+                <Field>
+                  <FieldLabel>{{ t('models.maxInputTokens') }}</FieldLabel>
+                  <div class="flex items-center gap-2">
+                    <Input
+                      v-model.number="form.maxInput"
+                      type="number"
+                      :placeholder="t('models.tokenPlaceholder')"
+                      :min="0"
+                    >
+                    </Input>
+                    <div class="flex shrink-0 items-center gap-1">
+                      <Button
+                        v-for="p in inputPresets"
+                        :key="p.value"
+                        type="button"
+                        size="xs"
+                        :variant="form.maxInput === p.value ? 'secondary' : 'ghost'"
+                        class="cursor-pointer font-mono"
+                        @click="form.maxInput = form.maxInput === p.value ? '' : p.value"
+                      >
+                        {{ p.label }}
+                      </Button>
+                    </div>
+                  </div>
+                </Field>
+
+                <Field>
+                  <FieldLabel>{{ t('models.maxOutputTokens') }}</FieldLabel>
+                  <div class="flex items-center gap-2">
+                    <Input
+                      v-model.number="form.maxOutput"
+                      type="number"
+                      :placeholder="t('models.tokenPlaceholder')"
+                      :min="0"
+                    >
+                    </Input>
+                    <div class="flex shrink-0 items-center gap-1">
+                      <Button
+                        v-for="p in outputPresets"
+                        :key="p.value"
+                        type="button"
+                        size="xs"
+                        :variant="form.maxOutput === p.value ? 'secondary' : 'ghost'"
+                        class="cursor-pointer font-mono"
+                        @click="form.maxOutput = form.maxOutput === p.value ? '' : p.value"
+                      >
+                        {{ p.label }}
+                      </Button>
+                    </div>
+                  </div>
+                </Field>
+
+                <!-- 推理模式 -->
+                <Field>
+                  <FieldLabel>{{ t('models.reasoningMode') }}</FieldLabel>
+                  <Select v-model="form.reasoning">
+                    <SelectTrigger class="w-full">
+                      <SelectValue :placeholder="t('models.selectReasoningMode')" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem
+                        v-for="item in reasoningOptions"
+                        :key="item.value"
+                        :value="item.value"
+                      >
+                        {{ item.label }}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                <!-- 推理档位：平铺复选，仅档位调节模式下动态展示 -->
+                <Field v-if="form.reasoning === 'TOGGLE'">
+                  <FieldLabel>{{ t('models.reasoningEffort') }}</FieldLabel>
+                  <div class="flex flex-wrap items-center gap-x-4 gap-y-2 pt-0.5">
+                    <label
+                      v-for="item in effortLevelOptions"
+                      :key="item.value"
+                      class="flex cursor-pointer items-center gap-1.5 text-xs select-none"
+                    >
+                      <Checkbox
+                        :model-value="form.effortLevel.includes(item.value)"
+                        @update:model-value="() => {
+                          const idx = form.effortLevel.indexOf(item.value)
+                          if (idx >= 0) form.effortLevel.splice(idx, 1)
+                          else form.effortLevel.push(item.value)
+                        }"
+                      />
+                      {{ item.label }}
+                    </label>
+                  </div>
+                </Field>
+
+                <!-- 3. 支持生成端点列表（展示完整路径）：整卡可点的复选行 -->
+                <Field>
+                  <FieldLabel>{{ t('endpoints.type') }}</FieldLabel>
+                  <div
+                    v-if="generateEndpointList.length"
+                    class="flex flex-col gap-1.5 pt-0.5"
+                  >
+                    <label
+                      v-for="ep in generateEndpointList"
+                      :key="ep.id"
+                      class="hover:bg-muted/50 flex cursor-pointer items-center gap-2.5 border px-2.5 py-1.5 transition-colors select-none"
+                      :class="form.generates.includes(ep.type) ? 'border-primary/40 bg-primary/5' : ''"
+                    >
+                      <Checkbox
+                        :model-value="form.generates.includes(ep.type)"
+                        @update:model-value="() => toggleGenerate(ep.type)"
+                      />
+                      <span class="flex min-w-0 flex-1 items-center gap-2">
+                        <span class="text-xs font-semibold shrink-0">{{ ep.type }}</span>
+                        <Badge
+                          v-if="ep.isDefault"
+                          variant="secondary"
+                          class="shrink-0"
+                        >
+                          {{ t('common.default') }}
+                        </Badge>
+                        <span
+                          class="text-muted-foreground min-w-0 flex-1 truncate font-mono text-xs select-all"
+                          :title="ep.fullUrl"
+                        >{{ ep.path || t('common.noData') }}</span>
+                      </span>
+                    </label>
+                  </div>
+                  <div
+                    v-else
+                    class="text-muted-foreground flex items-center justify-center border border-dashed bg-muted/20 p-4 text-xs"
+                  >
+                    {{ t('models.noGenerateEndpoints') }}
+                  </div>
+                </Field>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          <!-- 描述：识别性补充说明，不属能力配置；恒可见收尾于表单 -->
+          <Field>
+            <FieldLabel>{{ t('common.description') }}</FieldLabel>
+            <Textarea
+              v-model="form.remark"
+              :rows="2"
+              :placeholder="t('common.optional')"
+            />
+          </Field>
+        </FieldGroup>
+      </DialogBody>
 
       <DialogFooter>
         <Button

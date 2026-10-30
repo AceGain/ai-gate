@@ -4,6 +4,7 @@ import type { SModel, SModelInput, SRemoteModelItem, SRemoteModelKeyFetch } from
 import { computed, ref, watch } from 'vue'
 import {
   PhArrowsClockwise,
+  PhCaretDown,
   PhDownloadSimple,
   PhFloppyDisk,
   PhKey,
@@ -19,6 +20,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -26,6 +28,7 @@ import {
 } from '@/components/ui/dialog'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Spinner } from '@/components/ui/spinner'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Popover,
   PopoverContent,
@@ -65,6 +68,11 @@ const keyResults = ref<SRemoteModelKeyFetch[]>([])
 const fetched = ref(false)
 const selected = ref<Set<string>>(new Set())
 const filter = ref('')
+const resultsBody = ref<InstanceType<typeof DialogBody> | null>(null)
+
+watch(filter, () => {
+  resultsBody.value?.viewport?.scrollTo({ top: 0 })
+}, { flush: 'post' })
 
 const activeKeys = computed(() => store.keys.filter(k => k.enabled && k.status === 'ACTIVE'))
 const okResults = computed(() => keyResults.value.filter(r => r.ok))
@@ -295,7 +303,7 @@ async function importSelected() {
     :open="open"
     @update:open="v => open = v"
   >
-    <DialogContent class="max-h-[calc(100vh-4rem)] sm:max-w-md">
+    <DialogContent class="sm:max-w-md">
       <DialogHeader class="shrink-0">
         <DialogTitle>{{ t('importModels.title') }}</DialogTitle>
       </DialogHeader>
@@ -324,7 +332,7 @@ async function importSelected() {
           </PopoverTrigger>
 
           <PopoverContent
-            class="w-64 p-1 text-xs max-h-72 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            class="w-64 p-1 text-xs"
             align="start"
           >
             <div
@@ -340,25 +348,27 @@ async function importSelected() {
                 {{ selectedKeyIds.length === activeKeys.length ? t('common.deselectAll') : t('common.selectAll') }}
               </button>
             </div>
-            <div class="flex flex-col py-0.5">
-              <div
-                v-for="k in activeKeys"
-                :key="k.id"
-                class="hover:bg-accent hover:text-accent-foreground flex cursor-pointer items-center gap-2 px-2 py-1.5 text-xs select-none transition-colors"
-                @click="toggleKey(k.id)"
-              >
-                <Checkbox
-                  :model-value="selectedKeyIds.includes(k.id)"
-                  class="pointer-events-none"
-                />
-                <span
-                  class="truncate flex-1 text-xs"
-                  :title="k.name"
+            <ScrollArea type="auto" class="max-h-56" :viewport-label="t('importModels.chooseKeys')">
+              <div class="flex flex-col py-0.5 pr-3">
+                <div
+                  v-for="k in activeKeys"
+                  :key="k.id"
+                  class="hover:bg-accent hover:text-accent-foreground flex cursor-pointer items-center gap-2 px-2 py-1.5 text-xs select-none transition-colors"
+                  @click="toggleKey(k.id)"
                 >
-                  {{ k.name }}
-                </span>
+                  <Checkbox
+                    :model-value="selectedKeyIds.includes(k.id)"
+                    class="pointer-events-none"
+                  />
+                  <span
+                    class="truncate flex-1 text-xs"
+                    :title="k.name"
+                  >
+                    {{ k.name }}
+                  </span>
+                </div>
               </div>
-            </div>
+            </ScrollArea>
           </PopoverContent>
         </Popover>
 
@@ -399,8 +409,36 @@ async function importSelected() {
         </Button>
       </div>
 
-      <!-- 结果区：加载 / 错误 / 引导 / 空态 / 模型列表（恒定高度，列表内滚动） -->
-      <div class="flex h-72 flex-col gap-2">
+      <!-- 结果随内容自然增高，达到弹窗高度上限后在列表内滚动。 -->
+      <!-- 搜索与选择统计固定，状态与结果共用唯一的滚动区域。 -->
+      <div v-if="!loading && !errorCode && fetched && mergedItems.length" class="flex shrink-0 flex-col gap-2">
+        <InputGroup>
+          <InputGroupAddon align="inline-start">
+            <PhMagnifyingGlass />
+          </InputGroupAddon>
+          <InputGroupInput
+            v-model="filter"
+            :placeholder="t('importModels.searchPlaceholder')"
+          />
+        </InputGroup>
+
+        <div class="flex items-center justify-between gap-2">
+          <label class="flex cursor-pointer items-center gap-1.5 text-xs select-none">
+            <Checkbox
+              :model-value="allVisibleSelected"
+              @update:model-value="toggleAll"
+            />
+            {{ t('common.selectAll') }}
+          </label>
+          <span class="text-muted-foreground text-xs">{{ t('importModels.selectedCount', { count: selectedCount }) }}</span>
+        </div>
+      </div>
+
+      <DialogBody
+        ref="resultsBody"
+        content-class="flex flex-col gap-2"
+        :aria-label="t('importModels.title')"
+      >
         <!-- 拉取中 -->
         <AppLoading v-if="loading" />
 
@@ -452,28 +490,7 @@ async function importSelected() {
           </div>
 
           <template v-else-if="mergedItems.length">
-            <InputGroup>
-              <InputGroupAddon align="inline-start">
-                <PhMagnifyingGlass />
-              </InputGroupAddon>
-              <InputGroupInput
-                v-model="filter"
-                :placeholder="t('importModels.searchPlaceholder')"
-              />
-            </InputGroup>
-
-            <div class="flex items-center justify-between gap-2">
-              <label class="flex cursor-pointer items-center gap-1.5 text-xs select-none">
-                <Checkbox
-                  :model-value="allVisibleSelected"
-                  @update:model-value="toggleAll"
-                />
-                {{ t('common.selectAll') }}
-              </label>
-              <span class="text-muted-foreground text-xs">{{ t('importModels.selectedCount', { count: selectedCount }) }}</span>
-            </div>
-
-            <div class="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto pr-0.5">
+            <div class="flex flex-col gap-1.5">
               <label
                 v-for="item in filteredItems"
                 :key="item.code"
@@ -531,7 +548,7 @@ async function importSelected() {
             </div>
           </template>
         </template>
-      </div>
+      </DialogBody>
 
       <DialogFooter>
         <Button
