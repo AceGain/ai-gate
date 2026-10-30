@@ -3,12 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/check-i18n.mjs && vue-tsc --noEmit && vite build",
+    "build": "node --import tsx scripts/check-i18n.mjs && vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
-    "check:i18n": "node scripts/check-i18n.mjs"
+    "check:i18n": "node --import tsx scripts/check-i18n.mjs"
   },
   "dependencies": {
     "@ai-gate/shared": "workspace:*",
@@ -37,6 +40,7 @@
     "@types/sortablejs": "^1.15.9",
     "@vitejs/plugin-vue": "^6.0.10",
     "tailwindcss": "^4.3.3",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vite": "^8.3.5",
     "vue-tsc": "^3.3.13"
