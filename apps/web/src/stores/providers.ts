@@ -1,3 +1,5 @@
+import { apiErrorMessage } from '@/lib/apiErrorMessage'
+import { t } from '@/i18n'
 /**
  * 出站供应商（S 域）状态：Pinia store + SQLite 后端（/api/providers）逐条 CRUD
  * 列表排序由拖拽触发，经 reorder 接口持久化；
@@ -33,8 +35,8 @@ export const useProvidersStore = defineStore('providers', () => {
   const loading = ref(false)
   const loaded = ref(false)
 
-  function notifyBackendError() {
-    toast.error('后端服务不可用')
+  function notifyBackendError(err: unknown) {
+    toast.error(apiErrorMessage(err))
   }
 
   /** 拉取列表（后端按 sort 升序返回） */
@@ -45,7 +47,7 @@ export const useProvidersStore = defineStore('providers', () => {
       loaded.value = true
     } catch (err) {
       console.warn('[ai-gate] 加载供应商失败', err)
-      notifyBackendError()
+      notifyBackendError(err)
     } finally {
       loading.value = false
     }
@@ -97,10 +99,10 @@ export const useProvidersStore = defineStore('providers', () => {
     try {
       await api(`/providers/${id}`, {method: 'DELETE'})
       providers.value = providers.value.filter(p => p.id !== id)
-      toast.success('已删除')
+      toast.success(t('common.deleted'))
     } catch (err) {
       console.warn('[ai-gate] 删除供应商失败', err)
-      notifyBackendError()
+      notifyBackendError(err)
     }
   }
 
@@ -126,7 +128,7 @@ export const useProvidersStore = defineStore('providers', () => {
     } catch (err) {
       console.warn('[ai-gate] 切换供应商启用状态失败', err)
       providers.value[index] = prev
-      notifyBackendError()
+      notifyBackendError(err)
     }
   }
 
@@ -139,7 +141,7 @@ export const useProvidersStore = defineStore('providers', () => {
       })
     } catch (err) {
       console.warn('[ai-gate] 保存供应商排序失败', err)
-      notifyBackendError()
+      notifyBackendError(err)
       await load()
     }
   }
@@ -172,7 +174,7 @@ export const useProvidersStore = defineStore('providers', () => {
       models.value = modelList
     } catch (err) {
       console.warn('[ai-gate] 加载供应商配置失败', err)
-      notifyBackendError()
+      notifyBackendError(err)
     } finally {
       configLoading.value = false
     }
@@ -185,7 +187,7 @@ export const useProvidersStore = defineStore('providers', () => {
       endpoints.value = await api<SEndpoint[]>(`/providers/${providerId}/endpoints`)
     } catch (err) {
       console.warn('[ai-gate] 加载端点失败', err)
-      notifyBackendError()
+      notifyBackendError(err)
     }
   }
 
@@ -212,10 +214,10 @@ export const useProvidersStore = defineStore('providers', () => {
     try {
       await api(`/providers/${providerId}/endpoints/${id}`, {method: 'DELETE'})
       endpoints.value = endpoints.value.filter(e => e.id !== id)
-      toast.success('已删除')
+      toast.success(t('common.deleted'))
     } catch (err) {
       console.warn('[ai-gate] 删除端点失败', err)
-      notifyBackendError()
+      notifyBackendError(err)
     }
   }
 
@@ -226,7 +228,7 @@ export const useProvidersStore = defineStore('providers', () => {
       keys.value = await api<SKey[]>(`/providers/${providerId}/keys`)
     } catch (err) {
       console.warn('[ai-gate] 加载密钥失败', err)
-      notifyBackendError()
+      notifyBackendError(err)
     }
   }
 
@@ -254,10 +256,10 @@ export const useProvidersStore = defineStore('providers', () => {
     try {
       await api(`/providers/${providerId}/keys/${id}`, {method: 'DELETE'})
       keys.value = keys.value.filter(k => k.id !== id)
-      toast.success('已删除')
+      toast.success(t('common.deleted'))
     } catch (err) {
       console.warn('[ai-gate] 删除密钥失败', err)
-      notifyBackendError()
+      notifyBackendError(err)
     }
   }
 
@@ -269,7 +271,7 @@ export const useProvidersStore = defineStore('providers', () => {
       })
     } catch (err) {
       console.warn('[ai-gate] 保存密钥排序失败', err)
-      notifyBackendError()
+      notifyBackendError(err)
       await loadKeys(providerId)
     }
   }
@@ -286,7 +288,7 @@ export const useProvidersStore = defineStore('providers', () => {
       models.value = await api<SModel[]>(`/providers/${providerId}/models`)
     } catch (err) {
       console.warn('[ai-gate] 加载模型失败', err)
-      notifyBackendError()
+      notifyBackendError(err)
     }
   }
 
@@ -314,10 +316,10 @@ export const useProvidersStore = defineStore('providers', () => {
     try {
       await api(`/providers/${providerId}/models/${id}`, {method: 'DELETE'})
       models.value = models.value.filter(m => m.id !== id)
-      toast.success('已删除')
+      toast.success(t('common.deleted'))
     } catch (err) {
       console.warn('[ai-gate] 删除模型失败', err)
-      notifyBackendError()
+      notifyBackendError(err)
     }
   }
 
@@ -329,7 +331,7 @@ export const useProvidersStore = defineStore('providers', () => {
       })
     } catch (err) {
       console.warn('[ai-gate] 保存模型排序失败', err)
-      notifyBackendError()
+      notifyBackendError(err)
       await loadModels(providerId)
     }
   }

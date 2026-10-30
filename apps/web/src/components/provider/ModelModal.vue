@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { apiErrorMessage } from '@/lib/apiErrorMessage'
 import type {
   SEndpoint,
   SModel,
@@ -44,6 +45,9 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   providerId: number
@@ -81,39 +85,39 @@ const form = reactive({
 const showErrors = ref(false)
 const saving = ref(false)
 
-const typeOptions = [
-  {label: '文本', value: 'TEXT', icon: PhTextT},
-  {label: '图像', value: 'IMAGE', icon: PhImage},
-  {label: '视频', value: 'VIDEO', icon: PhVideoCamera},
-  {label: '音频', value: 'AUDIO', icon: PhWaveform},
-  {label: '向量', value: 'EMBEDDING', icon: PhBracketsAngle},
-  {label: '重排', value: 'RERANK', icon: PhArrowsDownUp},
-] as const
+const typeOptions = computed(() => [
+  {label: t('models.types.text'), value: 'TEXT', icon: PhTextT},
+  {label: t('models.types.image'), value: 'IMAGE', icon: PhImage},
+  {label: t('models.types.video'), value: 'VIDEO', icon: PhVideoCamera},
+  {label: t('models.types.audio'), value: 'AUDIO', icon: PhWaveform},
+  {label: t('models.types.embedding'), value: 'EMBEDDING', icon: PhBracketsAngle},
+  {label: t('models.types.rerank'), value: 'RERANK', icon: PhArrowsDownUp},
+] as const)
 
-const reasoningOptions = [
-  {label: '档位调节', value: 'TOGGLE'},
-  {label: '开关模式', value: 'SWITCH'},
-  {label: '始终开启', value: 'ALWAYS'},
-  {label: '不支持', value: 'DISABLE'},
-] as const
+const reasoningOptions = computed(() => [
+  {label: t('models.reasoningModes.levels'), value: 'TOGGLE'},
+  {label: t('models.reasoningModes.toggle'), value: 'SWITCH'},
+  {label: t('models.reasoningModes.always'), value: 'ALWAYS'},
+  {label: t('models.reasoningModes.unsupported'), value: 'DISABLE'},
+] as const)
 
-const modalityOptions = [
-  {label: '文本', value: 'text', icon: PhTextT},
-  {label: '图像', value: 'image', icon: PhImage},
-  {label: '视频', value: 'video', icon: PhVideoCamera},
-  {label: '音频', value: 'audio', icon: PhWaveform},
+const modalityOptions = computed(() => [
+  {label: t('models.types.text'), value: 'text', icon: PhTextT},
+  {label: t('models.types.image'), value: 'image', icon: PhImage},
+  {label: t('models.types.video'), value: 'video', icon: PhVideoCamera},
+  {label: t('models.types.audio'), value: 'audio', icon: PhWaveform},
   {label: 'PDF', value: 'pdf', icon: PhFileText},
-] as const
+] as const)
 
-const effortLevelOptions = [
-  {label: '无', value: 'none'},
-  {label: '极小', value: 'minimal'},
-  {label: '低', value: 'low'},
-  {label: '中', value: 'medium'},
-  {label: '高', value: 'high'},
-  {label: '极高', value: 'xhigh'},
-  {label: '最大', value: 'max'},
-] as const satisfies readonly {label: string, value: ModelEffortLevel}[]
+const effortLevelOptions = computed(() => [
+  {label: t('models.effort.none'), value: 'none'},
+  {label: t('models.effort.minimal'), value: 'minimal'},
+  {label: t('models.effort.low'), value: 'low'},
+  {label: t('models.effort.medium'), value: 'medium'},
+  {label: t('models.effort.high'), value: 'high'},
+  {label: t('models.effort.xhigh'), value: 'xhigh'},
+  {label: t('models.effort.max'), value: 'max'},
+] as const satisfies readonly {label: string, value: ModelEffortLevel}[])
 
 const contextPresets = [
   {label: '128k', value: 128000},
@@ -220,7 +224,7 @@ watch(() => form.reasoning, (val) => {
 })
 
 const codeError = computed(() =>
-  showErrors.value && !form.code.trim() ? '请输入模型编码' : undefined,
+  showErrors.value && !form.code.trim() ? t('validation.modelCodeRequired') : undefined,
 )
 
 const canSave = computed(() => !!form.code.trim() && !saving.value)
@@ -228,7 +232,7 @@ const canSave = computed(() => !!form.code.trim() && !saving.value)
 async function save() {
   if (!canSave.value) {
     showErrors.value = true
-    toast.error('请检查表单填写')
+    toast.error(t('validation.checkForm'))
     return
   }
   saving.value = true
@@ -254,15 +258,15 @@ async function save() {
     const saved = props.modelItem
       ? await store.updateModel(props.providerId, props.modelItem.id, input)
       : await store.createModel(props.providerId, input)
-    toast.success('已保存')
+    toast.success(t('common.saved'))
     open.value = false
     emit('saved', saved)
   } catch (err) {
-    if (err instanceof ApiError && (err.status === 409 || err.code.includes('Duplicate model code'))) {
-      toast.error('该模型编码已存在')
+    if (err instanceof ApiError && (err.status === 409 || err.code === 'DUPLICATE_MODEL_CODE')) {
+      toast.error(t('validation.duplicateModelCode'))
     } else {
       console.warn('[ai-gate] 保存模型失败', err)
-      toast.error('后端服务不可用')
+      toast.error(apiErrorMessage(err))
     }
   } finally {
     saving.value = false
@@ -277,18 +281,18 @@ async function save() {
   >
     <DialogContent class="max-h-[calc(100vh-4rem)] sm:max-w-lg">
       <DialogHeader>
-        <DialogTitle>{{ props.modelItem ? '编辑模型' : '新增模型' }}</DialogTitle>
+        <DialogTitle>{{ props.modelItem ? t('models.edit') : t('models.create') }}</DialogTitle>
       </DialogHeader>
 
       <FieldGroup class="min-h-0 overflow-y-auto pr-1">
         <!-- 基础配置：常用必要项 -->
         <!-- 模型编码供应商内唯一，创建后不可修改：编辑态只读禁用 -->
         <Field :data-invalid="!!codeError">
-          <FieldLabel>模型编码 <span class="text-destructive">*</span></FieldLabel>
+          <FieldLabel>{{ t('models.code') }} <span class="text-destructive">*</span></FieldLabel>
           <Input
             v-model="form.code"
             :aria-invalid="!!codeError || undefined"
-            placeholder="如 gpt-4o、claude-3-5-sonnet"
+            :placeholder="t('models.codePlaceholder')"
             :disabled="!!props.modelItem"
           />
           <FieldError v-if="codeError">
@@ -297,23 +301,23 @@ async function save() {
         </Field>
 
         <Field>
-          <FieldLabel>显示名称</FieldLabel>
+          <FieldLabel>{{ t('models.displayName') }}</FieldLabel>
           <Input
             v-model="form.name"
-            placeholder="选填，留空时展示编码"
+            :placeholder="t('models.namePlaceholder')"
           />
         </Field>
 
         <Field>
-          <FieldLabel>模型分组</FieldLabel>
+          <FieldLabel>{{ t('models.category') }}</FieldLabel>
           <Input
             v-model="form.category"
-            placeholder="如 LLM、Embedding、多模态"
+            :placeholder="t('models.categoryPlaceholder')"
           />
         </Field>
 
         <Field>
-          <FieldLabel>模型类型</FieldLabel>
+          <FieldLabel>{{ t('models.type') }}</FieldLabel>
           <ToggleGroup
             v-model="form.type"
             type="single"
@@ -343,7 +347,7 @@ async function save() {
             >
               <span class="flex items-center gap-2">
                 <PhSlidersHorizontal class="text-muted-foreground size-4 transition-colors group-hover:text-foreground" />
-                <span class="text-foreground text-xs font-medium">高级配置</span>
+                <span class="text-foreground text-xs font-medium">{{ t('models.advanced') }}</span>
               </span>
               <PhCaretDown class="text-muted-foreground size-4 transition-transform group-data-[state=open]:rotate-180" />
             </Button>
@@ -352,7 +356,7 @@ async function save() {
             <div class="flex flex-col gap-5 pt-3">
               <!-- 1. 模态支持：ToggleGroup 多选（与模型类型同款交互） -->
               <Field>
-                <FieldLabel>输入模态</FieldLabel>
+                <FieldLabel>{{ t('models.inputModalities') }}</FieldLabel>
                 <ToggleGroup
                   v-model="form.inputModal"
                   type="multiple"
@@ -371,7 +375,7 @@ async function save() {
               </Field>
 
               <Field>
-                <FieldLabel>输出模态</FieldLabel>
+                <FieldLabel>{{ t('models.outputModalities') }}</FieldLabel>
                 <ToggleGroup
                   v-model="form.outputModal"
                   type="multiple"
@@ -391,12 +395,12 @@ async function save() {
 
               <!-- 2. Token 限制与快捷输入（输入框 + 预设按钮） -->
               <Field>
-                <FieldLabel>上下文窗口</FieldLabel>
+                <FieldLabel>{{ t('models.contextWindow') }}</FieldLabel>
                 <div class="flex items-center gap-2">
                   <Input
                     v-model.number="form.maxContext"
                     type="number"
-                    placeholder="留空或输入数值"
+                    :placeholder="t('models.tokenPlaceholder')"
                     :min="0"
                   >
                   </Input>
@@ -417,12 +421,12 @@ async function save() {
               </Field>
 
               <Field>
-                <FieldLabel>最大输入 Token</FieldLabel>
+                <FieldLabel>{{ t('models.maxInputTokens') }}</FieldLabel>
                 <div class="flex items-center gap-2">
                   <Input
                     v-model.number="form.maxInput"
                     type="number"
-                    placeholder="留空或输入数值"
+                    :placeholder="t('models.tokenPlaceholder')"
                     :min="0"
                   >
                   </Input>
@@ -443,12 +447,12 @@ async function save() {
               </Field>
 
               <Field>
-                <FieldLabel>最大输出 Token</FieldLabel>
+                <FieldLabel>{{ t('models.maxOutputTokens') }}</FieldLabel>
                 <div class="flex items-center gap-2">
                   <Input
                     v-model.number="form.maxOutput"
                     type="number"
-                    placeholder="留空或输入数值"
+                    :placeholder="t('models.tokenPlaceholder')"
                     :min="0"
                   >
                   </Input>
@@ -470,10 +474,10 @@ async function save() {
 
               <!-- 推理模式 -->
               <Field>
-                <FieldLabel>推理模式</FieldLabel>
+                <FieldLabel>{{ t('models.reasoningMode') }}</FieldLabel>
                 <Select v-model="form.reasoning">
                   <SelectTrigger class="w-full">
-                    <SelectValue placeholder="请选择推理模式" />
+                    <SelectValue :placeholder="t('models.selectReasoningMode')" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem
@@ -489,7 +493,7 @@ async function save() {
 
               <!-- 推理档位：平铺复选，仅档位调节模式下动态展示 -->
               <Field v-if="form.reasoning === 'TOGGLE'">
-                <FieldLabel>推理档位</FieldLabel>
+                <FieldLabel>{{ t('models.reasoningEffort') }}</FieldLabel>
                 <div class="flex flex-wrap items-center gap-x-4 gap-y-2 pt-0.5">
                   <label
                     v-for="item in effortLevelOptions"
@@ -511,7 +515,7 @@ async function save() {
 
               <!-- 3. 支持生成端点列表（展示完整路径）：整卡可点的复选行 -->
               <Field>
-                <FieldLabel>端点类型</FieldLabel>
+                <FieldLabel>{{ t('endpoints.type') }}</FieldLabel>
                 <div
                   v-if="generateEndpointList.length"
                   class="flex flex-col gap-1.5 pt-0.5"
@@ -533,12 +537,12 @@ async function save() {
                         variant="secondary"
                         class="shrink-0"
                       >
-                        默认
+                        {{ t('common.default') }}
                       </Badge>
                       <span
                         class="text-muted-foreground min-w-0 flex-1 truncate font-mono text-xs select-all"
                         :title="ep.fullUrl"
-                      >{{ ep.path || '暂无数据' }}</span>
+                      >{{ ep.path || t('common.noData') }}</span>
                     </span>
                   </label>
                 </div>
@@ -546,7 +550,7 @@ async function save() {
                   v-else
                   class="text-muted-foreground flex items-center justify-center border border-dashed bg-muted/20 p-4 text-xs"
                 >
-                  暂无已配置的生成端点，请先在「端点」标签页添加生成端点
+                  {{ t('models.noGenerateEndpoints') }}
                 </div>
               </Field>
             </div>
@@ -555,11 +559,11 @@ async function save() {
 
         <!-- 描述：识别性补充说明，不属能力配置；恒可见收尾于表单 -->
         <Field>
-          <FieldLabel>描述</FieldLabel>
+          <FieldLabel>{{ t('common.description') }}</FieldLabel>
           <Textarea
             v-model="form.remark"
             :rows="2"
-            placeholder="选填"
+            :placeholder="t('common.optional')"
           />
         </Field>
       </FieldGroup>
@@ -571,7 +575,7 @@ async function save() {
           @click="open = false"
         >
           <PhX data-icon="inline-start" aria-hidden="true" />
-          取消
+          {{ t('common.cancel') }}
         </Button>
         <Button
           :disabled="saving"
@@ -582,7 +586,7 @@ async function save() {
             v-else
             data-icon="inline-start"
           />
-          保存
+          {{ t('common.save') }}
         </Button>
       </DialogFooter>
     </DialogContent>

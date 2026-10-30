@@ -12,6 +12,9 @@ import {
 import { reactiveOmit } from '@vueuse/core'
 import { cn } from 'cn'
 import { Toaster as Sonner } from 'vue-sonner'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = withDefaults(defineProps<ToasterProps>(), {
   expand: true,
@@ -20,11 +23,12 @@ const props = withDefaults(defineProps<ToasterProps>(), {
   closeButton: true,
 })
 
-const delegatedProps = reactiveOmit(props, 'class', 'toastOptions')
+const delegatedProps = reactiveOmit(props, 'class', 'toastOptions', 'containerAriaLabel')
 </script>
 
 <template>
   <Sonner
+    :container-aria-label="props.containerAriaLabel ?? t('common.notifications')"
     :class="cn('toaster group', props.class)"
     :style="{
       '--normal-bg': 'var(--popover)',
@@ -39,6 +43,7 @@ const delegatedProps = reactiveOmit(props, 'class', 'toastOptions')
     }"
     :toast-options="{
       ...props.toastOptions,
+      closeButtonAriaLabel: props.toastOptions?.closeButtonAriaLabel ?? t('common.close'),
       classes: {
         toast: 'rounded-none font-sans text-xs',
         title: 'text-xs font-medium text-foreground',

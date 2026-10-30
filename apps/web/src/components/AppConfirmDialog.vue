@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { toValue } from 'vue'
 import { PhWarning } from '@phosphor-icons/vue'
 import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import {
@@ -39,21 +40,21 @@ function handleOpenChange(open: boolean) {
             class="size-4 shrink-0"
             :class="state.destructive ? 'text-destructive' : 'text-warning'"
           />
-          {{ state.title }}
+          {{ toValue(state.title) }}
         </AlertDialogTitle>
         <AlertDialogDescription v-if="state.description">
-          {{ state.description }}
+          {{ toValue(state.description) }}
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel @click="settle(false)">
-          {{ state.cancelText }}
+          {{ toValue(state.cancelText) }}
         </AlertDialogCancel>
         <AlertDialogAction
           :variant="state.destructive ? 'destructive' : 'default'"
           @click="settle(true)"
         >
-          {{ state.confirmText }}
+          {{ toValue(state.confirmText) }}
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>

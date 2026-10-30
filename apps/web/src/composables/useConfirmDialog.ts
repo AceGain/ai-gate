@@ -2,18 +2,20 @@
  * 全局确认弹窗：Promise 风格调用
  * const confirmed = await confirmDialog({title, description})
  */
+import { t } from '@/i18n'
+import type { MaybeRefOrGetter } from 'vue'
 import { ref } from 'vue'
 
 interface ConfirmOptions {
-  title: string
-  description?: string
-  confirmText?: string
-  cancelText?: string
+  title: MaybeRefOrGetter<string>
+  description?: MaybeRefOrGetter<string>
+  confirmText?: MaybeRefOrGetter<string>
+  cancelText?: MaybeRefOrGetter<string>
   destructive?: boolean
 }
 
 interface ConfirmState extends Required<Omit<ConfirmOptions, 'description'>> {
-  description?: string
+  description?: MaybeRefOrGetter<string>
 }
 
 const state = ref<ConfirmState | null>(null)
@@ -27,8 +29,8 @@ export function useConfirmDialog() {
       state.value = {
         title: options.title,
         description: options.description,
-        confirmText: options.confirmText ?? '确认',
-        cancelText: options.cancelText ?? '取消',
+        confirmText: options.confirmText ?? (() => t('common.confirm')),
+        cancelText: options.cancelText ?? (() => t('common.cancel')),
         destructive: options.destructive ?? true,
       }
       resolver = resolve

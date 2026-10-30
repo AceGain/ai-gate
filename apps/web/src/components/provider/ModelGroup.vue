@@ -24,6 +24,9 @@ import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 /**
  * 供应商模型分组列表：按模型分组（category）渲染一个分组卡片
@@ -52,17 +55,17 @@ const testingId = ref<number | null>(null)
 function testErrorMessage(code: string | undefined, detail?: string): string {
   switch (code) {
     case 'MISSING_BASE_ENDPOINT':
-      return '请先在「端点」标签页配置 Base URL'
+      return t('errors.missingBaseEndpoint')
     case 'MISSING_GENERATE_ENDPOINT':
-      return '请先在「端点」标签页配置生成端点'
+      return t('errors.missingGenerateEndpoint')
     case 'UPSTREAM_UNREACHABLE':
-      return '无法连接供应商，请检查网络与端点配置'
+      return t('errors.upstreamUnreachable')
     case 'UPSTREAM_TIMEOUT':
-      return '上游响应超时'
+      return t('errors.upstreamTimeout')
     case 'UPSTREAM_ERROR':
-      return detail ? `模型不可用（${detail}）` : '模型不可用'
+      return detail ? t('models.unavailableDetail', { detail: detail }) : t('models.unavailable')
     default:
-      return '后端服务不可用'
+      return t('errors.backendUnavailable')
   }
 }
 
@@ -71,7 +74,7 @@ async function runTest(m: SModel) {
   testingId.value = m.id
   try {
     const res = await store.testModel(props.providerId, m.id)
-    toast.success(`模型可用 · ${res.latencyMs}ms`)
+    toast.success(t('models.testSuccess', { latency: res.latencyMs }))
   } catch (err) {
     console.warn('[ai-gate] 测试模型失败', err)
     const apiErr = err instanceof ApiError ? err : undefined
@@ -120,12 +123,12 @@ useSortable(listEl, localItems, {
 
 /** 模型类型图标与标签（与编辑弹窗的类型选项保持一致） */
 const typeMeta = computed(() => new Map<string, {icon: typeof PhTextT, label: string}>([
-  ['TEXT', {icon: PhTextT, label: '文本'}],
-  ['IMAGE', {icon: PhImage, label: '图像'}],
-  ['VIDEO', {icon: PhVideoCamera, label: '视频'}],
-  ['AUDIO', {icon: PhWaveform, label: '音频'}],
-  ['EMBEDDING', {icon: PhBracketsAngle, label: '向量'}],
-  ['RERANK', {icon: PhArrowsDownUp, label: '重排'}],
+  ['TEXT', {icon: PhTextT, label: t('models.types.text')}],
+  ['IMAGE', {icon: PhImage, label: t('models.types.image')}],
+  ['VIDEO', {icon: PhVideoCamera, label: t('models.types.video')}],
+  ['AUDIO', {icon: PhWaveform, label: t('models.types.audio')}],
+  ['EMBEDDING', {icon: PhBracketsAngle, label: t('models.types.embedding')}],
+  ['RERANK', {icon: PhArrowsDownUp, label: t('models.types.rerank')}],
 ]))
 </script>
 
@@ -161,7 +164,7 @@ const typeMeta = computed(() => new Map<string, {icon: typeof PhTextT, label: st
               <div
                 class="drag-handle text-muted-foreground hover:bg-muted hover:text-foreground -ml-1 flex size-7 shrink-0 cursor-pointer items-center justify-center transition-colors"
                 aria-hidden="true"
-                title="拖拽排序"
+                :title="t('common.dragToSort')"
               >
                 <PhDotsSixVertical class="size-4" />
               </div>
@@ -184,7 +187,7 @@ const typeMeta = computed(() => new Map<string, {icon: typeof PhTextT, label: st
                 <PhWarningCircle
                   v-if="m.status !== 'ACTIVE'"
                   class="text-destructive size-4 shrink-0"
-                  :title="'失效'"
+                  :title="t('common.invalid')"
                 />
               </div>
             </div>
@@ -193,15 +196,15 @@ const typeMeta = computed(() => new Map<string, {icon: typeof PhTextT, label: st
               <Switch
                 size="sm"
                 :model-value="m.enabled"
-                aria-label="切换启用状态"
+                :aria-label="t('common.toggleEnabled')"
                 @update:model-value="v => emit('toggle', m, !!v)"
               />
               <Button
                 variant="ghost"
                 size="icon-sm"
                 :disabled="testingId === m.id"
-                aria-label="测试"
-                title="测试"
+                :aria-label="t('common.test')"
+                :title="t('common.test')"
                 @click="runTest(m)"
               >
                 <Spinner v-if="testingId === m.id" />
@@ -210,8 +213,8 @@ const typeMeta = computed(() => new Map<string, {icon: typeof PhTextT, label: st
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label="修改"
-                title="修改"
+                :aria-label="t('common.edit')"
+                :title="t('common.edit')"
                 @click="emit('edit', m)"
               >
                 <PhPencilSimple />
@@ -220,8 +223,8 @@ const typeMeta = computed(() => new Map<string, {icon: typeof PhTextT, label: st
                 variant="ghost"
                 size="icon-sm"
                 class="text-destructive hover:bg-destructive/10"
-                aria-label="删除"
-                title="删除"
+                :aria-label="t('common.delete')"
+                :title="t('common.delete')"
                 @click="emit('remove', m)"
               >
                 <PhTrashSimple />

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { apiErrorMessage } from '@/lib/apiErrorMessage'
 import type { SKey, SKeyInput } from '@ai-gate/shared'
 import { computed, reactive, ref, watch } from 'vue'
 import { PhFloppyDisk, PhX } from '@phosphor-icons/vue'
@@ -15,6 +16,9 @@ import {
 import { Spinner } from '@/components/ui/spinner'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   providerId: number
@@ -46,11 +50,11 @@ watch(open, (v) => {
 })
 
 const nameError = computed(() =>
-  showErrors.value && !form.name.trim() ? '请输入密钥名称' : undefined,
+  showErrors.value && !form.name.trim() ? t('validation.keyNameRequired') : undefined,
 )
 
 const secretError = computed(() =>
-  showErrors.value && !form.secret.trim() ? '请输入密钥内容' : undefined,
+  showErrors.value && !form.secret.trim() ? t('validation.keySecretRequired') : undefined,
 )
 
 const canSave = computed(() => !!form.name.trim() && !!form.secret.trim() && !saving.value)
@@ -58,7 +62,7 @@ const canSave = computed(() => !!form.name.trim() && !!form.secret.trim() && !sa
 async function save() {
   if (!canSave.value) {
     showErrors.value = true
-    toast.error('请检查表单填写')
+    toast.error(t('validation.checkForm'))
     return
   }
   saving.value = true
@@ -74,12 +78,12 @@ async function save() {
     const saved = props.keyItem
       ? await store.updateKey(props.providerId, props.keyItem.id, input)
       : await store.createKey(props.providerId, input)
-    toast.success('已保存')
+    toast.success(t('common.saved'))
     open.value = false
     emit('saved', saved)
   } catch (err) {
     console.warn('[ai-gate] 保存密钥失败', err)
-    toast.error('后端服务不可用')
+    toast.error(apiErrorMessage(err))
   } finally {
     saving.value = false
   }
@@ -93,16 +97,16 @@ async function save() {
   >
     <DialogContent class="max-h-[calc(100vh-4rem)] sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>{{ props.keyItem ? '编辑密钥' : '新增密钥' }}</DialogTitle>
+        <DialogTitle>{{ props.keyItem ? t('keys.edit') : t('keys.create') }}</DialogTitle>
       </DialogHeader>
 
       <FieldGroup class="min-h-0 overflow-y-auto pr-1">
         <Field :data-invalid="!!nameError">
-          <FieldLabel>密钥名称 <span class="text-destructive">*</span></FieldLabel>
+          <FieldLabel>{{ t('keys.name') }} <span class="text-destructive">*</span></FieldLabel>
           <Input
             v-model="form.name"
             :aria-invalid="!!nameError || undefined"
-            placeholder="如 生产主 Key"
+            :placeholder="t('keys.namePlaceholder')"
           />
           <FieldError v-if="nameError">
             {{ nameError }}
@@ -110,12 +114,12 @@ async function save() {
         </Field>
 
         <Field :data-invalid="!!secretError">
-          <FieldLabel>密钥内容 <span class="text-destructive">*</span></FieldLabel>
+          <FieldLabel>{{ t('keys.secret') }} <span class="text-destructive">*</span></FieldLabel>
           <Input
             v-model="form.secret"
             type="password"
             :aria-invalid="!!secretError || undefined"
-            placeholder="请输入 API Key 密文"
+            :placeholder="t('keys.secretPlaceholder')"
           />
           <FieldError v-if="secretError">
             {{ secretError }}
@@ -123,12 +127,12 @@ async function save() {
         </Field>
 
         <Field>
-          <FieldLabel>过期时间</FieldLabel>
+          <FieldLabel>{{ t('keys.expiresAt') }}</FieldLabel>
           <Input
             v-model="form.expireTime"
             type="date"
           />
-          <FieldDescription>留空表示永久有效</FieldDescription>
+          <FieldDescription>{{ t('keys.expiryHint') }}</FieldDescription>
         </Field>
       </FieldGroup>
 
@@ -139,7 +143,7 @@ async function save() {
           @click="open = false"
         >
           <PhX data-icon="inline-start" aria-hidden="true" />
-          取消
+          {{ t('common.cancel') }}
         </Button>
         <Button
           :disabled="saving"
@@ -150,7 +154,7 @@ async function save() {
             v-else
             data-icon="inline-start"
           />
-          保存
+          {{ t('common.save') }}
         </Button>
       </DialogFooter>
     </DialogContent>

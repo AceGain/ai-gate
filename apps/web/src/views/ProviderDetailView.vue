@@ -44,6 +44,9 @@ import ModelImportModal from '@/components/provider/ModelImportModal.vue'
 import ModelModal from '@/components/provider/ModelModal.vue'
 import ProviderIcon from '@/components/provider/ProviderIcon.vue'
 import ProviderModal from '@/components/provider/ProviderModal.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -57,8 +60,8 @@ const id = computed(() => Number(route.params.id))
 const provider = computed(() => providers.value.find(p => p.id === id.value))
 
 useBreadcrumb(() => [
-  { label: '供应商', to: '/providers' },
-  { label: provider.value?.name || provider.value?.code || '配置' },
+  { label: t('nav.providers'), to: '/providers' },
+  { label: provider.value?.name || provider.value?.code || t('common.configure') },
 ])
 
 const loadingProvider = ref(false)
@@ -126,8 +129,8 @@ function openEditEndpoint(ep: SEndpoint) {
 
 async function confirmDeleteEndpoint(ep: SEndpoint) {
   const confirmed = await confirmDialog({
-    title: '删除端点',
-    description: `确定删除端点「${ep.path}」？`,
+    title: () => t('endpoints.delete'),
+    description: () => t('endpoints.deleteConfirm', { name: ep.path }),
   })
   if (confirmed && provider.value) {
     await store.removeEndpoint(provider.value.id, ep.id)
@@ -144,16 +147,16 @@ async function handleToggleDefault(ep: SEndpoint) {
       path: ep.path,
       isDefault: nextDefault,
     })
-    toast.success(nextDefault ? '已设为默认端点' : '已取消默认端点')
+    toast.success(nextDefault ? t('endpoints.defaultSet') : t('endpoints.defaultCleared'))
   } catch (err) {
     console.warn('[ai-gate] 切换默认端点失败', err)
-    toast.error('后端服务不可用')
+    toast.error(t('errors.backendUnavailable'))
   }
 }
 
 async function handleCopy(text: string) {
   await copy(text)
-  toast.success('已复制到剪贴板')
+  toast.success(t('common.copied'))
 }
 
 /* ---------------- 3. 密钥弹窗与操作 ---------------- */
@@ -184,7 +187,7 @@ async function handleCopyKey(k: SKey) {
   copyTimer = setTimeout(() => {
     copiedKeyId.value = null
   }, 2000)
-  toast.success('密钥已复制')
+  toast.success(t('keys.copied'))
 }
 
 function isKeyExpired(expireTime: string | null): boolean {
@@ -200,7 +203,7 @@ function isKeyExpired(expireTime: string | null): boolean {
 function formatKeyExpiry(expireTime: string | null): string {
   if (!expireTime) return ''
   if (isKeyExpired(expireTime)) {
-    return `${expireTime}（已过期）`
+    return t('keys.expiredDate', { date: expireTime })
   }
   return expireTime
 }
@@ -217,8 +220,8 @@ function openEditKey(k: SKey) {
 
 async function confirmDeleteKey(k: SKey) {
   const confirmed = await confirmDialog({
-    title: '删除密钥',
-    description: `确定删除密钥「${k.name}」？`,
+    title: () => t('keys.delete'),
+    description: () => t('keys.deleteConfirm', { name: k.name }),
   })
   if (confirmed && provider.value) {
     await store.removeKey(provider.value.id, k.id)
@@ -244,17 +247,17 @@ const testingKeyId = ref<number | null>(null)
 function keyTestErrorMessage(code: string | undefined, detail?: string): string {
   switch (code) {
     case 'MISSING_BASE_ENDPOINT':
-      return '请先在「端点」标签页配置 Base URL'
+      return t('errors.missingBaseEndpoint')
     case 'MISSING_MODELS_ENDPOINT':
-      return '请先在「端点」标签页配置模型列表端点'
+      return t('errors.missingModelsEndpoint')
     case 'UPSTREAM_UNREACHABLE':
-      return '无法连接供应商，请检查网络与端点配置'
+      return t('errors.upstreamUnreachable')
     case 'UPSTREAM_TIMEOUT':
-      return '上游响应超时'
+      return t('errors.upstreamTimeout')
     case 'UPSTREAM_ERROR':
-      return detail ? `密钥不可用（${detail}）` : '密钥不可用'
+      return detail ? t('keys.unavailableDetail', { detail: detail }) : t('keys.unavailable')
     default:
-      return '后端服务不可用'
+      return t('errors.backendUnavailable')
   }
 }
 
@@ -263,7 +266,7 @@ async function runKeyTest(k: SKey) {
   testingKeyId.value = k.id
   try {
     const res = await store.testKey(provider.value.id, k.id)
-    toast.success(`密钥可用 · ${res.latencyMs}ms`)
+    toast.success(t('keys.testSuccess', { latency: res.latencyMs }))
   } catch (err) {
     console.warn('[ai-gate] 测试密钥失败', err)
     const apiErr = err instanceof ApiError ? err : undefined
@@ -313,8 +316,8 @@ function openEditModel(m: SModel) {
 async function confirmDeleteModel(m: SModel) {
   const label = m.name || m.code
   const confirmed = await confirmDialog({
-    title: '删除模型',
-    description: `确定删除模型「${label}」？`,
+    title: () => t('models.delete'),
+    description: () => t('models.deleteConfirm', { name: label }),
   })
   if (confirmed && provider.value) {
     await store.removeModel(provider.value.id, m.id)
@@ -410,7 +413,7 @@ function urlParts(path?: string) {
       @click="router.push('/providers')"
     >
       <PhArrowLeft data-icon="inline-start" />
-      返回
+      {{ t('common.back') }}
     </Button>
   </Teleport>
 
@@ -442,8 +445,8 @@ function urlParts(path?: string) {
               variant="ghost"
               size="icon-xs"
               class="text-muted-foreground hover:text-foreground shrink-0"
-              aria-label="修改"
-              title="修改"
+              :aria-label="t('common.edit')"
+              :title="t('common.edit')"
               @click="editModalOpen = true"
             >
               <PhPencilSimple />
@@ -463,11 +466,11 @@ function urlParts(path?: string) {
       <div class="flex shrink-0 items-center">
         <div class="bg-muted/40 flex items-center gap-1.5 border px-2 py-1 text-xs">
           <span class="text-muted-foreground">
-            {{ provider.enabled ? '启用' : '停用' }}
+            {{ provider.enabled ? t('common.enabled') : t('common.disabled') }}
           </span>
           <Switch
             :model-value="provider.enabled"
-            aria-label="切换启用状态"
+            :aria-label="t('common.toggleEnabled')"
             @update:model-value="v => store.toggleProvider(provider!, !!v)"
           />
         </div>
@@ -483,15 +486,15 @@ function urlParts(path?: string) {
         <TabsList>
           <TabsTrigger value="endpoints">
             <PhPath data-icon="inline-start" />
-            端点
+            {{ t('endpoints.title') }}
           </TabsTrigger>
           <TabsTrigger value="keys">
             <PhKey data-icon="inline-start" />
-            密钥
+            {{ t('keys.title') }}
           </TabsTrigger>
           <TabsTrigger value="models">
             <PhSparkle data-icon="inline-start" />
-            模型
+            {{ t('models.title') }}
           </TabsTrigger>
         </TabsList>
 
@@ -501,11 +504,11 @@ function urlParts(path?: string) {
             v-if="activeTab === 'endpoints'"
             variant="ghost"
             :disabled="isAllGeneratesAdded"
-            :title="isAllGeneratesAdded ? '已添加所有支持的生成端点' : '新增'"
+            :title="isAllGeneratesAdded ? t('endpoints.allAdded') : t('common.add')"
             @click="openCreateEndpoint"
           >
             <PhPlus data-icon="inline-start" />
-            新增
+            {{ t('common.add') }}
           </Button>
           <Button
             v-else-if="activeTab === 'keys'"
@@ -513,24 +516,24 @@ function urlParts(path?: string) {
             @click="openCreateKey"
           >
             <PhPlus data-icon="inline-start" />
-            新增
+            {{ t('common.add') }}
           </Button>
           <template v-else-if="activeTab === 'models'">
             <Button
               variant="ghost"
-              aria-label="导入模型"
-              title="导入模型"
+              :aria-label="t('importModels.title')"
+              :title="t('importModels.title')"
               @click="openImportModels"
             >
               <PhDownloadSimple data-icon="inline-start" />
-              <span class="hidden sm:inline">导入模型</span>
+              <span class="hidden sm:inline">{{ t('importModels.title') }}</span>
             </Button>
             <Button
               variant="ghost"
               @click="openCreateModel"
             >
               <PhPlus data-icon="inline-start" />
-              新增
+              {{ t('common.add') }}
             </Button>
           </template>
         </div>
@@ -555,17 +558,17 @@ function urlParts(path?: string) {
               <div class="flex min-w-0 items-center gap-2">
                 <code
                   class="text-muted-foreground truncate text-xs select-all"
-                  :title="baseEndpoint?.path || '暂无数据'"
+                  :title="baseEndpoint?.path || t('common.noData')"
                 >
-                  {{ baseEndpoint?.path || '暂无数据' }}
+                  {{ baseEndpoint?.path || t('common.noData') }}
                 </code>
                 <Button
                   v-if="baseEndpoint?.path"
                   variant="ghost"
                   size="icon-xs"
                   class="text-muted-foreground shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-                  title="复制"
-                  aria-label="复制"
+                  :title="t('common.copy')"
+                  :aria-label="t('common.copy')"
                   @click="handleCopy(baseEndpoint.path)"
                 >
                   <PhCopy />
@@ -577,8 +580,8 @@ function urlParts(path?: string) {
                 variant="ghost"
                 size="icon-sm"
                 class="text-muted-foreground hover:text-foreground"
-                aria-label="修改"
-                title="修改"
+                :aria-label="t('common.edit')"
+                :title="t('common.edit')"
                 @click="openEditBaseEndpoint"
               >
                 <PhPencilSimple />
@@ -589,25 +592,25 @@ function urlParts(path?: string) {
           <!-- 固定端点 2: Models（全路径展示：域名弱化，路径高亮） -->
           <div class="group hover:bg-muted/30 flex items-center justify-between gap-4 px-2 py-2.5 transition-colors">
             <div class="flex min-w-0 flex-1 flex-col gap-1">
-              <span class="text-xs font-semibold">Models</span>
+              <span class="text-xs font-semibold">{{ t('endpoints.modelList') }}</span>
               <div class="flex min-w-0 items-center gap-2">
                 <code
                   class="truncate text-xs select-all"
-                  :title="urlParts(modelsEndpoint?.path).fullUrl || '暂无数据'"
+                  :title="urlParts(modelsEndpoint?.path).fullUrl || t('common.noData')"
                 >
                   <span
                     v-if="urlParts(modelsEndpoint?.path).basePart"
                     class="text-muted-foreground/70"
                   >{{ urlParts(modelsEndpoint?.path).basePart }}</span>
-                  <span :class="urlParts(modelsEndpoint?.path).basePart ? 'font-medium' : 'text-muted-foreground'">{{ urlParts(modelsEndpoint?.path).pathPart || '暂无数据' }}</span>
+                  <span :class="urlParts(modelsEndpoint?.path).basePart ? 'font-medium' : 'text-muted-foreground'">{{ urlParts(modelsEndpoint?.path).pathPart || t('common.noData') }}</span>
                 </code>
                 <Button
                   v-if="urlParts(modelsEndpoint?.path).fullUrl"
                   variant="ghost"
                   size="icon-xs"
                   class="text-muted-foreground shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-                  title="复制"
-                  aria-label="复制"
+                  :title="t('common.copy')"
+                  :aria-label="t('common.copy')"
                   @click="handleCopy(urlParts(modelsEndpoint?.path).fullUrl)"
                 >
                   <PhCopy />
@@ -619,8 +622,8 @@ function urlParts(path?: string) {
                 variant="ghost"
                 size="icon-sm"
                 class="text-muted-foreground hover:text-foreground"
-                aria-label="修改"
-                title="修改"
+                :aria-label="t('common.edit')"
+                :title="t('common.edit')"
                 @click="openEditModelsEndpoint"
               >
                 <PhPencilSimple />
@@ -642,7 +645,7 @@ function urlParts(path?: string) {
                   v-if="ep.isDefault"
                   variant="secondary"
                 >
-                  默认
+                  {{ t('common.default') }}
                 </Badge>
               </div>
               <!-- 第二行：全路径展示 -->
@@ -662,8 +665,8 @@ function urlParts(path?: string) {
                   variant="ghost"
                   size="icon-xs"
                   class="text-muted-foreground shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-                  title="复制"
-                  aria-label="复制"
+                  :title="t('common.copy')"
+                  :aria-label="t('common.copy')"
                   @click="handleCopy(urlParts(ep.path).fullUrl)"
                 >
                   <PhCopy />
@@ -677,8 +680,8 @@ function urlParts(path?: string) {
                 variant="ghost"
                 size="icon-sm"
                 :class="ep.isDefault ? 'text-primary' : 'text-muted-foreground hover:text-foreground'"
-                :title="ep.isDefault ? '点击取消默认' : '设为默认'"
-                :aria-label="ep.isDefault ? '点击取消默认' : '设为默认'"
+                :title="ep.isDefault ? t('endpoints.clearDefault') : t('endpoints.setDefault')"
+                :aria-label="ep.isDefault ? t('endpoints.clearDefault') : t('endpoints.setDefault')"
                 @click="handleToggleDefault(ep)"
               >
                 <PhStar :weight="ep.isDefault ? 'fill' : undefined" />
@@ -687,8 +690,8 @@ function urlParts(path?: string) {
                 variant="ghost"
                 size="icon-sm"
                 class="text-muted-foreground hover:text-foreground"
-                aria-label="修改"
-                title="修改"
+                :aria-label="t('common.edit')"
+                :title="t('common.edit')"
                 @click="openEditEndpoint(ep)"
               >
                 <PhPencilSimple />
@@ -697,8 +700,8 @@ function urlParts(path?: string) {
                 variant="ghost"
                 size="icon-sm"
                 class="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                aria-label="删除"
-                title="删除"
+                :aria-label="t('common.delete')"
+                :title="t('common.delete')"
                 @click="confirmDeleteEndpoint(ep)"
               >
                 <PhTrashSimple />
@@ -708,7 +711,7 @@ function urlParts(path?: string) {
 
           <!-- 生成端点为空时的极简空态 -->
           <div v-if="!generateEndpoints.length">
-            <AppEmpty title="暂无生成端点，点击右上角「新增」添加" />
+            <AppEmpty :title="t('endpoints.empty')" />
           </div>
         </div>
       </TabsContent>
@@ -736,7 +739,7 @@ function urlParts(path?: string) {
               <div
                 class="drag-handle text-muted-foreground hover:bg-muted hover:text-foreground -ml-1 flex size-7 shrink-0 cursor-pointer items-center justify-center transition-colors"
                 aria-hidden="true"
-                title="拖拽排序"
+                :title="t('common.dragToSort')"
               >
                 <PhDotsSixVertical class="size-4" />
               </div>
@@ -753,7 +756,7 @@ function urlParts(path?: string) {
                     v-if="k.status !== 'ACTIVE'"
                     variant="destructive"
                   >
-                    失效
+                    {{ t('common.invalid') }}
                   </Badge>
 
                   <span
@@ -779,8 +782,8 @@ function urlParts(path?: string) {
                     variant="ghost"
                     size="icon-xs"
                     class="text-muted-foreground shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-                    :title="revealedKeys.has(k.id) ? '隐藏明文' : '显示明文'"
-                    :aria-label="revealedKeys.has(k.id) ? '隐藏明文' : '显示明文'"
+                    :title="revealedKeys.has(k.id) ? t('keys.hideSecret') : t('keys.showSecret')"
+                    :aria-label="revealedKeys.has(k.id) ? t('keys.hideSecret') : t('keys.showSecret')"
                     @click="toggleReveal(k.id)"
                   >
                     <PhEyeSlash v-if="revealedKeys.has(k.id)" />
@@ -792,8 +795,8 @@ function urlParts(path?: string) {
                     size="icon-xs"
                     class="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                     :class="copiedKeyId === k.id ? 'text-success' : 'text-muted-foreground'"
-                    title="复制密钥"
-                    aria-label="复制密钥"
+                    :title="t('keys.copy')"
+                    :aria-label="t('keys.copy')"
                     @click="handleCopyKey(k)"
                   >
                     <PhCheck v-if="copiedKeyId === k.id" />
@@ -808,7 +811,7 @@ function urlParts(path?: string) {
               <Switch
                 size="sm"
                 :model-value="k.enabled"
-                aria-label="切换启用状态"
+                :aria-label="t('common.toggleEnabled')"
                 @update:model-value="v => handleToggleKeyEnabled(k, !!v)"
               />
               <Button
@@ -816,8 +819,8 @@ function urlParts(path?: string) {
                 size="icon-sm"
                 class="text-muted-foreground hover:text-foreground"
                 :disabled="testingKeyId === k.id"
-                aria-label="测试"
-                title="测试"
+                :aria-label="t('common.test')"
+                :title="t('common.test')"
                 @click="runKeyTest(k)"
               >
                 <Spinner v-if="testingKeyId === k.id" />
@@ -827,8 +830,8 @@ function urlParts(path?: string) {
                 variant="ghost"
                 size="icon-sm"
                 class="text-muted-foreground hover:text-foreground"
-                aria-label="修改"
-                title="修改"
+                :aria-label="t('common.edit')"
+                :title="t('common.edit')"
                 @click="openEditKey(k)"
               >
                 <PhPencilSimple />
@@ -837,8 +840,8 @@ function urlParts(path?: string) {
                 variant="ghost"
                 size="icon-sm"
                 class="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                aria-label="删除"
-                title="删除"
+                :aria-label="t('common.delete')"
+                :title="t('common.delete')"
                 @click="confirmDeleteKey(k)"
               >
                 <PhTrashSimple />

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, watch, watchEffect } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import AppSidebar from '@/components/AppSidebar.vue'
 import {
@@ -17,6 +17,9 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { useProvideBreadcrumb, type BreadcrumbItemRecord } from '@/composables/useBreadcrumb'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const { customBreadcrumbs, clearBreadcrumbs } = useProvideBreadcrumb()
@@ -31,12 +34,16 @@ const breadcrumbs = computed<BreadcrumbItemRecord[]>(() => {
     return customBreadcrumbs.value
   }
   if (Array.isArray(route.meta.breadcrumbs)) {
-    return route.meta.breadcrumbs as BreadcrumbItemRecord[]
+    return route.meta.breadcrumbs.map(item => ({ label: t(item.labelKey), to: item.to }))
   }
-  if (route.meta.title) {
-    return [{ label: route.meta.title as string }]
+  if (route.meta.titleKey) {
+    return [{ label: t(route.meta.titleKey) }]
   }
-  return [{ label: '概览' }]
+  return [{ label: t('nav.overview') }]
+})
+
+watchEffect(() => {
+  document.title = `${t(route.meta.titleKey ?? 'nav.overview')} · AI Gate`
 })
 </script>
 

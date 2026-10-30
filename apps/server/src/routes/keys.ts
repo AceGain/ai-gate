@@ -19,7 +19,7 @@ export const keys = new Hono()
 /** 列表 */
 keys.get('/providers/:providerId/keys', (c) => {
   const providerId = parseId(c.req.param('providerId'))
-  if (!providerId) return c.json({error: 'Provider not found'}, 404)
+  if (!providerId) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
   return c.json(listKeys(providerId))
 })
 
@@ -27,7 +27,7 @@ keys.get('/providers/:providerId/keys', (c) => {
 keys.put('/providers/:providerId/keys/reorder', async (c) => {
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseBody(SReorderSchema, body)
-  if (!data) return c.json({error: error!}, 400)
+  if (!data) return c.json({error: 'INVALID_REQUEST', detail: error!}, 400)
   reorderKeys(data)
   return c.json({ok: true})
 })
@@ -35,10 +35,10 @@ keys.put('/providers/:providerId/keys/reorder', async (c) => {
 /** 新增 */
 keys.post('/providers/:providerId/keys', async (c) => {
   const providerId = parseId(c.req.param('providerId'))
-  if (!providerId) return c.json({error: 'Provider not found'}, 404)
+  if (!providerId) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseBody(SKeyInputSchema, body)
-  if (!data) return c.json({error: `Invalid key: ${error!}`}, 400)
+  if (!data) return c.json({error: 'INVALID_REQUEST', detail: error!}, 400)
 
   return c.json(insertKey(providerId, data), 201)
 })
@@ -84,20 +84,20 @@ keys.post('/providers/:providerId/keys/:id/test', async (c) => {
 /** 更新 */
 keys.put('/providers/:providerId/keys/:id', async (c) => {
   const id = parseId(c.req.param('id'))
-  if (!id) return c.json({error: 'Key not found'}, 404)
+  if (!id) return c.json({error: 'KEY_NOT_FOUND'}, 404)
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseBody(SKeyInputSchema, body)
-  if (!data) return c.json({error: `Invalid key: ${error!}`}, 400)
+  if (!data) return c.json({error: 'INVALID_REQUEST', detail: error!}, 400)
 
   const updated = updateKey(id, data)
-  if (!updated) return c.json({error: 'Key not found'}, 404)
+  if (!updated) return c.json({error: 'KEY_NOT_FOUND'}, 404)
   return c.json(updated)
 })
 
 /** 删除 */
 keys.delete('/providers/:providerId/keys/:id', (c) => {
   const id = parseId(c.req.param('id'))
-  if (!id) return c.json({error: 'Key not found'}, 404)
-  if (!removeKey(id)) return c.json({error: 'Key not found'}, 404)
+  if (!id) return c.json({error: 'KEY_NOT_FOUND'}, 404)
+  if (!removeKey(id)) return c.json({error: 'KEY_NOT_FOUND'}, 404)
   return c.json({ok: true})
 })

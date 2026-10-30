@@ -3,6 +3,9 @@ import type { HTMLAttributes } from 'vue'
 
 import { PhDotsThree } from '@phosphor-icons/vue'
 import { cn } from 'cn'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   class?: HTMLAttributes['class']
@@ -19,6 +22,6 @@ const props = defineProps<{
     <slot>
       <PhDotsThree />
     </slot>
-    <span class="sr-only">More</span>
+    <span class="sr-only">{{ t('common.more') }}</span>
   </span>
 </template>

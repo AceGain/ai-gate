@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { apiErrorMessage } from '@/lib/apiErrorMessage'
 import type { SModel, SModelInput, SRemoteModelItem, SRemoteModelKeyFetch } from '@ai-gate/shared'
 import { computed, ref, watch } from 'vue'
 import {
@@ -32,6 +33,9 @@ import {
 } from '@/components/ui/popover'
 import AppEmpty from '@/components/AppEmpty.vue'
 import AppLoading from '@/components/AppLoading.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 /**
  * 从供应商模型列表端点获取模型：获取方式在弹窗内选择——
@@ -99,13 +103,13 @@ const keyNameById = computed(() => new Map(store.keys.map(k => [k.id, k.name])))
 
 /** 下拉框摘要文案：全部选中显示「全部密钥 (N)」，否则显示已选数量；悬停展示明细 */
 const keySelectSummary = computed(() => {
-  if (!selectedKeyIds.value.length) return '请选择密钥'
+  if (!selectedKeyIds.value.length) return t('importModels.selectKey')
   if (selectedKeyIds.value.length === activeKeys.value.length) {
     return activeKeys.value.length > 1
-      ? `全部密钥 (${selectedKeyIds.value.length})`
-      : '全部密钥'
+      ? t('importModels.allKeysCount', { count: selectedKeyIds.value.length })
+      : t('importModels.allKeys')
   }
-  return `已选 ${selectedKeyIds.value.length} 个密钥`
+  return t('importModels.selectedKeys', { count: selectedKeyIds.value.length })
 })
 
 const keySelectSummaryTitle = computed(() =>
@@ -147,20 +151,20 @@ const allVisibleSelected = computed(() =>
 /** 未勾选任何密钥时无法拉取 */
 const refetchDisabled = computed(() => !selectedKeyIds.value.length)
 
-const loadButtonLabels = {
-  load: '加载',
-  refresh: '刷新',
-  retry: '重试',
-}
+const loadButtonLabels = computed(() => ({
+  load: t('common.load'),
+  refresh: t('common.refresh'),
+  retry: t('common.retry'),
+}))
 
 const loadButtonAction = computed(() => {
   if (errorCode.value) return 'retry'
   return fetched.value ? 'refresh' : 'load'
 })
 // 请求开始前记录动作，避免清除错误或更新结果时改变按钮文案。
-const pendingLoadAction = ref<keyof typeof loadButtonLabels>('load')
+const pendingLoadAction = ref<keyof typeof loadButtonLabels.value>('load')
 const loadButtonText = computed(() =>
-  loadButtonLabels[loading.value ? pendingLoadAction.value : loadButtonAction.value],
+  loadButtonLabels.value[loading.value ? pendingLoadAction.value : loadButtonAction.value],
 )
 
 async function load() {
@@ -218,19 +222,19 @@ function toggleAll() {
 const errorMessage = computed(() => {
   switch (errorCode.value) {
     case 'MISSING_BASE_ENDPOINT':
-      return '请先在「端点」标签页配置 Base URL'
+      return t('errors.missingBaseEndpoint')
     case 'MISSING_MODELS_ENDPOINT':
-      return '请先在「端点」标签页配置模型列表端点'
+      return t('errors.missingModelsEndpoint')
     case 'NO_ACTIVE_KEYS':
-      return '没有可用密钥，请先在「密钥」标签页添加并启用'
+      return t('errors.noActiveKeys')
     case 'UPSTREAM_UNREACHABLE':
-      return '无法连接供应商，请检查网络与端点配置'
+      return t('errors.upstreamUnreachable')
     case 'UPSTREAM_ERROR':
-      return '供应商返回错误，请检查密钥与端点配置'
+      return t('errors.upstreamError')
     case 'UPSTREAM_INVALID_RESPONSE':
-      return '供应商返回的模型列表格式无法识别'
+      return t('errors.upstreamInvalidResponse')
     default:
-      return '获取模型列表失败'
+      return t('errors.fetchModelsFailed')
   }
 })
 
@@ -238,17 +242,17 @@ const errorMessage = computed(() => {
 function keyFetchErrorText(r: SRemoteModelKeyFetch): string {
   switch (r.error) {
     case 'KEY_INACTIVE':
-      return '密钥已停用或失效'
+      return t('errors.keyInactive')
     case 'UPSTREAM_TIMEOUT':
-      return '上游响应超时'
+      return t('errors.upstreamTimeout')
     case 'UPSTREAM_UNREACHABLE':
-      return '无法连接供应商，请检查网络与端点配置'
+      return t('errors.upstreamUnreachable')
     case 'UPSTREAM_INVALID_RESPONSE':
-      return '供应商返回的模型列表格式无法识别'
+      return t('errors.upstreamInvalidResponse')
     case 'UPSTREAM_ERROR':
-      return r.detail ? `供应商返回错误（${r.detail}）` : '供应商返回错误，请检查密钥与端点配置'
+      return r.detail ? t('errors.upstreamErrorDetail', { detail: r.detail }) : t('errors.upstreamError')
     default:
-      return '获取模型列表失败'
+      return t('errors.fetchModelsFailed')
   }
 }
 
@@ -272,13 +276,13 @@ async function importSelected() {
   try {
     const {imported, bindings: bindingCount} = await store.importModels(props.providerId, inputs, bindings)
     toast.success(bindingCount > 0
-      ? `已导入 ${imported} 个模型 · 更新 ${bindingCount} 条密钥关系`
-      : `已导入 ${imported} 个模型`)
+      ? t('importModels.importedWithBindings', { count: imported, bindings: bindingCount })
+      : t('importModels.imported', { count: imported }))
     open.value = false
     emit('saved', imported)
   } catch (err) {
     console.warn('[ai-gate] 导入模型失败', err)
-    toast.error('后端服务不可用')
+    toast.error(apiErrorMessage(err))
   } finally {
     importing.value = false
   }
@@ -292,7 +296,7 @@ async function importSelected() {
   >
     <DialogContent class="max-h-[calc(100vh-4rem)] sm:max-w-md">
       <DialogHeader class="shrink-0">
-        <DialogTitle>导入模型</DialogTitle>
+        <DialogTitle>{{ t('importModels.title') }}</DialogTitle>
       </DialogHeader>
 
       <!-- 工具栏：密钥下拉多选 + 获取按钮，任何状态下常驻 -->
@@ -326,13 +330,13 @@ async function importSelected() {
               v-if="activeKeys.length > 1"
               class="flex items-center justify-between border-b px-2 py-1.5 text-xs select-none"
             >
-              <span class="text-muted-foreground">选择密钥</span>
+              <span class="text-muted-foreground">{{ t('importModels.chooseKeys') }}</span>
               <button
                 type="button"
                 class="text-primary hover:underline cursor-pointer"
                 @click.stop="toggleSelectAllKeys"
               >
-                {{ selectedKeyIds.length === activeKeys.length ? '取消全选' : '全选' }}
+                {{ selectedKeyIds.length === activeKeys.length ? t('common.deselectAll') : t('common.selectAll') }}
               </button>
             </div>
             <div class="flex flex-col py-0.5">
@@ -360,7 +364,7 @@ async function importSelected() {
         <span
           v-else
           class="text-muted-foreground min-w-0 flex-1 text-xs"
-        >没有可用密钥，请先在「密钥」标签页添加并启用</span>
+        >{{ t('errors.noActiveKeys') }}</span>
 
         <Button
           variant="outline"
@@ -410,7 +414,7 @@ async function importSelected() {
             @click="load"
           >
             <PhArrowsClockwise data-icon="inline-start" />
-            重试
+            {{ t('common.retry') }}
           </Button>
         </div>
 
@@ -419,7 +423,7 @@ async function importSelected() {
           v-else-if="!fetched"
           class="flex flex-1 items-center justify-center"
         >
-          <AppEmpty title="选好密钥后点击「加载」拉取模型列表" />
+          <AppEmpty :title="t('importModels.loadHint')" />
         </div>
 
         <template v-else>
@@ -443,7 +447,7 @@ async function importSelected() {
             v-if="!mergedItems.length && !failedResults.length"
             class="flex flex-1 items-center justify-center"
           >
-            <AppEmpty title="供应商模型列表为空" />
+            <AppEmpty :title="t('importModels.emptyList')" />
           </div>
 
           <template v-else-if="mergedItems.length">
@@ -453,7 +457,7 @@ async function importSelected() {
               </InputGroupAddon>
               <InputGroupInput
                 v-model="filter"
-                placeholder="搜索模型..."
+                :placeholder="t('importModels.searchPlaceholder')"
               />
             </InputGroup>
 
@@ -463,9 +467,9 @@ async function importSelected() {
                   :model-value="allVisibleSelected"
                   @update:model-value="toggleAll"
                 />
-                全选
+                {{ t('common.selectAll') }}
               </label>
-              <span class="text-muted-foreground text-xs">已选 {{ selectedCount }} 个</span>
+              <span class="text-muted-foreground text-xs">{{ t('importModels.selectedCount', { count: selectedCount }) }}</span>
             </div>
 
             <div class="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto pr-0.5">
@@ -493,19 +497,19 @@ async function importSelected() {
                     variant="secondary"
                     class="shrink-0"
                   >
-                    已存在
+                    {{ t('importModels.exists') }}
                   </Badge>
                   <!-- 多密钥拉取时标注该模型被哪些密钥支持：计数 + 悬停明细 -->
                   <span
                     v-if="multiKey"
                     class="text-muted-foreground flex shrink-0 items-center gap-1.5 text-xs"
-                    :title="`支持该模型的密钥：${item.keyIds.map(id => keyNameById.get(id) || id).join('、')}`"
+                    :title="t('importModels.supportedKeys', { keys: item.keyIds.map(id => keyNameById.get(id) || id).join('、') })"
                   >
                     <span
                       v-if="item.name && item.name !== item.code"
                       class="max-w-48 min-w-0 truncate"
                     >{{ item.name }}</span>
-                    <span class="text-muted-foreground/70 shrink-0">{{ item.keyIds.length }} 把密钥可用</span>
+                    <span class="text-muted-foreground/70 shrink-0">{{ t('importModels.availableKeys', { count: item.keyIds.length }) }}</span>
                   </span>
                   <span
                     v-else-if="item.name && item.name !== item.code"
@@ -521,7 +525,7 @@ async function importSelected() {
                 v-if="!filteredItems.length"
                 class="flex min-h-24 items-center justify-center"
               >
-                <AppEmpty title="没有匹配的模型" />
+                <AppEmpty :title="t('importModels.noMatches')" />
               </div>
             </div>
           </template>
@@ -535,7 +539,7 @@ async function importSelected() {
           @click="open = false"
         >
           <PhX data-icon="inline-start" aria-hidden="true" />
-          取消
+          {{ t('common.cancel') }}
         </Button>
         <Button
           :disabled="!selectedCount || importing"
@@ -547,7 +551,7 @@ async function importSelected() {
             v-else
             data-icon="inline-start"
           />
-          导入
+          {{ t('common.import') }}
         </Button>
       </DialogFooter>
     </DialogContent>

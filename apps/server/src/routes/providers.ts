@@ -47,7 +47,7 @@ providers.get('/providers', (c) => {
 providers.put('/providers/reorder', async (c) => {
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseBody(SReorderSchema, body)
-  if (!data) return c.json({error: error!}, 400)
+  if (!data) return c.json({error: 'INVALID_REQUEST', detail: error!}, 400)
   reorderProviders(data)
   return c.json({ok: true})
 })
@@ -55,9 +55,9 @@ providers.put('/providers/reorder', async (c) => {
 /** 详情 */
 providers.get('/providers/:id', (c) => {
   const id = parseId(c.req.param('id'))
-  if (!id) return c.json({error: 'Provider not found'}, 404)
+  if (!id) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
   const provider = getProvider(id)
-  if (!provider) return c.json({error: 'Provider not found'}, 404)
+  if (!provider) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
   return c.json(provider)
 })
 
@@ -65,12 +65,12 @@ providers.get('/providers/:id', (c) => {
 providers.post('/providers', async (c) => {
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseBody(SProviderCreateSchema, body)
-  if (!data) return c.json({error: `Invalid provider entry: ${error!}`}, 400)
+  if (!data) return c.json({error: 'INVALID_REQUEST', detail: error!}, 400)
 
   try {
     return c.json(insertProvider(data), 201)
   } catch (err) {
-    if (isUniqueViolation(err)) return c.json({error: `Duplicate provider code: ${data.code}`}, 409)
+    if (isUniqueViolation(err)) return c.json({error: 'DUPLICATE_PROVIDER_CODE'}, 409)
     throw err
   }
 })
@@ -78,17 +78,17 @@ providers.post('/providers', async (c) => {
 /** 全量更新单条（code 创建后不可变，忽略） */
 providers.put('/providers/:id', async (c) => {
   const id = parseId(c.req.param('id'))
-  if (!id) return c.json({error: 'Provider not found'}, 404)
+  if (!id) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseBody(SProviderUpdateSchema, body)
-  if (!data) return c.json({error: `Invalid provider entry: ${error!}`}, 400)
+  if (!data) return c.json({error: 'INVALID_REQUEST', detail: error!}, 400)
 
   try {
     const updated = updateProvider(id, data)
-    if (!updated) return c.json({error: 'Provider not found'}, 404)
+    if (!updated) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
     return c.json(updated)
   } catch (err) {
-    if (isUniqueViolation(err)) return c.json({error: `Duplicate provider code: ${data.code}`}, 409)
+    if (isUniqueViolation(err)) return c.json({error: 'DUPLICATE_PROVIDER_CODE'}, 409)
     throw err
   }
 })
@@ -96,7 +96,7 @@ providers.put('/providers/:id', async (c) => {
 /** 删除 */
 providers.delete('/providers/:id', (c) => {
   const id = parseId(c.req.param('id'))
-  if (!id) return c.json({error: 'Provider not found'}, 404)
-  if (!removeProvider(id)) return c.json({error: 'Provider not found'}, 404)
+  if (!id) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
+  if (!removeProvider(id)) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
   return c.json({ok: true})
 })

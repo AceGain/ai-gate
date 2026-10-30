@@ -19,6 +19,9 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import ProviderIcon from '@/components/provider/ProviderIcon.vue'
 import ProviderModal from '@/components/provider/ProviderModal.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const store = useProvidersStore()
@@ -47,8 +50,8 @@ function openConfig(p: SProvider) {
 /** 删除：二次确认 */
 async function confirmRemove(p: SProvider) {
   const confirmed = await confirmDialog({
-    title: '删除供应商',
-    description: `删除后供应商「${p.name || p.code}」将无法恢复，确定删除？`,
+    title: () => t('providers.delete'),
+    description: () => t('providers.deleteConfirm', { name: p.name || p.code }),
   })
   if (confirmed) await store.removeProvider(p.id)
 }
@@ -90,7 +93,7 @@ onBeforeUnmount(() => {
       @click="openCreate"
     >
       <PhPlus data-icon="inline-start" />
-      新增
+      {{ t('common.add') }}
     </Button>
   </Teleport>
 
@@ -116,7 +119,7 @@ onBeforeUnmount(() => {
           <div
             class="drag-handle text-muted-foreground hover:bg-muted hover:text-foreground -ml-1 flex size-7 shrink-0 cursor-pointer items-center justify-center transition-colors"
             aria-hidden="true"
-            title="拖拽排序"
+            :title="t('common.dragToSort')"
           >
             <PhDotsSixVertical class="size-4" />
           </div>
@@ -144,7 +147,7 @@ onBeforeUnmount(() => {
           <Switch
             size="sm"
             :model-value="p.enabled"
-            aria-label="切换启用状态"
+            :aria-label="t('common.toggleEnabled')"
             class="shrink-0"
             @update:model-value="v => store.toggleProvider(p, !!v)"
           />
@@ -155,8 +158,8 @@ onBeforeUnmount(() => {
               variant="ghost"
               size="icon-sm"
               class="text-muted-foreground hover:text-foreground"
-              aria-label="配置"
-              title="配置"
+              :aria-label="t('common.configure')"
+              :title="t('common.configure')"
               @click="openConfig(p)"
             >
               <PhGearSix />
@@ -165,8 +168,8 @@ onBeforeUnmount(() => {
               variant="ghost"
               size="icon-sm"
               class="text-muted-foreground hover:text-foreground"
-              aria-label="修改"
-              title="修改"
+              :aria-label="t('common.edit')"
+              :title="t('common.edit')"
               @click="openEdit(p)"
             >
               <PhPencilSimple />
@@ -175,8 +178,8 @@ onBeforeUnmount(() => {
               variant="ghost"
               size="icon-sm"
               class="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-              aria-label="删除"
-              title="删除"
+              :aria-label="t('common.delete')"
+              :title="t('common.delete')"
               @click="confirmRemove(p)"
             >
               <PhTrashSimple />

@@ -1,12 +1,17 @@
 import { fileURLToPath, URL } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
+import vueI18n from '@intlify/unplugin-vue-i18n/vite'
 import { defineConfig } from 'vite'
 
 const host = process.env.TAURI_DEV_HOST
 
 export default defineConfig({
-  plugins: [vue(), tailwindcss()],
+  plugins: [
+    vue(),
+    tailwindcss(),
+    vueI18n({ include: fileURLToPath(new URL('./src/locales/**', import.meta.url)), strictMessage: true }),
+  ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

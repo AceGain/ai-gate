@@ -25,7 +25,7 @@ export const models = new Hono()
 /** 列表 */
 models.get('/providers/:providerId/models', (c) => {
   const providerId = parseId(c.req.param('providerId'))
-  if (!providerId) return c.json({error: 'Provider not found'}, 404)
+  if (!providerId) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
   return c.json(listModels(providerId))
 })
 
@@ -33,7 +33,7 @@ models.get('/providers/:providerId/models', (c) => {
 models.put('/providers/:providerId/models/reorder', async (c) => {
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseBody(SReorderSchema, body)
-  if (!data) return c.json({error: error!}, 400)
+  if (!data) return c.json({error: 'INVALID_REQUEST', detail: error!}, 400)
   reorderModels(data)
   return c.json({ok: true})
 })
@@ -122,7 +122,7 @@ async function fetchModelsForKey(url: string, generate: string | undefined, key:
  */
 models.get('/providers/:providerId/models/remote', async (c) => {
   const providerId = parseId(c.req.param('providerId'))
-  if (!providerId) return c.json({error: 'Provider not found'}, 404)
+  if (!providerId) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
   const endpoints = listEndpoints(providerId)
   const base = endpoints.find(e => e.type === 'base')
   const modelsEndpoint = endpoints.find(e => e.type === 'models')
@@ -226,19 +226,19 @@ models.post('/providers/:providerId/models/:id/test', async (c) => {
 /** 批量导入模型：跳过已存在编码，其余以最小配置落库；请求中的密钥-模型绑定随同一事务写入（只增不删，冲突忽略） */
 models.post('/providers/:providerId/models/import', async (c) => {
   const providerId = parseId(c.req.param('providerId'))
-  if (!providerId) return c.json({error: 'Provider not found'}, 404)
+  if (!providerId) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseBody(SModelImportSchema, body)
-  if (!data) return c.json({error: `Invalid import payload: ${error!}`}, 400)
+  if (!data) return c.json({error: 'INVALID_REQUEST', detail: error!}, 400)
   if (!data.models.length) {
-    return c.json({error: 'Body must be {models: [{code, name?, type?}], bindings?: [{keyId, codes: []}]}'}, 400)
+    return c.json({error: 'INVALID_IMPORT_PAYLOAD'}, 400)
   }
 
   // 绑定校验：keyId 必须属于该供应商
   const providerKeyIds = new Set(listKeys(providerId).map(k => k.id))
   for (const binding of data.bindings ?? []) {
     if (!providerKeyIds.has(binding.keyId)) {
-      return c.json({error: 'Invalid bindings: unknown keyId'}, 400)
+      return c.json({error: 'INVALID_BINDINGS'}, 400)
     }
   }
 
@@ -266,7 +266,7 @@ models.post('/providers/:providerId/models/import', async (c) => {
     const {imported, skipped, bindings} = importModelsWithBindings(providerId, items)
     return c.json({imported, skipped, bindings}, 201)
   } catch (err) {
-    if (isUniqueViolation(err)) return c.json({error: 'Duplicate model code in batch'}, 409)
+    if (isUniqueViolation(err)) return c.json({error: 'DUPLICATE_MODEL_CODE'}, 409)
     throw err
   }
 })
@@ -274,15 +274,15 @@ models.post('/providers/:providerId/models/import', async (c) => {
 /** 新增 */
 models.post('/providers/:providerId/models', async (c) => {
   const providerId = parseId(c.req.param('providerId'))
-  if (!providerId) return c.json({error: 'Provider not found'}, 404)
+  if (!providerId) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseBody(SModelInputSchema, body)
-  if (!data) return c.json({error: `Invalid model: ${error!}`}, 400)
+  if (!data) return c.json({error: 'INVALID_REQUEST', detail: error!}, 400)
 
   try {
     return c.json(insertModel(providerId, data), 201)
   } catch (err) {
-    if (isUniqueViolation(err)) return c.json({error: `Duplicate model code: ${data.code}`}, 409)
+    if (isUniqueViolation(err)) return c.json({error: 'DUPLICATE_MODEL_CODE'}, 409)
     throw err
   }
 })
@@ -290,17 +290,17 @@ models.post('/providers/:providerId/models', async (c) => {
 /** 更新 */
 models.put('/providers/:providerId/models/:id', async (c) => {
   const id = parseId(c.req.param('id'))
-  if (!id) return c.json({error: 'Model not found'}, 404)
+  if (!id) return c.json({error: 'MODEL_NOT_FOUND'}, 404)
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseBody(SModelInputSchema, body)
-  if (!data) return c.json({error: `Invalid model: ${error!}`}, 400)
+  if (!data) return c.json({error: 'INVALID_REQUEST', detail: error!}, 400)
 
   try {
     const updated = updateModel(id, data)
-    if (!updated) return c.json({error: 'Model not found'}, 404)
+    if (!updated) return c.json({error: 'MODEL_NOT_FOUND'}, 404)
     return c.json(updated)
   } catch (err) {
-    if (isUniqueViolation(err)) return c.json({error: `Duplicate model code: ${data.code}`}, 409)
+    if (isUniqueViolation(err)) return c.json({error: 'DUPLICATE_MODEL_CODE'}, 409)
     throw err
   }
 })
@@ -308,7 +308,7 @@ models.put('/providers/:providerId/models/:id', async (c) => {
 /** 删除 */
 models.delete('/providers/:providerId/models/:id', (c) => {
   const id = parseId(c.req.param('id'))
-  if (!id) return c.json({error: 'Model not found'}, 404)
-  if (!removeModel(id)) return c.json({error: 'Model not found'}, 404)
+  if (!id) return c.json({error: 'MODEL_NOT_FOUND'}, 404)
+  if (!removeModel(id)) return c.json({error: 'MODEL_NOT_FOUND'}, 404)
   return c.json({ok: true})
 })

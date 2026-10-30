@@ -22,7 +22,7 @@ app.get('/', (c) => {
 
 app.onError((err, c) => {
   console.error('[ai-gate] uncaught error:', err)
-  return c.json({ error: err.message || 'Internal Server Error' }, 500)
+  return c.json({ error: 'INTERNAL_ERROR' }, 500)
 })
 
 serve({

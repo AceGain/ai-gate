@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { MessageKey } from '@/i18n'
 import type { Component } from 'vue'
 import type { SidebarProps } from '@/components/ui/sidebar'
 import {
@@ -26,55 +27,58 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<SidebarProps>()
 
 const route = useRoute()
 
 interface NavItem {
-  title: string
+  titleKey: MessageKey
   url: string
   icon: Component
 }
 
 const navItems: NavItem[] = [
   {
-    title: '概览',
+    titleKey: 'nav.overview',
     url: '/overview',
     icon: PhSquaresFour,
   },
   {
-    title: '供应商',
+    titleKey: 'nav.providers',
     url: '/providers',
     icon: PhCloud,
   },
   {
-    title: '路由',
+    titleKey: 'nav.routes',
     url: '/routes',
     icon: PhArrowsSplit,
   },
   {
-    title: '虚拟模型',
+    titleKey: 'nav.models',
     url: '/models',
     icon: PhCube,
   },
   {
-    title: '智能体',
+    titleKey: 'nav.agents',
     url: '/agents',
     icon: PhRobot,
   },
   {
-    title: 'Skill',
+    titleKey: 'nav.skills',
     url: '/skills',
     icon: PhLightning,
   },
   {
-    title: 'MCP',
+    titleKey: 'nav.mcp',
     url: '/mcp',
     icon: PhPlugsConnected,
   },
   {
-    title: '使用统计',
+    titleKey: 'nav.usage',
     url: '/usage',
     icon: PhChartBar,
   },
@@ -112,7 +116,7 @@ const navItems: NavItem[] = [
               >
                 <RouterLink :to="item.url">
                   <component :is="item.icon" />
-                  <span>{{ item.title }}</span>
+                  <span>{{ t(item.titleKey) }}</span>
                 </RouterLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -130,7 +134,7 @@ const navItems: NavItem[] = [
           >
             <RouterLink to="/settings">
               <PhGear />
-              <span>设置</span>
+              <span>{{ t('nav.settings') }}</span>
             </RouterLink>
           </SidebarMenuButton>
         </SidebarMenuItem>

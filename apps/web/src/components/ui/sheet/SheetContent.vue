@@ -13,6 +13,9 @@ import {
 } from 'reka-ui'
 import { Button } from '@/components/ui/button'
 import SheetOverlay from './SheetOverlay.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 interface SheetContentProps extends DialogContentProps {
   class?: HTMLAttributes['class']
@@ -53,7 +56,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       >
         <Button variant="ghost" class="absolute top-3 right-3" size="icon-sm">
           <PhX />
-          <span class="sr-only">Close</span>
+          <span class="sr-only">{{ t('common.close') }}</span>
         </Button>
       </DialogClose>
     </DialogContent>

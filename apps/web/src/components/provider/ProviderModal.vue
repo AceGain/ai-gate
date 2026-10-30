@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { apiErrorMessage } from '@/lib/apiErrorMessage'
 import type { GenEndpointType, SProvider } from '@ai-gate/shared'
 import { GEN_ENDPOINT_TYPES, GEN_ENDPOINT_DEFAULT_PATHS } from '@ai-gate/shared'
 import { computed, reactive, ref, watch } from 'vue'
@@ -21,6 +22,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { defaultProviderIcon } from '@/utils/brandIcons'
 import ProviderIconPicker from './ProviderIconPicker.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 /**
  * 供应商新增/编辑弹窗：基本信息（图标、编码、名称、描述、启用）
@@ -51,7 +55,7 @@ const form = reactive({
 })
 
 /** 服务端 409 冲突信息（客户端校验通过但与并发写入冲突时展示） */
-const serverCodeError = ref('')
+const serverCodeError = ref(false)
 
 /** 是否展示校验错误：仅在尝试保存后置真，避免弹窗一打开就红字 */
 const showErrors = ref(false)
@@ -68,7 +72,7 @@ watch(open, (v) => {
   form.secret = ''
   form.remark = props.provider?.remark ?? ''
   form.enabled = props.provider?.enabled ?? true
-  serverCodeError.value = ''
+  serverCodeError.value = false
   showErrors.value = false
 })
 
@@ -92,27 +96,27 @@ watch(() => form.generate, (newGen, oldGen) => {
 /** 编码实际校验结果（与错误展示解耦，供 canSave 使用）：不限制字符，仅要求非空且全局唯一 */
 const codeInvalidReason = computed(() => {
   const v = form.code.trim()
-  if (!v) return '请输入编码'
+  if (!v) return t('validation.providerCodeRequired')
   if (store.providers.some(p => p.code === v && p.id !== props.provider?.id)) {
-    return '编码已存在'
+    return t('validation.duplicateProviderCode')
   }
   return undefined
 })
 
 const codeError = computed(() => {
-  if (serverCodeError.value) return serverCodeError.value
+  if (serverCodeError.value) return t('validation.duplicateProviderCode')
   if (!showErrors.value) return undefined
   return codeInvalidReason.value
 })
 
 const nameError = computed(() =>
-  showErrors.value && !form.name.trim() ? '请输入名称' : undefined,
+  showErrors.value && !form.name.trim() ? t('validation.nameRequired') : undefined,
 )
 
 /** Base URL 校验结果：仅新增模式下校验必填 */
 const baseUrlInvalidReason = computed(() => {
   if (props.provider) return undefined
-  return form.baseUrl.trim() ? undefined : '请输入 Base URL'
+  return form.baseUrl.trim() ? undefined : t('validation.baseUrlRequired')
 })
 
 const baseUrlError = computed(() =>
@@ -122,7 +126,7 @@ const baseUrlError = computed(() =>
 /** 生成端点地址校验结果：仅新增模式下校验必填 */
 const generatePathInvalidReason = computed(() => {
   if (props.provider) return undefined
-  return form.generatePath.trim() ? undefined : '请输入端点地址'
+  return form.generatePath.trim() ? undefined : t('validation.endpointPathRequired')
 })
 
 const generatePathError = computed(() =>
@@ -132,7 +136,7 @@ const generatePathError = computed(() =>
 /** 密钥校验结果：仅新增模式下校验必填 */
 const secretInvalidReason = computed(() => {
   if (props.provider) return undefined
-  return form.secret.trim() ? undefined : '请输入密钥内容'
+  return form.secret.trim() ? undefined : t('validation.keySecretRequired')
 })
 
 const secretError = computed(() =>
@@ -152,7 +156,7 @@ const canSave = computed(() =>
 async function save() {
   if (!canSave.value) {
     showErrors.value = true
-    toast.error('请检查表单填写')
+    toast.error(t('validation.checkForm'))
     return
   }
   saving.value = true
@@ -176,15 +180,15 @@ async function save() {
         // 首个密钥名称固定为 default（标识符，不随界面语言本地化）
         apiKey: {name: 'default', secret: form.secret.trim()},
       })
-    toast.success('已保存')
+    toast.success(t('common.saved'))
     open.value = false
     emit('saved', saved)
   } catch (err) {
-    if (err instanceof ApiError && (err.status === 409 || err.code.includes('Duplicate provider code'))) {
-      serverCodeError.value = '编码已存在'
+    if (err instanceof ApiError && (err.status === 409 || err.code === 'DUPLICATE_PROVIDER_CODE')) {
+      serverCodeError.value = true
     } else {
       console.warn('[ai-gate] 保存供应商失败', err)
-      toast.error('后端服务不可用')
+      toast.error(apiErrorMessage(err))
     }
   } finally {
     saving.value = false
@@ -199,7 +203,7 @@ async function save() {
   >
     <DialogContent class="max-h-[calc(100vh-4rem)] sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>{{ props.provider ? '修改供应商' : '新增供应商' }}</DialogTitle>
+        <DialogTitle>{{ props.provider ? t('providers.edit') : t('providers.create') }}</DialogTitle>
       </DialogHeader>
 
       <FieldGroup class="min-h-0 overflow-y-auto pr-1">
@@ -213,11 +217,11 @@ async function save() {
 
         <!-- 编码全局唯一，创建后不可修改：编辑态只读禁用 -->
         <Field :data-invalid="!!codeError">
-          <FieldLabel>编码 <span class="text-destructive">*</span></FieldLabel>
+          <FieldLabel>{{ t('providers.code') }} <span class="text-destructive">*</span></FieldLabel>
           <Input
             v-model="form.code"
             :aria-invalid="!!codeError || undefined"
-            placeholder="对外模型标识前缀，如 agnes"
+            :placeholder="t('providers.codePlaceholder')"
             :disabled="!!props.provider"
           />
           <FieldError v-if="codeError">
@@ -226,11 +230,11 @@ async function save() {
         </Field>
 
         <Field :data-invalid="!!nameError">
-          <FieldLabel>名称 <span class="text-destructive">*</span></FieldLabel>
+          <FieldLabel>{{ t('common.name') }} <span class="text-destructive">*</span></FieldLabel>
           <Input
             v-model="form.name"
             :aria-invalid="!!nameError || undefined"
-            placeholder="如 Agnes AI"
+            :placeholder="t('providers.namePlaceholder')"
           />
           <FieldError v-if="nameError">
             {{ nameError }}
@@ -245,7 +249,7 @@ async function save() {
           <Input
             v-model="form.baseUrl"
             :aria-invalid="!!baseUrlError || undefined"
-            placeholder="如 https://api.openai.com"
+            :placeholder="t('endpoints.basePlaceholder')"
           />
           <FieldError v-if="baseUrlError">
             {{ baseUrlError }}
@@ -255,10 +259,10 @@ async function save() {
         <template v-if="!props.provider">
           <!-- 初始生成端点：端点类型 + 端点地址（默认路径自动填充） -->
           <Field>
-            <FieldLabel>端点类型</FieldLabel>
+            <FieldLabel>{{ t('endpoints.type') }}</FieldLabel>
             <Select v-model="form.generate">
               <SelectTrigger class="w-full">
-                <SelectValue placeholder="请选择端点类型" />
+                <SelectValue :placeholder="t('validation.selectEndpointType')" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem
@@ -273,7 +277,7 @@ async function save() {
           </Field>
 
           <Field :data-invalid="!!generatePathError">
-            <FieldLabel>端点地址 <span class="text-destructive">*</span></FieldLabel>
+            <FieldLabel>{{ t('endpoints.path') }} <span class="text-destructive">*</span></FieldLabel>
             <Input
               v-model="form.generatePath"
               :aria-invalid="!!generatePathError || undefined"
@@ -286,12 +290,12 @@ async function save() {
 
           <!-- 初始密钥：创建后可在供应商详情页管理 -->
           <Field :data-invalid="!!secretError">
-            <FieldLabel>密钥 <span class="text-destructive">*</span></FieldLabel>
+            <FieldLabel>{{ t('keys.title') }} <span class="text-destructive">*</span></FieldLabel>
             <Input
               v-model="form.secret"
               type="password"
               :aria-invalid="!!secretError || undefined"
-              placeholder="请输入 API Key 密文"
+              :placeholder="t('keys.secretPlaceholder')"
             />
             <FieldError v-if="secretError">
               {{ secretError }}
@@ -300,11 +304,11 @@ async function save() {
         </template>
 
         <Field>
-          <FieldLabel>描述</FieldLabel>
+          <FieldLabel>{{ t('common.description') }}</FieldLabel>
           <Textarea
             v-model="form.remark"
             :rows="2"
-            placeholder="选填"
+            :placeholder="t('common.optional')"
           />
         </Field>
       </FieldGroup>
@@ -316,7 +320,7 @@ async function save() {
           @click="open = false"
         >
           <PhX data-icon="inline-start" aria-hidden="true" />
-          取消
+          {{ t('common.cancel') }}
         </Button>
         <Button
           :disabled="saving"
@@ -327,7 +331,7 @@ async function save() {
             v-else
             data-icon="inline-start"
           />
-          保存
+          {{ t('common.save') }}
         </Button>
       </DialogFooter>
     </DialogContent>

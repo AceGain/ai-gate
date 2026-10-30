@@ -1,3 +1,4 @@
+import type { MessageKey } from '@/i18n'
 import type { InjectionKey, MaybeRefOrGetter, ShallowRef } from 'vue'
 import { inject, onScopeDispose, provide, shallowRef, toValue, watchEffect } from 'vue'
 
@@ -8,8 +9,8 @@ export interface BreadcrumbItemRecord {
 
 declare module 'vue-router' {
   interface RouteMeta {
-    title?: string
-    breadcrumbs?: BreadcrumbItemRecord[]
+    titleKey?: MessageKey
+    breadcrumbs?: { labelKey: MessageKey, to?: string }[]
   }
 }
 

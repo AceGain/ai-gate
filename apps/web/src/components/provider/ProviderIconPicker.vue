@@ -19,6 +19,9 @@ import {
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { brandIconUrl, providerIconOptions } from '@/utils/brandIcons'
 import ProviderIcon from './ProviderIcon.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 /**
  * 图标选择器：头像居中展示，悬浮相机遮罩提示；
@@ -72,11 +75,11 @@ function onFileChange(e: Event) {
   input.value = ''
   if (!file) return
   if (!file.type.startsWith('image/')) {
-    toast.error('请选择图片文件')
+    toast.error(t('icons.selectImage'))
     return
   }
   if (file.size > MAX_UPLOAD_SIZE) {
-    toast.error('图片不能超过 1MB')
+    toast.error(t('icons.imageTooLarge'))
     return
   }
   const reader = new FileReader()
@@ -99,7 +102,7 @@ watch(open, (v) => {
       variant="outline"
       size="icon-lg"
       class="group relative size-14 shrink-0 p-0"
-      aria-label="更换图标"
+      :aria-label="t('icons.change')"
       @click="open = true"
     >
       <ProviderIcon
@@ -119,7 +122,7 @@ watch(open, (v) => {
     >
       <DialogContent class="max-h-[calc(100vh-4rem)] sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>更换图标</DialogTitle>
+          <DialogTitle>{{ t('icons.change') }}</DialogTitle>
         </DialogHeader>
 
         <div class="flex min-h-0 flex-col gap-2.5 overflow-y-auto pr-1">
@@ -130,14 +133,14 @@ watch(open, (v) => {
             </InputGroupAddon>
             <InputGroupInput
               v-model="search"
-              placeholder="搜索品牌图标..."
+              :placeholder="t('icons.searchPlaceholder')"
             />
             <InputGroupAddon align="inline-end">
               <Button
                 v-if="search"
                 variant="ghost"
                 size="icon-xs"
-                aria-label="清空"
+                :aria-label="t('common.clear')"
                 @click="search = ''"
               >
                 <PhX />
@@ -153,7 +156,7 @@ watch(open, (v) => {
               @click="resetToAuto"
             >
               <PhSparkle data-icon="inline-start" />
-              自动（首字母）
+              {{ t('icons.auto') }}
             </Button>
             <Button
               variant="outline"
@@ -161,7 +164,7 @@ watch(open, (v) => {
               @click="pickFile"
             >
               <PhUploadSimple data-icon="inline-start" />
-              上传图片
+              {{ t('icons.upload') }}
             </Button>
           </div>
 
@@ -192,7 +195,7 @@ watch(open, (v) => {
               v-else
               class="text-muted-foreground py-8 text-center text-xs"
             >
-              未找到匹配图标
+              {{ t('icons.noMatches') }}
             </div>
           </div>
         </div>

@@ -5,7 +5,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useClipboard } from '@vueuse/core'
 import { PhCopy, PhFloppyDisk, PhX } from '@phosphor-icons/vue'
 import { toast } from 'vue-sonner'
-import { ApiError } from '@/lib/api'
+import { apiErrorMessage } from '@/lib/apiErrorMessage'
 import { useProvidersStore } from '@/stores/providers'
 import { splitUrl } from '@/utils/url'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,9 @@ import { Spinner } from '@/components/ui/spinner'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = withDefaults(defineProps<{
   providerId: number
@@ -101,15 +104,15 @@ watch(() => form.generate, (newGen, oldGen) => {
 
 const generateError = computed(() => {
   if (form.type !== 'generate') return undefined
-  if (showErrors.value && !form.generate.trim()) return '请选择端点类型'
+  if (showErrors.value && !form.generate.trim()) return t('validation.selectEndpointType')
   if (!props.endpoint && configuredGenerates.value.has(form.generate.trim())) {
-    return '该端点类型已存在'
+    return t('validation.duplicateEndpointType')
   }
   return undefined
 })
 
 const pathError = computed(() =>
-  showErrors.value && !form.path.trim() ? '请输入端点地址' : undefined,
+  showErrors.value && !form.path.trim() ? t('validation.endpointPathRequired') : undefined,
 )
 
 const canSave = computed(() => {
@@ -123,23 +126,23 @@ const canSave = computed(() => {
 })
 
 /** 弹窗标题 */
-const modalTitle = computed(() => props.endpoint ? '修改端点' : '新增端点')
+const modalTitle = computed(() => props.endpoint ? t('endpoints.edit') : t('endpoints.create'))
 
 /** 端点类型只读显示文本 */
 const endpointTypeDisplay = computed(() => {
   if (form.type === 'base') return 'Base URL'
-  if (form.type === 'models') return 'Models'
-  if (form.type === 'generate') return form.generate || '生成路径'
+  if (form.type === 'models') return t('endpoints.modelList')
+  if (form.type === 'generate') return form.generate || t('endpoints.generatePath')
   return form.type
 })
 
 const pathPlaceholder = computed(() => {
-  if (form.type === 'base') return '如 https://api.openai.com'
+  if (form.type === 'base') return t('endpoints.basePlaceholder')
   if (form.type === 'models') return '/v1/models'
   if (form.type === 'generate' && form.generate in GEN_ENDPOINT_DEFAULT_PATHS) {
     return GEN_ENDPOINT_DEFAULT_PATHS[form.generate as keyof typeof GEN_ENDPOINT_DEFAULT_PATHS]
   }
-  return '如 https://api.example.com 或 /v1/chat/completions'
+  return t('endpoints.pathPlaceholder')
 })
 
 /** 完整端点地址拆分与预览 */
@@ -148,13 +151,13 @@ const previewUrlParts = computed(() => splitUrl(baseEndpoint.value?.path, form.p
 async function handleCopyPreview() {
   if (!previewUrlParts.value.fullUrl) return
   await copy(previewUrlParts.value.fullUrl)
-  toast.success('已复制完整端点地址')
+  toast.success(t('endpoints.copied'))
 }
 
 async function save() {
   if (!canSave.value) {
     showErrors.value = true
-    toast.error('请检查表单填写')
+    toast.error(t('validation.checkForm'))
     return
   }
   saving.value = true
@@ -169,13 +172,12 @@ async function save() {
     const saved = props.endpoint
       ? await store.updateEndpoint(props.providerId, props.endpoint.id, input)
       : await store.createEndpoint(props.providerId, input)
-    toast.success('已保存')
+    toast.success(t('common.saved'))
     open.value = false
     emit('saved', saved)
   } catch (err) {
     console.warn('[ai-gate] 保存端点失败', err)
-    const msg = err instanceof ApiError ? (err.detail ?? err.code) : undefined
-    toast.error(msg || '后端服务不可用')
+    toast.error(apiErrorMessage(err))
   } finally {
     saving.value = false
   }
@@ -191,7 +193,7 @@ async function save() {
       <DialogHeader>
         <DialogTitle>{{ modalTitle }}</DialogTitle>
         <DialogDescription v-if="form.type === 'generate' && !props.endpoint && availableGenerates.length === 0">
-          当前所有支持的生成端点类型均已配置，每种端点类型仅支持添加一个端点
+          {{ t('endpoints.allConfigured') }}
         </DialogDescription>
       </DialogHeader>
 
@@ -199,7 +201,7 @@ async function save() {
         <!-- 端点类型：修改时只读不可操作；新增 generate 时展示下拉选择 -->
         <Field :data-invalid="!props.endpoint ? !!generateError : false">
           <FieldLabel>
-            端点类型
+            {{ t('endpoints.type') }}
             <span
               v-if="!props.endpoint && form.type === 'generate'"
               class="text-destructive"
@@ -218,7 +220,7 @@ async function save() {
               class="w-full"
               :disabled="availableGenerates.length === 0"
             >
-              <SelectValue placeholder="请选择端点类型" />
+              <SelectValue :placeholder="t('validation.selectEndpointType')" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem
@@ -237,7 +239,7 @@ async function save() {
 
         <!-- 端点地址输入框 -->
         <Field :data-invalid="!!pathError">
-          <FieldLabel>端点地址 <span class="text-destructive">*</span></FieldLabel>
+          <FieldLabel>{{ t('endpoints.path') }} <span class="text-destructive">*</span></FieldLabel>
           <Input
             v-model="form.path"
             :aria-invalid="!!pathError || undefined"
@@ -251,25 +253,25 @@ async function save() {
 
         <!-- 完整端点地址预览 -->
         <Field>
-          <FieldLabel>地址预览</FieldLabel>
+          <FieldLabel>{{ t('endpoints.preview') }}</FieldLabel>
           <div class="bg-muted/40 flex min-h-8 items-center justify-between gap-2 border px-2.5 py-1.5">
             <code
               class="min-w-0 flex-1 truncate text-xs select-all"
-              :title="previewUrlParts.fullUrl || '暂无数据'"
+              :title="previewUrlParts.fullUrl || t('common.noData')"
             >
               <span
                 v-if="previewUrlParts.basePart"
                 class="text-muted-foreground"
               >{{ previewUrlParts.basePart }}</span>
-              <span :class="previewUrlParts.basePart ? 'font-medium' : 'text-muted-foreground'">{{ previewUrlParts.pathPart || (!previewUrlParts.fullUrl ? '暂无数据' : '') }}</span>
+              <span :class="previewUrlParts.basePart ? 'font-medium' : 'text-muted-foreground'">{{ previewUrlParts.pathPart || (!previewUrlParts.fullUrl ? t('common.noData') : '') }}</span>
             </code>
             <Button
               v-if="previewUrlParts.fullUrl"
               variant="ghost"
               size="icon-sm"
               class="shrink-0"
-              title="复制"
-              aria-label="复制"
+              :title="t('common.copy')"
+              :aria-label="t('common.copy')"
               @click="handleCopyPreview"
             >
               <PhCopy />
@@ -285,7 +287,7 @@ async function save() {
           @click="open = false"
         >
           <PhX data-icon="inline-start" aria-hidden="true" />
-          取消
+          {{ t('common.cancel') }}
         </Button>
         <Button
           :disabled="saving || (form.type === 'generate' && !props.endpoint && availableGenerates.length === 0)"
@@ -296,7 +298,7 @@ async function save() {
             v-else
             data-icon="inline-start"
           />
-          保存
+          {{ t('common.save') }}
         </Button>
       </DialogFooter>
     </DialogContent>
