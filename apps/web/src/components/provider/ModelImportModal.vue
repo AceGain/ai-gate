@@ -303,8 +303,8 @@ async function importSelected() {
     :open="open"
     @update:open="v => open = v"
   >
-    <!-- 以初始空态高度为下限；矮屏下仍遵循 DialogContent 的视口高度上限。 -->
-    <DialogContent class="min-h-[min(276px,calc(100dvh-2rem))] sm:min-h-[min(276px,calc(100dvh-4rem))] sm:max-w-md">
+    <!-- 为模型选择预留稳定空间；矮屏下仍遵循 DialogContent 的视口高度上限。 -->
+    <DialogContent class="min-h-[min(384px,calc(100dvh-2rem))] sm:min-h-[min(384px,calc(100dvh-4rem))] sm:max-w-md">
       <DialogHeader class="shrink-0">
         <DialogTitle>{{ t('importModels.title') }}</DialogTitle>
       </DialogHeader>
@@ -435,14 +435,21 @@ async function importSelected() {
         </div>
       </div>
 
+      <!-- 显式传递 flex 高度，避免内层 min-height: 100% 在自适应弹窗内无法撑满。 -->
       <DialogBody
         ref="resultsBody"
-        class="flex-auto"
-        content-class="flex flex-col gap-2"
+        class="flex-auto [&>[data-slot=scroll-area-viewport]]:flex [&>[data-slot=scroll-area-viewport]]:flex-col [&>[data-slot=scroll-area-viewport]>div]:flex-1"
+        content-class="flex w-full flex-col gap-2"
         :aria-label="t('importModels.title')"
       >
-        <!-- 拉取中 -->
-        <AppLoading v-if="loading" class="flex-1" />
+        <!-- 引导和加载共用全宽居中容器，避免状态切换时对齐位置变化。 -->
+        <div
+          v-if="loading || (!errorCode && !fetched)"
+          class="flex w-full flex-1 items-center justify-center"
+        >
+          <AppLoading v-if="loading" class="w-full" />
+          <AppEmpty v-else :title="t('importModels.loadHint')" />
+        </div>
 
         <!-- 拉取失败：错误文案 + 重试入口 -->
         <div
@@ -457,14 +464,6 @@ async function importSelected() {
             <PhArrowsClockwise data-icon="inline-start" />
             {{ t('common.retry') }}
           </Button>
-        </div>
-
-        <!-- 尚未获取：引导用户点击「获取」 -->
-        <div
-          v-else-if="!fetched"
-          class="flex flex-1 items-center justify-center"
-        >
-          <AppEmpty :title="t('importModels.loadHint')" />
         </div>
 
         <template v-else>
