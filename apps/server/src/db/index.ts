@@ -5,7 +5,7 @@ import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import * as schema from './schema.js'
 
-const dbFile = fileURLToPath(new URL('../../data/server.db', import.meta.url))
+const dbFile = process.env.AI_GATE_DB_PATH || fileURLToPath(new URL('../../data/server.db', import.meta.url))
 const schemaFile = fileURLToPath(new URL('../../sql/schema.sql', import.meta.url))
 
 fs.mkdirSync(path.dirname(dbFile), { recursive: true })

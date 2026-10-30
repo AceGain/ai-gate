@@ -7,6 +7,7 @@ const errorKeys: Readonly<Record<string, MessageKey>> = {
   ENDPOINT_NOT_FOUND: 'errors.endpointNotFound',
   KEY_NOT_FOUND: 'errors.keyNotFound',
   MODEL_NOT_FOUND: 'errors.modelNotFound',
+  MODEL_TEST_UNSUPPORTED: 'errors.modelTestUnsupported',
   DUPLICATE_PROVIDER_CODE: 'validation.duplicateProviderCode',
   DUPLICATE_MODEL_CODE: 'validation.duplicateModelCode',
   DUPLICATE_ENDPOINT: 'validation.duplicateEndpointType',

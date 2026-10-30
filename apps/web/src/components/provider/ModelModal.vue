@@ -9,7 +9,7 @@ import type {
   ModelStatus,
   ModelType,
 } from '@ai-gate/shared'
-import { MODEL_EFFORT_LEVELS, MODEL_DEFAULT_CATEGORY } from '@ai-gate/shared'
+import { MODEL_EFFORT_LEVELS, MODEL_DEFAULT_CATEGORY, isModelType } from '@ai-gate/shared'
 import { computed, reactive, ref, watch } from 'vue'
 import {
   PhArrowsDownUp,
@@ -69,8 +69,8 @@ const form = reactive({
   code: '',
   name: '',
   category: '',
-  // ToggleGroup 的受控值按 reka-ui 宽类型收放，保存时收窄回共享类型
-  type: 'TEXT' as string,
+  // 模型类型保持共享枚举，单选组的宽类型返回值由更新函数校验。
+  type: 'TEXT' as ModelType,
   status: 'ACTIVE' as ModelStatus,
   enabled: true,
   inputModal: ['text'] as string[],
@@ -97,6 +97,11 @@ const typeOptions = computed(() => [
   {label: t('models.types.rerank'), value: 'RERANK', icon: PhArrowsDownUp},
   {label: t('models.types.class'), value: 'CLASS', icon: PhTag},
 ] as const)
+
+function updateModelType(value: unknown) {
+  // 单选组再次点击已选项时会发出空值，模型类型必须保留一个有效选项。
+  if (isModelType(value)) form.type = value
+}
 
 const reasoningOptions = computed(() => [
   {label: t('models.reasoningModes.levels'), value: 'TOGGLE'},
@@ -231,7 +236,7 @@ const codeError = computed(() =>
   showErrors.value && !form.code.trim() ? t('validation.modelCodeRequired') : undefined,
 )
 
-const canSave = computed(() => !!form.code.trim() && !saving.value)
+const canSave = computed(() => !!form.code.trim() && isModelType(form.type) && !saving.value)
 
 async function save() {
   if (!canSave.value) {
@@ -245,7 +250,7 @@ async function save() {
     // 显示名允许为空，列表展示时回退到模型编码
     name: form.name.trim(),
     category: form.category.trim() || MODEL_DEFAULT_CATEGORY,
-    type: form.type as ModelType,
+    type: form.type,
     status: form.status,
     enabled: form.enabled,
     inputModal: form.inputModal,
@@ -323,11 +328,12 @@ async function save() {
         <Field>
           <FieldLabel>{{ t('models.type') }}</FieldLabel>
           <ToggleGroup
-            v-model="form.type"
+            :model-value="form.type"
             type="single"
             variant="outline"
             :spacing="2"
             class="grid w-full grid-cols-2 sm:grid-cols-4"
+            @update:model-value="updateModelType"
           >
             <ToggleGroupItem
               v-for="item in typeOptions"

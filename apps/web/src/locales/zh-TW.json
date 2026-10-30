@@ -89,6 +89,7 @@
     "modelList": "模型清單"
   },
   "errors": {
+    "modelTestUnsupported": "目前僅支援測試文字與全模態模型",
     "backendUnavailable": "後端服務無法使用",
     "missingBaseEndpoint": "請先在「端點」分頁設定 Base URL",
     "missingGenerateEndpoint": "請先在「端點」分頁設定生成端點",

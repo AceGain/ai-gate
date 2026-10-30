@@ -89,6 +89,7 @@
     "modelList": "Model list"
   },
   "errors": {
+    "modelTestUnsupported": "Testing is currently supported only for Text and Omni models",
     "backendUnavailable": "Backend service unavailable",
     "missingBaseEndpoint": "Configure the Base URL in the Endpoints tab first",
     "missingGenerateEndpoint": "Configure a generation endpoint in the Endpoints tab first",

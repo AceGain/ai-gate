@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { SModel } from '@ai-gate/shared'
+import { supportsModelTextTest } from '@ai-gate/shared'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useSortable } from '@vueuse/integrations/useSortable'
 import {
@@ -56,6 +57,8 @@ const testingId = ref<number | null>(null)
 /** 测试失败文案：按后端错误码就近映射 */
 function testErrorMessage(code: string | undefined, detail?: string): string {
   switch (code) {
+    case 'MODEL_TEST_UNSUPPORTED':
+      return t('errors.modelTestUnsupported')
     case 'MISSING_BASE_ENDPOINT':
       return t('errors.missingBaseEndpoint')
     case 'MISSING_GENERATE_ENDPOINT':
@@ -72,7 +75,7 @@ function testErrorMessage(code: string | undefined, detail?: string): string {
 }
 
 async function runTest(m: SModel) {
-  if (testingId.value) return
+  if (testingId.value || !supportsModelTextTest(m.type)) return
   testingId.value = m.id
   try {
     const res = await store.testModel(props.providerId, m.id)
@@ -203,17 +206,19 @@ const typeMeta = computed(() => new Map<string, {icon: typeof PhTextT, label: st
                 :aria-label="t('common.toggleEnabled')"
                 @update:model-value="v => emit('toggle', m, !!v)"
               />
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                :disabled="testingId === m.id"
-                :aria-label="t('common.test')"
-                :title="t('common.test')"
-                @click="runTest(m)"
-              >
-                <Spinner v-if="testingId === m.id" />
-                <PhPulse v-else />
-              </Button>
+              <span :title="supportsModelTextTest(m.type) ? t('common.test') : t('errors.modelTestUnsupported')">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  :disabled="testingId === m.id || !supportsModelTextTest(m.type)"
+                  :aria-label="t('common.test')"
+                  :title="supportsModelTextTest(m.type) ? t('common.test') : t('errors.modelTestUnsupported')"
+                  @click="runTest(m)"
+                >
+                  <Spinner v-if="testingId === m.id" />
+                  <PhPulse v-else />
+                </Button>
+              </span>
               <Button
                 variant="ghost"
                 size="icon-sm"

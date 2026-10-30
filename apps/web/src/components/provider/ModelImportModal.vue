@@ -90,8 +90,9 @@ const mergedItems = computed<MergedItem[]>(() => {
         entry = {...m, keyIds: []}
         map.set(m.code, entry)
         order.push(m.code)
-      } else if (!entry.name && m.name) {
-        entry.name = m.name
+      } else {
+        if (!entry.name && m.name) entry.name = m.name
+        if (!entry.type && m.type) entry.type = m.type
       }
       entry.keyIds.push(r.keyId)
     }
@@ -263,10 +264,10 @@ async function importSelected() {
   const inputs: SModelInput[] = [
     ...importableItems.value
       .filter(i => selected.value.has(i.code))
-      .map(i => ({code: i.code, name: i.name, type: 'TEXT'} as SModelInput)),
+      .map(i => ({code: i.code, name: i.name, type: i.type ?? 'TEXT'})),
     ...mergedItems.value
       .filter(i => existingCodes.value.has(i.code))
-      .map(i => ({code: i.code, name: i.name, type: 'TEXT'} as SModelInput)),
+      .map(i => ({code: i.code, name: i.name, type: i.type ?? 'TEXT'})),
   ]
   // 绑定 = 每把成功密钥 × 其报告的模型（保守原则：只记录已验证事实，未拉取密钥不建绑定）
   const bindings = okResults.value.map(r => ({

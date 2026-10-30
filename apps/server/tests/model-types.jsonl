@@ -1,0 +1,29 @@
+{"method":"POST","path":"/api/providers","body":{"code":"audit","name":"Model type audit","baseUrl":"https://upstream.audit.invalid","generateEndpoint":{"generate":"Chat Completions","path":"/v1/chat/completions"},"apiKey":{"name":"audit","secret":"dummy-audit-key"}},"expect":{"status":201},"save":{"providerId":".id"}}
+{"path":"/api/providers/{{providerId}}/models/remote","expect":{"status":200,"body":{"results":[{"ok":true,"models":[{"code":"remote-class","type":"CLASS"},{"code":"remote-omni","type":"OMNI"},{"code":"remote-unknown"},{"code":"remote-untyped"}]}]}},"save":{"remoteClassType":".results.0.models.0.type","remoteOmniType":".results.0.models.1.type"}}
+{"method":"POST","path":"/api/providers/{{providerId}}/models","body":{"code":"class-model","type":"CLASS"},"expect":{"status":201,"body":{"type":"CLASS"}},"save":{"classId":".id"}}
+{"method":"POST","path":"/api/providers/{{providerId}}/models/{{classId}}/test","expect":{"status":400,"body":{"error":"MODEL_TEST_UNSUPPORTED"}}}
+{"path":"/__audit/state","expect":{"body":{"upstreamRequests":1,"types":{"class-model":"CLASS"}}}}
+{"method":"POST","path":"/api/providers/{{providerId}}/models","body":{"code":"omni-model","type":"OMNI","inputModal":["text","image","audio","video"],"outputModal":["text","image","audio"]},"expect":{"status":201,"body":{"type":"OMNI","inputModal":["text","image","audio","video"],"outputModal":["text","image","audio"]}},"save":{"omniId":".id"}}
+{"method":"POST","path":"/api/providers/{{providerId}}/models/{{omniId}}/test","expect":{"status":200,"body":{"ok":true}}}
+{"method":"POST","path":"/api/providers/{{providerId}}/models","body":{"code":"text-model","type":"TEXT"},"expect":{"status":201,"body":{"type":"TEXT"}},"save":{"textId":".id"}}
+{"method":"POST","path":"/api/providers/{{providerId}}/models/{{textId}}/test","expect":{"status":200,"body":{"ok":true}}}
+{"method":"PUT","path":"/api/providers/{{providerId}}/models/{{omniId}}","body":{"code":"omni-model","name":"Edited Omni","type":"OMNI","inputModal":["text","audio"],"outputModal":["text","audio"]},"expect":{"status":200,"body":{"name":"Edited Omni","type":"OMNI","inputModal":["text","audio"],"outputModal":["text","audio"]}}}
+{"method":"PUT","path":"/api/providers/{{providerId}}/models/{{classId}}","body":{"code":"class-model","name":"Edited Class","type":"CLASS"},"expect":{"status":200,"body":{"name":"Edited Class","type":"CLASS"}}}
+{"method":"POST","path":"/api/providers/{{providerId}}/models/import","body":{"models":[{"code":"remote-class","type":"{{remoteClassType}}"},{"code":"remote-omni","type":"{{remoteOmniType}}"}],"bindings":[{"keyId":1,"codes":["remote-class","remote-omni"]}]},"expect":{"status":201,"body":{"imported":2,"bindings":2}}}
+{"method":"POST","path":"/api/providers/{{providerId}}/models/import","body":{"models":[{"code":"class-model","type":"TEXT"},{"code":"omni-model","type":"TEXT"}]},"expect":{"status":201,"body":{"imported":0,"skipped":2}}}
+{"path":"/__audit/state","expect":{"body":{"upstreamRequests":3,"types":{"class-model":"CLASS","omni-model":"OMNI","text-model":"TEXT","remote-class":"CLASS","remote-omni":"OMNI"}}}}
+{"method":"POST","path":"/api/providers/{{providerId}}/models/import","body":{"models":[{"code":"image-model","type":"IMAGE"},{"code":"audio-model","type":"AUDIO"},{"code":"video-model","type":"VIDEO"},{"code":"embedding-model","type":"EMBEDDING"},{"code":"rerank-model","type":"RERANK"}]},"expect":{"status":201,"body":{"imported":5}}}
+{"path":"/__audit/state","expect":{"body":{"modelCount":10}},"save":{"imageId":".ids.image-model","audioId":".ids.audio-model","videoId":".ids.video-model","embeddingId":".ids.embedding-model","rerankId":".ids.rerank-model"}}
+{"method":"POST","path":"/api/providers/{{providerId}}/models/{{imageId}}/test","expect":{"status":400,"body":{"error":"MODEL_TEST_UNSUPPORTED"}}}
+{"method":"POST","path":"/api/providers/{{providerId}}/models/{{audioId}}/test","expect":{"status":400,"body":{"error":"MODEL_TEST_UNSUPPORTED"}}}
+{"method":"POST","path":"/api/providers/{{providerId}}/models/{{videoId}}/test","expect":{"status":400,"body":{"error":"MODEL_TEST_UNSUPPORTED"}}}
+{"method":"POST","path":"/api/providers/{{providerId}}/models/{{embeddingId}}/test","expect":{"status":400,"body":{"error":"MODEL_TEST_UNSUPPORTED"}}}
+{"method":"POST","path":"/api/providers/{{providerId}}/models/{{rerankId}}/test","expect":{"status":400,"body":{"error":"MODEL_TEST_UNSUPPORTED"}}}
+{"method":"POST","path":"/api/providers/{{providerId}}/models","body":{"code":"invalid-model","type":"UNKNOWN"},"expect":{"status":400,"body":{"error":"INVALID_REQUEST"}}}
+{"method":"POST","path":"/api/providers/{{providerId}}/models","body":{"code":"empty-type","type":""},"expect":{"status":400,"body":{"error":"INVALID_REQUEST"}}}
+{"method":"PUT","path":"/api/providers/{{providerId}}/models/{{classId}}","body":{"code":"class-model","type":"UNKNOWN"},"expect":{"status":400,"body":{"error":"INVALID_REQUEST"}}}
+{"method":"POST","path":"/api/providers/{{providerId}}/models/import","body":{"models":[{"code":"valid-before-invalid","type":"CLASS"},{"code":"invalid-import","type":"UNKNOWN"}]},"expect":{"status":400,"body":{"error":"INVALID_REQUEST"}}}
+{"path":"/__audit/state","expect":{"body":{"modelCount":10,"upstreamRequests":3,"types":{"class-model":"CLASS","omni-model":"OMNI"}}}}
+{"method":"POST","path":"/__audit/template","body":{"code":"template-class","type":"CLASS"},"expect":{"status":200,"body":{"type":"CLASS"}}}
+{"method":"POST","path":"/__audit/template","body":{"code":"template-omni","type":"OMNI"},"expect":{"status":200,"body":{"type":"OMNI"}}}
+{"method":"POST","path":"/__audit/template","body":{"code":"invalid-template","type":"UNKNOWN"},"expect":{"status":400,"body":{"error":"INVALID_REQUEST"}}}

@@ -4,7 +4,7 @@
  */
 import {Hono} from 'hono'
 import type {SRemoteModelItem, SRemoteModelKeyFetch} from '@ai-gate/shared'
-import {SModelImportSchema, SModelInputSchema, MODEL_DEFAULT_CATEGORY, SReorderSchema} from '@ai-gate/shared'
+import {SModelImportSchema, SModelInputSchema, MODEL_DEFAULT_CATEGORY, SReorderSchema, isModelType, supportsModelTextTest} from '@ai-gate/shared'
 import type {SKey, SModelInput, ModelType} from '@ai-gate/shared'
 import {
   importModelsWithBindings,
@@ -62,14 +62,27 @@ function extractRemoteModels(json: unknown): SRemoteModelItem[] | null {
   if (!arr) return null
 
   const items: SRemoteModelItem[] = []
-  const seen = new Set<string>()
+  const seen = new Map<string, SRemoteModelItem>()
   for (const entry of arr) {
     if (!entry || typeof entry !== 'object') continue
     const obj = entry as Record<string, unknown>
     const code = firstNonEmptyString(obj.id, obj.code, obj.name)
-    if (!code || seen.has(code)) continue
-    seen.add(code)
-    items.push({code, name: firstNonEmptyString(obj.display_name, obj.displayName) ?? ''})
+    if (!code) continue
+    const type = typeof obj.type === 'string' ? obj.type.trim().toUpperCase() : undefined
+    const name = firstNonEmptyString(obj.display_name, obj.displayName) ?? ''
+    const existing = seen.get(code)
+    if (existing) {
+      if (!existing.name && name) existing.name = name
+      if (!existing.type && isModelType(type)) existing.type = type
+      continue
+    }
+    const item: SRemoteModelItem = {
+      code,
+      name,
+      ...(isModelType(type) ? {type} : {}),
+    }
+    items.push(item)
+    seen.set(code, item)
   }
   return items
 }
@@ -184,6 +197,9 @@ models.post('/providers/:providerId/models/:id/test', async (c) => {
   if (!providerId || !id) return c.json({error: 'MODEL_NOT_FOUND'}, 404)
   const model = listModels(providerId).find(m => m.id === id)
   if (!model) return c.json({error: 'MODEL_NOT_FOUND'}, 404)
+  if (!supportsModelTextTest(model.type)) {
+    return c.json({error: 'MODEL_TEST_UNSUPPORTED'}, 400)
+  }
 
   const endpoints = listEndpoints(providerId)
   const base = endpoints.find(e => e.type === 'base')

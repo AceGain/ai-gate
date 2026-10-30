@@ -13,6 +13,15 @@ export const MODEL_TYPES = ['TEXT', 'IMAGE', 'AUDIO', 'VIDEO', 'OMNI', 'EMBEDDIN
 
 export type ModelType = (typeof MODEL_TYPES)[number]
 
+export function isModelType(value: unknown): value is ModelType {
+  return typeof value === 'string' && MODEL_TYPES.some(type => type === value)
+}
+
+/** 现有测试请求只发送文本提示，非文本任务需要各自的端点和请求体。 */
+export function supportsModelTextTest(type: ModelType): boolean {
+  return type === 'TEXT' || type === 'OMNI'
+}
+
 /** 推理模式（跨域取值词汇） */
 export type ModelReasoning = 'DISABLE' | 'ALWAYS' | 'SWITCH' | 'TOGGLE'
 
@@ -97,6 +106,8 @@ export interface SRemoteModelItem {
   code: string
   /** 上游提供的显示名（如 Anthropic 的 display_name），无则为空串 */
   name: string
+  /** 上游明确提供且在支持范围内的类型；未提供时由导入方使用默认值 */
+  type?: ModelType
 }
 
 /** 按单把密钥拉取上游模型列表的结果（models/remote 分组返回的条目） */
