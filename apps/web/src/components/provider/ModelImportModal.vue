@@ -147,6 +147,19 @@ const allVisibleSelected = computed(() =>
 /** 未勾选任何密钥时无法拉取 */
 const refetchDisabled = computed(() => !selectedKeyIds.value.length)
 
+const loadButtonLabels = {
+  load: '加载',
+  loading: '加载中',
+  refresh: '刷新',
+  retry: '重试',
+}
+
+const loadButtonText = computed(() => {
+  if (loading.value) return loadButtonLabels.loading
+  if (errorCode.value) return loadButtonLabels.retry
+  return fetched.value ? loadButtonLabels.refresh : loadButtonLabels.load
+})
+
 async function load() {
   if (refetchDisabled.value || loading.value) return
   loading.value = true
@@ -355,11 +368,24 @@ async function importSelected() {
             v-if="loading"
             data-icon="inline-start"
           />
+          <PhArrowsClockwise
+            v-else-if="errorCode || fetched"
+            data-icon="inline-start"
+          />
           <PhDownloadSimple
             v-else
             data-icon="inline-start"
           />
-          加载
+          <span class="inline-grid place-items-center">
+            <!-- 所有状态文案共用一个网格单元，按最长文案预留宽度。 -->
+            <span
+              v-for="(label, state) in loadButtonLabels"
+              :key="state"
+              class="invisible col-start-1 row-start-1"
+              aria-hidden="true"
+            >{{ label }}</span>
+            <span class="col-start-1 row-start-1">{{ loadButtonText }}</span>
+          </span>
         </Button>
       </div>
 
