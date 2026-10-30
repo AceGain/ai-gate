@@ -322,7 +322,8 @@ async function save() {
             v-model="form.type"
             type="single"
             variant="outline"
-            class="flex-wrap"
+            :spacing="2"
+            class="grid w-full grid-cols-2 sm:grid-cols-3"
           >
             <ToggleGroupItem
               v-for="item in typeOptions"
@@ -361,7 +362,8 @@ async function save() {
                   v-model="form.inputModal"
                   type="multiple"
                   variant="outline"
-                  class="flex-wrap"
+                  :spacing="2"
+                  class="grid w-full grid-cols-3 sm:grid-cols-5"
                 >
                   <ToggleGroupItem
                     v-for="item in modalityOptions"
@@ -380,7 +382,8 @@ async function save() {
                   v-model="form.outputModal"
                   type="multiple"
                   variant="outline"
-                  class="flex-wrap"
+                  :spacing="2"
+                  class="grid w-full grid-cols-3 sm:grid-cols-5"
                 >
                   <ToggleGroupItem
                     v-for="item in modalityOptions"

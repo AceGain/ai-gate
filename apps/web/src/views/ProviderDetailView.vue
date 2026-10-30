@@ -34,6 +34,7 @@ import AppEmpty from '@/components/AppEmpty.vue'
 import AppLoading from '@/components/AppLoading.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -58,6 +59,10 @@ const {providers, endpoints, keys, models, configLoading} = storeToRefs(store)
 
 const id = computed(() => Number(route.params.id))
 const provider = computed(() => providers.value.find(p => p.id === id.value))
+const providerStateLabels = computed(() => ({
+  enabled: t('common.enabled'),
+  disabled: t('common.disabled'),
+}))
 
 useBreadcrumb(() => [
   { label: t('nav.providers'), to: '/providers' },
@@ -425,52 +430,58 @@ function urlParts(path?: string) {
     class="mx-auto flex min-w-0 w-full max-w-5xl flex-1 flex-col"
   >
     <!-- 1. 顶部档案区：图标 + 名称/描述 + 返回与启用控制 -->
-    <div class="flex shrink-0 items-center justify-between gap-4 pb-3">
-      <!-- 左侧：图标 + 名称/编码 + 描述 -->
-      <div class="flex min-w-0 items-center gap-3.5">
-        <ProviderIcon
-          :icon="provider.icon"
-          :name="provider.name || provider.code"
-          size="lg"
-        />
-        <div class="flex min-w-0 flex-col gap-0.5">
-          <div class="flex items-center gap-1.5">
-            <h1
-              class="truncate text-sm font-semibold"
-              :title="provider.name || provider.code"
-            >
-              {{ provider.name || provider.code }}
-            </h1>
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              class="text-muted-foreground hover:text-foreground shrink-0"
-              :aria-label="t('common.edit')"
-              :title="t('common.edit')"
-              @click="editModalOpen = true"
-            >
-              <PhPencilSimple />
-            </Button>
-          </div>
-          <p
-            v-if="provider.remark"
-            class="text-muted-foreground truncate text-xs"
-            :title="provider.remark"
+    <div class="grid shrink-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3.5 pb-3">
+      <ProviderIcon
+        :icon="provider.icon"
+        :name="provider.name || provider.code"
+        size="lg"
+      />
+      <div class="grid min-w-0 grid-cols-1 items-center gap-x-4 gap-y-0.5 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <div class="flex min-w-0 items-center gap-1.5">
+          <h1
+            class="truncate text-sm font-semibold"
+            :title="provider.name || provider.code"
           >
-            {{ provider.remark }}
-          </p>
+            {{ provider.name || provider.code }}
+          </h1>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            class="text-muted-foreground hover:text-foreground shrink-0"
+            :aria-label="t('common.edit')"
+            :title="t('common.edit')"
+            @click="editModalOpen = true"
+          >
+            <PhPencilSimple />
+          </Button>
         </div>
-      </div>
+        <p
+          v-if="provider.remark"
+          class="text-muted-foreground row-start-2 min-w-0 truncate text-xs sm:col-span-2"
+          :title="provider.remark"
+        >
+          {{ provider.remark }}
+        </p>
 
-      <!-- 右侧：启用状态开关 -->
-      <div class="flex shrink-0 items-center">
-        <div class="bg-muted/40 flex items-center gap-1.5 border px-2 py-1 text-xs">
-          <span class="text-muted-foreground">
-            {{ provider.enabled ? t('common.enabled') : t('common.disabled') }}
-          </span>
+        <!-- 宽屏与名称同行，窄屏整体移到备注下方并靠右。 -->
+        <div class="mt-2 flex shrink-0 items-center gap-2 justify-self-end sm:col-start-2 sm:row-start-1 sm:mt-0">
+          <Label for="provider-enabled" class="cursor-pointer">
+            <span class="text-muted-foreground inline-grid place-items-center">
+              <span
+                v-for="(label, state) in providerStateLabels"
+                :key="state"
+                class="invisible col-start-1 row-start-1"
+                aria-hidden="true"
+              >{{ label }}</span>
+              <span class="col-start-1 row-start-1">
+                {{ provider.enabled ? providerStateLabels.enabled : providerStateLabels.disabled }}
+              </span>
+            </span>
+          </Label>
           <Switch
+            id="provider-enabled"
             :model-value="provider.enabled"
-            :aria-label="t('common.toggleEnabled')"
+            :aria-label="t('providers.enable')"
             @update:model-value="v => store.toggleProvider(provider!, !!v)"
           />
         </div>
@@ -482,8 +493,8 @@ function urlParts(path?: string) {
       v-model="activeTab"
       class="flex min-h-0 flex-1 flex-col"
     >
-      <div class="flex shrink-0 items-center justify-between gap-2">
-        <TabsList>
+      <div class="flex shrink-0 flex-wrap items-center justify-between gap-2">
+        <TabsList class="inline-grid shrink-0 auto-cols-fr grid-flow-col">
           <TabsTrigger value="endpoints">
             <PhPath data-icon="inline-start" />
             {{ t('endpoints.title') }}
@@ -499,24 +510,27 @@ function urlParts(path?: string) {
         </TabsList>
 
         <!-- 右侧操作按钮与 Tab 同行对齐 -->
-        <div class="flex items-center">
+        <div class="ml-auto flex items-center">
           <Button
             v-if="activeTab === 'endpoints'"
             variant="ghost"
             :disabled="isAllGeneratesAdded"
+            :aria-label="t('common.add')"
             :title="isAllGeneratesAdded ? t('endpoints.allAdded') : t('common.add')"
             @click="openCreateEndpoint"
           >
             <PhPlus data-icon="inline-start" />
-            {{ t('common.add') }}
+            <span class="hidden sm:inline">{{ t('common.add') }}</span>
           </Button>
           <Button
             v-else-if="activeTab === 'keys'"
             variant="ghost"
+            :aria-label="t('common.add')"
+            :title="t('common.add')"
             @click="openCreateKey"
           >
             <PhPlus data-icon="inline-start" />
-            {{ t('common.add') }}
+            <span class="hidden sm:inline">{{ t('common.add') }}</span>
           </Button>
           <template v-else-if="activeTab === 'models'">
             <Button
@@ -530,10 +544,12 @@ function urlParts(path?: string) {
             </Button>
             <Button
               variant="ghost"
+              :aria-label="t('common.add')"
+              :title="t('common.add')"
               @click="openCreateModel"
             >
               <PhPlus data-icon="inline-start" />
-              {{ t('common.add') }}
+              <span class="hidden sm:inline">{{ t('common.add') }}</span>
             </Button>
           </template>
         </div>

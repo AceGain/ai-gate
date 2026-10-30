@@ -209,6 +209,7 @@
     "noMatches": "未找到匹配图标"
   },
   "providers": {
+    "enable": "启用供应商",
     "edit": "修改供应商",
     "create": "新增供应商",
     "code": "编码",

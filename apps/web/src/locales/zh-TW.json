@@ -209,6 +209,7 @@
     "noMatches": "找不到符合的圖示"
   },
   "providers": {
+    "enable": "啟用供應商",
     "edit": "修改供應商",
     "create": "新增供應商",
     "code": "代碼",

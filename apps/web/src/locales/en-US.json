@@ -209,6 +209,7 @@
     "noMatches": "No matching icons"
   },
   "providers": {
+    "enable": "Enable provider",
     "edit": "Edit provider",
     "create": "Add provider",
     "code": "Code",
