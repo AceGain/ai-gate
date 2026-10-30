@@ -137,10 +137,12 @@
     "types": {
       "text": "文本",
       "image": "图像",
-      "video": "视频",
       "audio": "音频",
+      "video": "视频",
+      "omni": "全模态",
       "embedding": "向量",
-      "rerank": "重排"
+      "rerank": "重排",
+      "class": "分类"
     },
     "reasoningModes": {
       "levels": "档位调节",

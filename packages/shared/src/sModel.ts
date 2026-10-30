@@ -9,7 +9,9 @@ import * as v from 'valibot'
 export type ModelStatus = 'ACTIVE' | 'INACTIVE' | 'ERROR'
 
 /** 模型类型（跨域取值词汇） */
-export type ModelType = 'TEXT' | 'IMAGE' | 'AUDIO' | 'VIDEO' | 'EMBEDDING' | 'RERANK'
+export const MODEL_TYPES = ['TEXT', 'IMAGE', 'AUDIO', 'VIDEO', 'OMNI', 'EMBEDDING', 'RERANK', 'CLASS'] as const
+
+export type ModelType = (typeof MODEL_TYPES)[number]
 
 /** 推理模式（跨域取值词汇） */
 export type ModelReasoning = 'DISABLE' | 'ALWAYS' | 'SWITCH' | 'TOGGLE'
@@ -120,7 +122,7 @@ export const SModelInputSchema = v.object({
   category: v.optional(v.string(), MODEL_DEFAULT_CATEGORY),
   enabled: v.optional(v.boolean(), true),
   status: v.optional(v.picklist(['ACTIVE', 'INACTIVE', 'ERROR']), 'ACTIVE'),
-  type: v.picklist(['TEXT', 'IMAGE', 'AUDIO', 'VIDEO', 'EMBEDDING', 'RERANK']),
+  type: v.picklist(MODEL_TYPES),
   inputModal: v.optional(v.array(v.string()), ['text']),
   outputModal: v.optional(v.array(v.string()), ['text']),
   generates: v.optional(v.array(v.string()), []),
@@ -138,7 +140,7 @@ export const SModelImportSchema = v.object({
   models: v.array(v.object({
     code: requiredText,
     name: v.optional(v.string(), ''),
-    type: v.picklist(['TEXT', 'IMAGE', 'AUDIO', 'VIDEO', 'EMBEDDING', 'RERANK']),
+    type: v.picklist(MODEL_TYPES),
   })),
   bindings: v.optional(v.array(v.object({
     keyId: v.pipe(v.number(), v.integer()),

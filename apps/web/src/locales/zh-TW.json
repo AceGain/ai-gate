@@ -137,10 +137,12 @@
     "types": {
       "text": "文字",
       "image": "影像",
-      "video": "影片",
       "audio": "音訊",
+      "video": "影片",
+      "omni": "全模態",
       "embedding": "向量",
-      "rerank": "重排"
+      "rerank": "重排",
+      "class": "分類"
     },
     "reasoningModes": {
       "levels": "等級調整",

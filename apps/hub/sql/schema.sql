@@ -48,7 +48,7 @@ CREATE TABLE t_model (
   category TEXT DEFAULT 'Default', -- 分类，默认 Default；  
   enabled BOOLEAN NOT NULL DEFAULT FALSE,
   status TEXT NOT NULL DEFAULT 'ACTIVE', -- 状态；ACTIVE：正常，INACTIVE：不可用，ERROR：异常；
-  type TEXT NOT NULL, -- 类型：TEXT、IMAGE、AUDIO、VIDEO、EMBEDDING、RERANK；
+  type TEXT NOT NULL, -- 类型：TEXT、IMAGE、AUDIO、VIDEO、OMNI、EMBEDDING、RERANK、CLASS；
   gen_type TEXT NOT NULL CHECK (json_valid(gen_type)), -- GEN 类型：Chat、Responses、Messages；
   config TEXT NOT NULL CHECK (json_valid(config)), -- 模型配置
   remark TEXT DEFAULT NULL,

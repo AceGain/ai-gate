@@ -18,7 +18,9 @@ import {
   PhFileText,
   PhFloppyDisk,
   PhImage,
+  PhIntersectThree,
   PhSlidersHorizontal,
+  PhTag,
   PhTextT,
   PhVideoCamera,
   PhWaveform,
@@ -88,10 +90,12 @@ const saving = ref(false)
 const typeOptions = computed(() => [
   {label: t('models.types.text'), value: 'TEXT', icon: PhTextT},
   {label: t('models.types.image'), value: 'IMAGE', icon: PhImage},
-  {label: t('models.types.video'), value: 'VIDEO', icon: PhVideoCamera},
   {label: t('models.types.audio'), value: 'AUDIO', icon: PhWaveform},
+  {label: t('models.types.video'), value: 'VIDEO', icon: PhVideoCamera},
+  {label: t('models.types.omni'), value: 'OMNI', icon: PhIntersectThree},
   {label: t('models.types.embedding'), value: 'EMBEDDING', icon: PhBracketsAngle},
   {label: t('models.types.rerank'), value: 'RERANK', icon: PhArrowsDownUp},
+  {label: t('models.types.class'), value: 'CLASS', icon: PhTag},
 ] as const)
 
 const reasoningOptions = computed(() => [
@@ -323,7 +327,7 @@ async function save() {
             type="single"
             variant="outline"
             :spacing="2"
-            class="grid w-full grid-cols-2 sm:grid-cols-3"
+            class="grid w-full grid-cols-2 sm:grid-cols-4"
           >
             <ToggleGroupItem
               v-for="item in typeOptions"

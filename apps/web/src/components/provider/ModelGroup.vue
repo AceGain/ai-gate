@@ -8,8 +8,10 @@ import {
   PhCaretDown,
   PhDotsSixVertical,
   PhImage,
+  PhIntersectThree,
   PhPencilSimple,
   PhPulse,
+  PhTag,
   PhTextT,
   PhTrashSimple,
   PhVideoCamera,
@@ -125,10 +127,12 @@ useSortable(listEl, localItems, {
 const typeMeta = computed(() => new Map<string, {icon: typeof PhTextT, label: string}>([
   ['TEXT', {icon: PhTextT, label: t('models.types.text')}],
   ['IMAGE', {icon: PhImage, label: t('models.types.image')}],
-  ['VIDEO', {icon: PhVideoCamera, label: t('models.types.video')}],
   ['AUDIO', {icon: PhWaveform, label: t('models.types.audio')}],
+  ['VIDEO', {icon: PhVideoCamera, label: t('models.types.video')}],
+  ['OMNI', {icon: PhIntersectThree, label: t('models.types.omni')}],
   ['EMBEDDING', {icon: PhBracketsAngle, label: t('models.types.embedding')}],
   ['RERANK', {icon: PhArrowsDownUp, label: t('models.types.rerank')}],
+  ['CLASS', {icon: PhTag, label: t('models.types.class')}],
 ]))
 </script>
 

@@ -137,10 +137,12 @@
     "types": {
       "text": "Text",
       "image": "Image",
-      "video": "Video",
       "audio": "Audio",
+      "video": "Video",
+      "omni": "Omni",
       "embedding": "Embedding",
-      "rerank": "Rerank"
+      "rerank": "Rerank",
+      "class": "Class"
     },
     "reasoningModes": {
       "levels": "Adjustable effort",

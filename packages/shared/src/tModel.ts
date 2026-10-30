@@ -4,7 +4,7 @@
  */
 import * as v from 'valibot'
 import type { ModelReasoning, ModelStatus, ModelType } from './sModel.js'
-import { MODEL_DEFAULT_CATEGORY } from './sModel.js'
+import { MODEL_DEFAULT_CATEGORY, MODEL_TYPES } from './sModel.js'
 
 /** t_model.config 列的 JSON 结构 */
 export interface TModelConfig {
@@ -81,7 +81,7 @@ export const TModelInputSchema = v.object({
   category: v.optional(v.string(), MODEL_DEFAULT_CATEGORY),
   enabled: v.optional(v.boolean(), false),
   status: v.optional(v.picklist(['ACTIVE', 'INACTIVE', 'ERROR']), 'ACTIVE'),
-  type: v.picklist(['TEXT', 'IMAGE', 'AUDIO', 'VIDEO', 'EMBEDDING', 'RERANK']),
+  type: v.picklist(MODEL_TYPES),
   genType: v.optional(v.array(v.string())),
   generates: v.optional(v.array(v.string())),
   config: v.optional(v.record(v.string(), v.unknown())),
