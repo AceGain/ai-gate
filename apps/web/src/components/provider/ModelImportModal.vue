@@ -149,19 +149,23 @@ const refetchDisabled = computed(() => !selectedKeyIds.value.length)
 
 const loadButtonLabels = {
   load: '加载',
-  loading: '加载中',
   refresh: '刷新',
   retry: '重试',
 }
 
-const loadButtonText = computed(() => {
-  if (loading.value) return loadButtonLabels.loading
-  if (errorCode.value) return loadButtonLabels.retry
-  return fetched.value ? loadButtonLabels.refresh : loadButtonLabels.load
+const loadButtonAction = computed(() => {
+  if (errorCode.value) return 'retry'
+  return fetched.value ? 'refresh' : 'load'
 })
+// 请求开始前记录动作，避免清除错误或更新结果时改变按钮文案。
+const pendingLoadAction = ref<keyof typeof loadButtonLabels>('load')
+const loadButtonText = computed(() =>
+  loadButtonLabels[loading.value ? pendingLoadAction.value : loadButtonAction.value],
+)
 
 async function load() {
   if (refetchDisabled.value || loading.value) return
+  pendingLoadAction.value = loadButtonAction.value
   loading.value = true
   errorCode.value = null
   keyResults.value = []
@@ -362,6 +366,7 @@ async function importSelected() {
           variant="outline"
           class="shrink-0"
           :disabled="refetchDisabled || loading"
+          :aria-busy="loading"
           @click="load"
         >
           <Spinner
@@ -534,6 +539,7 @@ async function importSelected() {
         </Button>
         <Button
           :disabled="!selectedCount || importing"
+          :aria-busy="importing"
           @click="importSelected"
         >
           <Spinner v-if="importing" data-icon="inline-start" />
@@ -541,7 +547,7 @@ async function importSelected() {
             v-else
             data-icon="inline-start"
           />
-          保存
+          导入
         </Button>
       </DialogFooter>
     </DialogContent>
