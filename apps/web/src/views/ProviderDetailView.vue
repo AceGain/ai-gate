@@ -34,7 +34,6 @@ import AppEmpty from '@/components/AppEmpty.vue'
 import AppLoading from '@/components/AppLoading.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -59,10 +58,6 @@ const {providers, endpoints, keys, models, configLoading} = storeToRefs(store)
 
 const id = computed(() => Number(route.params.id))
 const provider = computed(() => providers.value.find(p => p.id === id.value))
-const providerStateLabels = computed(() => ({
-  enabled: t('common.enabled'),
-  disabled: t('common.disabled'),
-}))
 
 useBreadcrumb(() => [
   { label: t('nav.providers'), to: '/providers' },
@@ -464,22 +459,10 @@ function urlParts(path?: string) {
         </p>
 
         <!-- 宽屏与名称同行，窄屏整体移到备注下方并靠右。 -->
-        <div class="mt-2 flex shrink-0 items-center gap-2 justify-self-end sm:col-start-2 sm:row-start-1 sm:mt-0">
-          <Label for="provider-enabled" class="cursor-pointer">
-            <span class="text-muted-foreground inline-grid place-items-center">
-              <span
-                v-for="(label, state) in providerStateLabels"
-                :key="state"
-                class="invisible col-start-1 row-start-1"
-                aria-hidden="true"
-              >{{ label }}</span>
-              <span class="col-start-1 row-start-1">
-                {{ provider.enabled ? providerStateLabels.enabled : providerStateLabels.disabled }}
-              </span>
-            </span>
-          </Label>
+        <div class="mt-2 flex shrink-0 items-center justify-self-end sm:col-start-2 sm:row-start-1 sm:mt-0">
           <Switch
             id="provider-enabled"
+            size="sm"
             :model-value="provider.enabled"
             :aria-label="t('providers.enable')"
             @update:model-value="v => store.toggleProvider(provider!, !!v)"
