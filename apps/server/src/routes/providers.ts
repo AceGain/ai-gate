@@ -1,5 +1,5 @@
 /**
- * 出站供应商（S 域）API（/api/providers）：s_provider 表的逐条 CRUD
+ * 出站供应商（S 域）API（/api/set/providers）：s_provider 表的逐条 CRUD
  * id 与时间戳由服务端/数据库维护；code 冲突返回 409，记录不存在返回 404
  */
 import {Hono} from 'hono'

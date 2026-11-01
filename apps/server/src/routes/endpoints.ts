@@ -1,5 +1,5 @@
 /**
- * 出站供应商端点（S 域）API（/api/providers/:providerId/endpoints）：s_endpoint 表的 CRUD
+ * 出站供应商端点（S 域）API（/api/set/providers/:providerId/endpoints）：s_endpoint 表的 CRUD
  */
 import {Hono} from 'hono'
 import {SEndpointInputSchema} from '@ai-gate/shared'

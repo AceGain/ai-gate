@@ -1,5 +1,5 @@
 /**
- * 出站供应商模型（S 域）API（/api/providers/:providerId/models）：s_model 表的 CRUD
+ * 出站供应商模型（S 域）API（/api/set/providers/:providerId/models）：s_model 表的 CRUD
  * + 上游模型列表拉取 / 单模型测试 / 批量导入（含密钥-模型绑定 s_relat）
  */
 import {Hono} from 'hono'

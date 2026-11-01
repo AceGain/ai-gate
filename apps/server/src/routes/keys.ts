@@ -1,5 +1,5 @@
 /**
- * 出站供应商密钥（S 域）API（/api/providers/:providerId/keys）：s_key 表的 CRUD + 可用性测试
+ * 出站供应商密钥（S 域）API（/api/set/providers/:providerId/keys）：s_key 表的 CRUD + 可用性测试
  */
 import {Hono} from 'hono'
 import {SKeyInputSchema, SReorderSchema} from '@ai-gate/shared'
