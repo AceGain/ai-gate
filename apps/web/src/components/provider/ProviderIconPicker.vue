@@ -86,7 +86,7 @@ function onFileChange(event: Event) {
     </div>
   </div>
 
-  <DialogBody ref="resultsBody" :aria-label="t('icons.change')">
+  <DialogBody ref="resultsBody" class="flex-1" :aria-label="t('icons.change')">
     <div v-if="displayedIcons.length" class="grid grid-cols-[repeat(auto-fill,minmax(2.5rem,1fr))] gap-1.5">
       <Button
         v-for="item in displayedIcons"

@@ -3,6 +3,7 @@ import { apiErrorMessage } from '@/lib/apiErrorMessage'
 import type { GenEndpointType, SProvider } from '@ai-gate/shared'
 import { GEN_ENDPOINT_TYPES, GEN_ENDPOINT_DEFAULT_PATHS } from '@ai-gate/shared'
 import { computed, nextTick, reactive, ref, watch, useId } from 'vue'
+import { cn } from 'cn'
 import { PhArrowLeft, PhCamera, PhFloppyDisk, PhX } from '@phosphor-icons/vue'
 import { toast } from 'vue-sonner'
 import { ApiError } from '@/lib/api'
@@ -239,7 +240,10 @@ async function save() {
     :open="open"
     @update:open="v => open = v"
   >
-    <DialogContent class="sm:max-w-md" @escape-key-down="handleEscape">
+    <DialogContent
+      :class="cn('sm:max-w-md', pickingIcon && 'min-h-[min(384px,calc(100dvh-2rem))] sm:min-h-[min(384px,calc(100dvh-4rem))]')"
+      @escape-key-down="handleEscape"
+    >
       <DialogHeader>
         <div v-if="pickingIcon" class="flex items-center gap-2 pr-6">
           <Button variant="ghost" size="icon-sm" :aria-label="t('common.back')" @click="returnToForm">
