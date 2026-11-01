@@ -424,7 +424,7 @@ function urlParts(path?: string) {
 
   <div
     v-else-if="provider"
-    class="mx-auto flex min-w-0 w-full max-w-5xl flex-1 flex-col"
+    class="flex min-w-0 flex-1 flex-col"
   >
     <!-- 1. 顶部档案区：图标 + 名称/描述 + 返回与启用控制 -->
     <div class="grid shrink-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3.5 pb-3">
