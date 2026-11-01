@@ -520,12 +520,12 @@ function urlParts(path?: string) {
           <template v-else-if="activeTab === 'models'">
             <Button
               variant="ghost"
-              :aria-label="t('importModels.title')"
-              :title="t('importModels.title')"
+              :aria-label="t('common.import')"
+              :title="t('common.import')"
               @click="openImportModels"
             >
               <PhDownloadSimple data-icon="inline-start" />
-              <span class="hidden sm:inline">{{ t('importModels.title') }}</span>
+              <span class="hidden sm:inline">{{ t('common.import') }}</span>
             </Button>
             <Button
               variant="ghost"

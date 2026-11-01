@@ -358,19 +358,11 @@ async function save() {
 
           <!-- 额外配置：模态、Token 限制、推理、生成端点等可选扩展 -->
           <Collapsible v-model:open="isAdvancedOpen">
-            <CollapsibleTrigger
-              as-child
-              class="group w-full"
-            >
-              <Button
-                variant="ghost"
-                class="justify-between px-0 py-2"
-              >
-                <span class="flex items-center gap-2">
-                  <PhSlidersHorizontal class="text-muted-foreground size-4 transition-colors group-hover:text-foreground" />
-                  <span class="text-foreground text-xs font-medium">{{ t('models.advanced') }}</span>
-                </span>
-                <PhCaretDown class="text-muted-foreground size-4 transition-transform group-data-[state=open]:rotate-180" />
+            <CollapsibleTrigger as-child>
+              <Button variant="outline" class="group w-full justify-start text-left">
+                <PhSlidersHorizontal data-icon="inline-start" class="text-muted-foreground" />
+                <span class="min-w-0 flex-1">{{ t('models.advanced') }}</span>
+                <PhCaretDown data-icon="inline-end" class="text-muted-foreground transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none" />
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent>
@@ -418,19 +410,11 @@ async function save() {
                   </ToggleGroup>
                 </Field>
 
-                <!-- 2. Token 限制与快捷输入（输入框 + 预设按钮） -->
+                <!-- 2. Token 限制：标题右侧放置预设，输入框独占一行。 -->
                 <Field>
-                  <FieldLabel :for="`${formId}-maxContext`">{{ t('models.contextWindow') }}</FieldLabel>
-                  <div class="flex items-center gap-2">
-                    <Input
-                      v-model.number="form.maxContext"
-                      :id="`${formId}-maxContext`"
-                      type="number"
-                      :placeholder="t('models.tokenPlaceholder')"
-                      :min="0"
-                    >
-                    </Input>
-                    <ToggleGroup :model-value="form.maxContext" type="single" :spacing="1" :aria-label="t('models.contextWindow')" class="shrink-0" @update:model-value="v => form.maxContext = typeof v === 'number' ? v : ''">
+                  <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                    <FieldLabel class="shrink-0" :for="`${formId}-maxContext`">{{ t('models.contextWindow') }}</FieldLabel>
+                    <ToggleGroup :model-value="form.maxContext" type="single" :spacing="1" :aria-label="t('models.contextWindow')" class="ml-auto shrink-0" @update:model-value="v => form.maxContext = typeof v === 'number' ? v : ''">
                       <ToggleGroupItem
                         v-for="p in contextPresets"
                         :key="p.value"
@@ -442,20 +426,20 @@ async function save() {
                       </ToggleGroupItem>
                     </ToggleGroup>
                   </div>
+                  <Input
+                    v-model.number="form.maxContext"
+                    :id="`${formId}-maxContext`"
+                    type="number"
+                    :placeholder="t('models.tokenPlaceholder')"
+                    :min="0"
+                  >
+                  </Input>
                 </Field>
 
                 <Field>
-                  <FieldLabel :for="`${formId}-maxInput`">{{ t('models.maxInputTokens') }}</FieldLabel>
-                  <div class="flex items-center gap-2">
-                    <Input
-                      v-model.number="form.maxInput"
-                      :id="`${formId}-maxInput`"
-                      type="number"
-                      :placeholder="t('models.tokenPlaceholder')"
-                      :min="0"
-                    >
-                    </Input>
-                    <ToggleGroup :model-value="form.maxInput" type="single" :spacing="1" :aria-label="t('models.maxInputTokens')" class="shrink-0" @update:model-value="v => form.maxInput = typeof v === 'number' ? v : ''">
+                  <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                    <FieldLabel class="shrink-0" :for="`${formId}-maxInput`">{{ t('models.maxInputTokens') }}</FieldLabel>
+                    <ToggleGroup :model-value="form.maxInput" type="single" :spacing="1" :aria-label="t('models.maxInputTokens')" class="ml-auto shrink-0" @update:model-value="v => form.maxInput = typeof v === 'number' ? v : ''">
                       <ToggleGroupItem
                         v-for="p in inputPresets"
                         :key="p.value"
@@ -467,20 +451,20 @@ async function save() {
                       </ToggleGroupItem>
                     </ToggleGroup>
                   </div>
+                  <Input
+                    v-model.number="form.maxInput"
+                    :id="`${formId}-maxInput`"
+                    type="number"
+                    :placeholder="t('models.tokenPlaceholder')"
+                    :min="0"
+                  >
+                  </Input>
                 </Field>
 
                 <Field>
-                  <FieldLabel :for="`${formId}-maxOutput`">{{ t('models.maxOutputTokens') }}</FieldLabel>
-                  <div class="flex items-center gap-2">
-                    <Input
-                      v-model.number="form.maxOutput"
-                      :id="`${formId}-maxOutput`"
-                      type="number"
-                      :placeholder="t('models.tokenPlaceholder')"
-                      :min="0"
-                    >
-                    </Input>
-                    <ToggleGroup :model-value="form.maxOutput" type="single" :spacing="1" :aria-label="t('models.maxOutputTokens')" class="shrink-0" @update:model-value="v => form.maxOutput = typeof v === 'number' ? v : ''">
+                  <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                    <FieldLabel class="shrink-0" :for="`${formId}-maxOutput`">{{ t('models.maxOutputTokens') }}</FieldLabel>
+                    <ToggleGroup :model-value="form.maxOutput" type="single" :spacing="1" :aria-label="t('models.maxOutputTokens')" class="ml-auto shrink-0" @update:model-value="v => form.maxOutput = typeof v === 'number' ? v : ''">
                       <ToggleGroupItem
                         v-for="p in outputPresets"
                         :key="p.value"
@@ -492,6 +476,14 @@ async function save() {
                       </ToggleGroupItem>
                     </ToggleGroup>
                   </div>
+                  <Input
+                    v-model.number="form.maxOutput"
+                    :id="`${formId}-maxOutput`"
+                    type="number"
+                    :placeholder="t('models.tokenPlaceholder')"
+                    :min="0"
+                  >
+                  </Input>
                 </Field>
 
                 <!-- 推理模式 -->
