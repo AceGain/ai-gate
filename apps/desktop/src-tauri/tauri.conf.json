@@ -13,6 +13,7 @@
     "windows": [
       {
         "title": "AI Gate",
+        "generalAutofillEnabled": false,
         "width": 900,
         "height": 660,
         "minWidth": 900,
