@@ -241,6 +241,7 @@ async function save() {
     @update:open="v => open = v"
   >
     <DialogContent
+      v-bind="pickingIcon ? {} : { 'aria-describedby': undefined }"
       :class="cn('sm:max-w-md', pickingIcon && 'min-h-[min(384px,calc(100dvh-2rem))] sm:min-h-[min(384px,calc(100dvh-4rem))]')"
       @escape-key-down="handleEscape"
     >

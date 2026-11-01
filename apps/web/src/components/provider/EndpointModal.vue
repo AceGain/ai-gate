@@ -79,6 +79,10 @@ const availableGenerates = computed(() => {
   return GEN_ENDPOINT_TYPES.filter(p => !configuredGenerates.value.has(p))
 })
 
+const showUnavailableDescription = computed(() =>
+  form.type === 'generate' && !props.endpoint && availableGenerates.value.length === 0,
+)
+
 watch(open, (v) => {
   if (!v) return
   form.type = targetType.value
@@ -193,10 +197,13 @@ async function save() {
     :open="open"
     @update:open="v => open = v"
   >
-    <DialogContent class="sm:max-w-md">
+    <DialogContent
+      v-bind="showUnavailableDescription ? {} : { 'aria-describedby': undefined }"
+      class="sm:max-w-md"
+    >
       <DialogHeader>
         <DialogTitle>{{ modalTitle }}</DialogTitle>
-        <DialogDescription v-if="form.type === 'generate' && !props.endpoint && availableGenerates.length === 0">
+        <DialogDescription v-if="showUnavailableDescription">
           {{ t('endpoints.allConfigured') }}
         </DialogDescription>
       </DialogHeader>

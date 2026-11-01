@@ -293,7 +293,7 @@ async function save() {
     :open="open"
     @update:open="v => open = v"
   >
-    <DialogContent class="sm:max-w-lg">
+    <DialogContent :aria-describedby="undefined" class="sm:max-w-lg">
       <DialogHeader>
         <DialogTitle>{{ props.modelItem ? t('models.edit') : t('models.create') }}</DialogTitle>
       </DialogHeader>

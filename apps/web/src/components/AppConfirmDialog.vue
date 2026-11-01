@@ -33,6 +33,7 @@ function handleOpenChange(open: boolean) {
   >
     <AlertDialogContent
       v-if="state"
+      v-bind="state.description ? {} : { 'aria-describedby': undefined }"
       size="sm"
       class="flex max-h-[calc(100dvh-2rem)] flex-col max-sm:w-[calc(100%-2rem)] sm:max-h-[calc(100dvh-4rem)]"
     >

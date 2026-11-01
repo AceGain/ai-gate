@@ -307,7 +307,7 @@ async function importSelected() {
     @update:open="v => open = v"
   >
     <!-- 为模型选择预留稳定空间；矮屏下仍遵循 DialogContent 的视口高度上限。 -->
-    <DialogContent class="min-h-[min(384px,calc(100dvh-2rem))] sm:min-h-[min(384px,calc(100dvh-4rem))] sm:max-w-md">
+    <DialogContent :aria-describedby="undefined" class="min-h-[min(384px,calc(100dvh-2rem))] sm:min-h-[min(384px,calc(100dvh-4rem))] sm:max-w-md">
       <DialogHeader class="shrink-0">
         <DialogTitle>{{ t('importModels.title') }}</DialogTitle>
       </DialogHeader>

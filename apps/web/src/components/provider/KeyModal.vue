@@ -99,7 +99,7 @@ async function save() {
     :open="open"
     @update:open="v => open = v"
   >
-    <DialogContent class="sm:max-w-md">
+    <DialogContent :aria-describedby="undefined" class="sm:max-w-md">
       <DialogHeader>
         <DialogTitle>{{ props.keyItem ? t('keys.edit') : t('keys.create') }}</DialogTitle>
       </DialogHeader>
