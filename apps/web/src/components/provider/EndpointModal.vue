@@ -265,7 +265,7 @@ async function save() {
           <!-- 完整端点地址预览 -->
           <Field>
             <FieldLabel>{{ t('endpoints.preview') }}</FieldLabel>
-            <div class="bg-muted/40 flex min-h-8 items-center justify-between gap-2 border px-2.5 py-1.5">
+            <div class="bg-muted/40 flex h-8 min-w-0 items-center justify-between gap-2 border px-2.5">
               <code
                 class="min-w-0 flex-1 truncate text-xs select-all"
                 :title="previewUrlParts.fullUrl || t('common.noData')"
@@ -279,7 +279,7 @@ async function save() {
               <Button
                 v-if="previewUrlParts.fullUrl"
                 variant="ghost"
-                size="icon-sm"
+                size="icon-xs"
                 class="shrink-0"
                 :title="t('common.copy')"
                 :aria-label="t('common.copy')"
