@@ -517,7 +517,7 @@ async function importSelected() {
                   />
                   <span class="flex min-w-0 flex-1 items-center gap-2">
                     <span
-                      class="min-w-0 flex-1 truncate text-xs font-medium"
+                      class="min-w-0 flex-1 select-text truncate text-xs font-medium"
                       :title="item.code"
                     >{{ item.code }}</span>
                     <Badge
@@ -535,13 +535,13 @@ async function importSelected() {
                     >
                       <span
                         v-if="item.name && item.name !== item.code"
-                        class="max-w-48 min-w-0 truncate"
+                        class="max-w-48 min-w-0 select-text truncate"
                       >{{ item.name }}</span>
                       <span class="text-muted-foreground/70 shrink-0">{{ t('importModels.availableKeys', { count: item.keyIds.length }) }}</span>
                     </span>
                     <span
                       v-else-if="item.name && item.name !== item.code"
-                      class="text-muted-foreground min-w-0 shrink truncate text-xs"
+                      class="text-muted-foreground min-w-0 shrink select-text truncate text-xs"
                     >
                       {{ item.name }}
                     </span>

@@ -51,7 +51,7 @@ watchEffect(() => {
   <SidebarProvider>
     <AppSidebar />
     <SidebarInset>
-      <header class="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+      <header class="flex h-14 shrink-0 select-none items-center gap-2 border-b px-4">
         <SidebarTrigger class="-ml-1" />
         <Separator
           orientation="vertical"

@@ -115,7 +115,7 @@ onBeforeUnmount(() => {
         <Item
           v-for="p in providers"
           :key="p.id"
-          class="group hover:border-primary/40 hover:bg-muted/30 min-h-16 min-w-0 gap-3 px-3.5 select-none flex-nowrap duration-150"
+          class="group hover:border-primary/40 hover:bg-muted/30 min-h-16 min-w-0 gap-3 px-3.5 flex-nowrap duration-150"
           variant="outline"
           role="listitem"
         >

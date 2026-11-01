@@ -555,7 +555,7 @@ function urlParts(path?: string) {
           <!-- 固定端点 1: Base URL -->
           <Item role="listitem" class="group hover:bg-muted/30 justify-between gap-4 px-2 flex-nowrap duration-150 border-0 border-border not-last:border-b">
             <ItemContent class="min-w-0">
-              <span class="text-xs font-semibold">Base URL</span>
+              <span class="select-none text-xs font-semibold">Base URL</span>
               <div class="flex min-w-0 items-center gap-2">
                 <code
                   class="text-muted-foreground truncate text-xs select-all"
@@ -593,7 +593,7 @@ function urlParts(path?: string) {
           <!-- 固定端点 2: Models（全路径展示：域名弱化，路径高亮） -->
           <Item role="listitem" class="group hover:bg-muted/30 justify-between gap-4 px-2 flex-nowrap duration-150 border-0 border-border not-last:border-b">
             <ItemContent class="min-w-0">
-              <span class="text-xs font-semibold">{{ t('endpoints.modelList') }}</span>
+              <span class="select-none text-xs font-semibold">{{ t('endpoints.modelList') }}</span>
               <div class="flex min-w-0 items-center gap-2">
                 <code
                   class="truncate text-xs select-all"
