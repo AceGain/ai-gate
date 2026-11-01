@@ -24,6 +24,7 @@ import { ApiError } from '@/lib/api'
 import { useProvidersStore } from '@/stores/providers'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Item, ItemActions } from '@/components/ui/item'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
@@ -146,14 +147,15 @@ const typeMeta = computed(() => new Map<string, {icon: typeof PhTextT, label: st
       <CollapsibleTrigger
         as-child
       >
-        <button
+        <Button
+          variant="ghost"
           type="button"
-          class="bg-muted/50 hover:bg-muted flex w-full cursor-pointer items-center justify-between px-2 py-2 transition-colors"
+          class="bg-muted/50 hover:bg-muted aria-expanded:bg-muted/50 aria-expanded:hover:bg-muted h-auto w-full justify-between gap-0 border-0 px-2 py-2 font-normal leading-relaxed active:translate-y-0"
           :title="label"
         >
           <span class="truncate text-xs font-semibold">{{ label }}</span>
           <PhCaretDown class="text-muted-foreground size-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
-        </button>
+        </Button>
       </CollapsibleTrigger>
 
       <!-- 模型行：单行压缩（显示名 + 类型徽章） -->
@@ -161,11 +163,13 @@ const typeMeta = computed(() => new Map<string, {icon: typeof PhTextT, label: st
         <div
           ref="listEl"
           class="divide-y"
+          role="list"
         >
-          <div
+          <Item
             v-for="m in localItems"
             :key="m.id"
-            class="group hover:bg-muted/40 flex items-center justify-between gap-2 px-2 py-1.5 transition-colors"
+            class="group hover:bg-muted/40 justify-between gap-2 px-2 py-1.5 flex-nowrap duration-150 border-0 border-border leading-relaxed not-last:border-b"
+            role="listitem"
           >
             <div class="flex min-w-0 flex-1 items-center gap-2.5">
               <div
@@ -199,7 +203,7 @@ const typeMeta = computed(() => new Map<string, {icon: typeof PhTextT, label: st
               </div>
             </div>
 
-            <div class="flex shrink-0 items-center gap-1">
+            <ItemActions class="shrink-0 gap-1">
               <Switch
                 size="sm"
                 :model-value="m.enabled"
@@ -238,8 +242,8 @@ const typeMeta = computed(() => new Map<string, {icon: typeof PhTextT, label: st
               >
                 <PhTrashSimple />
               </Button>
-            </div>
-          </div>
+            </ItemActions>
+          </Item>
         </div>
       </CollapsibleContent>
     </Collapsible>

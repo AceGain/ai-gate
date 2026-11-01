@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { apiErrorMessage } from '@/lib/apiErrorMessage'
 import type { SModel, SModelInput, SRemoteModelItem, SRemoteModelKeyFetch } from '@ai-gate/shared'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, useId } from 'vue'
 import {
   PhArrowsClockwise,
   PhCaretDown,
+  PhCheck,
   PhDownloadSimple,
   PhFloppyDisk,
   PhKey,
@@ -18,6 +19,12 @@ import { useProvidersStore } from '@/stores/providers'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import {
+  DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent,
+  DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Field, FieldLabel } from '@/components/ui/field'
 import {
   Dialog,
   DialogBody,
@@ -29,16 +36,12 @@ import {
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Spinner } from '@/components/ui/spinner'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
 import AppEmpty from '@/components/AppEmpty.vue'
 import AppLoading from '@/components/AppLoading.vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
+const formId = useId()
 
 /**
  * 从供应商模型列表端点获取模型：获取方式在弹窗内选择——
@@ -108,6 +111,11 @@ const mergedItems = computed<MergedItem[]>(() => {
   return order.map(code => map.get(code)!)
 })
 
+// ID 跟随模型，避免过滤时复用其他复选框的标签。
+const modelOptionIds = computed(() => new Map(
+  mergedItems.value.map((item, index) => [item.code, `${formId}-model-${index}`]),
+))
+
 const keyNameById = computed(() => new Map(store.keys.map(k => [k.id, k.name])))
 
 /** 下拉框摘要文案：全部选中显示「全部密钥 (N)」，否则显示已选数量；悬停展示明细 */
@@ -133,15 +141,10 @@ function toggleSelectAllKeys() {
   }
 }
 
-function toggleKey(id: number) {
-  const next = [...selectedKeyIds.value]
-  const idx = next.indexOf(id)
-  if (idx >= 0) {
-    next.splice(idx, 1)
-  } else {
-    next.push(id)
-  }
-  selectedKeyIds.value = next
+function setKeyChecked(id: number, checked: boolean) {
+  selectedKeyIds.value = checked
+    ? [...selectedKeyIds.value.filter(value => value !== id), id]
+    : selectedKeyIds.value.filter(value => value !== id)
 }
 
 const filteredItems = computed(() => {
@@ -311,11 +314,10 @@ async function importSelected() {
 
       <!-- 工具栏：密钥下拉多选 + 获取按钮，任何状态下常驻 -->
       <div class="flex shrink-0 items-center gap-2">
-        <Popover v-if="activeKeys.length">
-          <PopoverTrigger as-child>
+        <DropdownMenu v-if="activeKeys.length" :modal="false">
+          <DropdownMenuTrigger as-child>
             <Button
               variant="outline"
-              role="combobox"
               class="h-8 min-w-0 flex-1 justify-between px-2.5 text-xs font-normal select-none"
               :aria-label="keySelectSummary"
             >
@@ -330,48 +332,54 @@ async function importSelected() {
               </div>
               <PhCaretDown class="text-muted-foreground size-3.5 shrink-0 opacity-70" />
             </Button>
-          </PopoverTrigger>
+          </DropdownMenuTrigger>
 
-          <PopoverContent
+          <DropdownMenuContent
             class="w-64 p-1 text-xs"
             align="start"
           >
-            <div
-              v-if="activeKeys.length > 1"
-              class="flex items-center justify-between border-b px-2 py-1.5 text-xs select-none"
-            >
-              <span class="text-muted-foreground">{{ t('importModels.chooseKeys') }}</span>
-              <button
-                type="button"
-                class="text-primary hover:underline cursor-pointer"
-                @click.stop="toggleSelectAllKeys"
+            <DropdownMenuGroup>
+              <div
+                v-if="activeKeys.length > 1"
+                class="flex items-center justify-between border-b px-2 py-1.5 text-xs select-none"
               >
-                {{ selectedKeyIds.length === activeKeys.length ? t('common.deselectAll') : t('common.selectAll') }}
-              </button>
-            </div>
-            <ScrollArea type="auto" class="max-h-56" :viewport-label="t('importModels.chooseKeys')">
-              <div class="flex flex-col py-0.5 pr-3">
-                <div
-                  v-for="k in activeKeys"
-                  :key="k.id"
-                  class="hover:bg-accent hover:text-accent-foreground flex cursor-pointer items-center gap-2 px-2 py-1.5 text-xs select-none transition-colors"
-                  @click="toggleKey(k.id)"
-                >
-                  <Checkbox
-                    :model-value="selectedKeyIds.includes(k.id)"
-                    class="pointer-events-none"
-                  />
-                  <span
-                    class="truncate flex-1 text-xs"
-                    :title="k.name"
+                <span class="text-muted-foreground">{{ t('importModels.chooseKeys') }}</span>
+                <DropdownMenuItem as-child @select.prevent="toggleSelectAllKeys">
+                  <Button
+                    variant="link"
+                    type="button"
+                    class="h-auto border-0 p-0 font-normal"
                   >
-                    {{ k.name }}
-                  </span>
-                </div>
+                    {{ selectedKeyIds.length === activeKeys.length ? t('common.deselectAll') : t('common.selectAll') }}
+                  </Button>
+                </DropdownMenuItem>
               </div>
-            </ScrollArea>
-          </PopoverContent>
-        </Popover>
+              <ScrollArea type="auto" class="max-h-56" :viewport-label="t('importModels.chooseKeys')">
+                <DropdownMenuGroup class="flex flex-col py-0.5 pr-3">
+                  <DropdownMenuCheckboxItem
+                    v-for="k in activeKeys"
+                    :key="k.id"
+                    :model-value="selectedKeyIds.includes(k.id)"
+                    :text-value="k.name"
+                    class="hover:bg-accent hover:text-accent-foreground cursor-pointer gap-2 px-2 py-1.5 transition-colors [&>[data-slot=dropdown-menu-checkbox-item-indicator]]:hidden"
+                    @update:model-value="checked => setKeyChecked(k.id, checked)"
+                    @select.prevent
+                  >
+                    <Checkbox as="span" :model-value="selectedKeyIds.includes(k.id)" :tabindex="-1" aria-hidden="true" class="pointer-events-none">
+                      <PhCheck class="size-3.5" />
+                    </Checkbox>
+                    <span
+                      class="truncate flex-1 text-xs"
+                      :title="k.name"
+                    >
+                      {{ k.name }}
+                    </span>
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuGroup>
+              </ScrollArea>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <span
           v-else
@@ -424,13 +432,14 @@ async function importSelected() {
         </InputGroup>
 
         <div class="flex items-center justify-between gap-2">
-          <label class="flex cursor-pointer items-center gap-1.5 text-xs select-none">
+          <FieldLabel :for="`${formId}-select-all`" class="cursor-pointer gap-1.5 text-xs leading-4">
             <Checkbox
+              :id="`${formId}-select-all`"
               :model-value="allVisibleSelected"
               @update:model-value="toggleAll"
             />
             {{ t('common.selectAll') }}
-          </label>
+          </FieldLabel>
           <span class="text-muted-foreground text-xs">{{ t('importModels.selectedCount', { count: selectedCount }) }}</span>
         </div>
       </div>
@@ -472,14 +481,14 @@ async function importSelected() {
             v-if="failedResults.length"
             class="flex shrink-0 flex-col gap-1"
           >
-            <div
+            <Alert
               v-for="r in failedResults"
               :key="r.keyId"
-              class="text-warning flex items-center gap-1.5 text-xs"
+              variant="inline-warning"
             >
               <PhWarning class="size-3.5 shrink-0" />
-              <span class="truncate">{{ r.keyName || r.keyId }}：{{ keyFetchErrorText(r) }}</span>
-            </div>
+              <AlertDescription class="text-warning truncate leading-4">{{ r.keyName || r.keyId }}：{{ keyFetchErrorText(r) }}</AlertDescription>
+            </Alert>
           </div>
 
           <!-- 有失败密钥时由上方明细说明原因，不再叠加「列表为空」 -->
@@ -492,52 +501,53 @@ async function importSelected() {
 
           <template v-else-if="mergedItems.length">
             <div class="flex flex-col gap-1.5">
-              <label
+              <FieldLabel
                 v-for="item in filteredItems"
                 :key="item.code"
-                class="hover:bg-muted/50 flex cursor-pointer items-center gap-2.5 border px-2.5 py-1.5 transition-colors select-none"
-                :class="[
-                  existingCodes.has(item.code) ? 'opacity-60' : '',
-                  !existingCodes.has(item.code) && selected.has(item.code) ? 'border-primary/40 bg-primary/5' : '',
-                ]"
+                :for="modelOptionIds.get(item.code)"
+                class="hover:bg-muted/50 has-data-checked:border-primary/40 dark:has-data-checked:border-primary/40 dark:has-data-checked:bg-primary/5 w-full cursor-pointer leading-4 transition-colors [&>[data-slot=field]]:px-2.5 [&>[data-slot=field]]:py-1.5"
+                :class="{ 'opacity-60': existingCodes.has(item.code) }"
               >
-                <Checkbox
-                  :model-value="selected.has(item.code)"
-                  :disabled="existingCodes.has(item.code)"
-                  @update:model-value="() => toggleItem(item.code)"
-                />
-                <span class="flex min-w-0 flex-1 items-center gap-2">
-                  <span
-                    class="min-w-0 flex-1 truncate text-xs font-medium"
-                    :title="item.code"
-                  >{{ item.code }}</span>
-                  <Badge
-                    v-if="existingCodes.has(item.code)"
-                    variant="secondary"
-                    class="shrink-0"
-                  >
-                    {{ t('importModels.exists') }}
-                  </Badge>
-                  <!-- 多密钥拉取时标注该模型被哪些密钥支持：计数 + 悬停明细 -->
-                  <span
-                    v-if="multiKey"
-                    class="text-muted-foreground flex shrink-0 items-center gap-1.5 text-xs"
-                    :title="item.keyIds.map(id => keyNameById.get(id) || id).join('、')"
-                  >
+                <Field orientation="horizontal" class="gap-2.5">
+                  <Checkbox
+                    :id="modelOptionIds.get(item.code)"
+                    :model-value="selected.has(item.code)"
+                    :disabled="existingCodes.has(item.code)"
+                    @update:model-value="() => toggleItem(item.code)"
+                  />
+                  <span class="flex min-w-0 flex-1 items-center gap-2">
                     <span
-                      v-if="item.name && item.name !== item.code"
-                      class="max-w-48 min-w-0 truncate"
-                    >{{ item.name }}</span>
-                    <span class="text-muted-foreground/70 shrink-0">{{ t('importModels.availableKeys', { count: item.keyIds.length }) }}</span>
+                      class="min-w-0 flex-1 truncate text-xs font-medium"
+                      :title="item.code"
+                    >{{ item.code }}</span>
+                    <Badge
+                      v-if="existingCodes.has(item.code)"
+                      variant="secondary"
+                      class="shrink-0"
+                    >
+                      {{ t('importModels.exists') }}
+                    </Badge>
+                    <!-- 多密钥拉取时标注该模型被哪些密钥支持：计数 + 悬停明细 -->
+                    <span
+                      v-if="multiKey"
+                      class="text-muted-foreground flex shrink-0 items-center gap-1.5 text-xs"
+                      :title="item.keyIds.map(id => keyNameById.get(id) || id).join('、')"
+                    >
+                      <span
+                        v-if="item.name && item.name !== item.code"
+                        class="max-w-48 min-w-0 truncate"
+                      >{{ item.name }}</span>
+                      <span class="text-muted-foreground/70 shrink-0">{{ t('importModels.availableKeys', { count: item.keyIds.length }) }}</span>
+                    </span>
+                    <span
+                      v-else-if="item.name && item.name !== item.code"
+                      class="text-muted-foreground min-w-0 shrink truncate text-xs"
+                    >
+                      {{ item.name }}
+                    </span>
                   </span>
-                  <span
-                    v-else-if="item.name && item.name !== item.code"
-                    class="text-muted-foreground min-w-0 shrink truncate text-xs"
-                  >
-                    {{ item.name }}
-                  </span>
-                </span>
-              </label>
+                </Field>
+              </FieldLabel>
 
               <!-- 搜索无结果 -->
               <div

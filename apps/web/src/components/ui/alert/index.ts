@@ -1,0 +1,22 @@
+import type { VariantProps } from 'class-variance-authority'
+import { cva } from 'class-variance-authority'
+
+export { default as Alert } from './Alert.vue'
+export { default as AlertAction } from './AlertAction.vue'
+export { default as AlertDescription } from './AlertDescription.vue'
+export { default as AlertTitle } from './AlertTitle.vue'
+
+export const alertVariants = cva('grid gap-0.5 rounded-none border px-2.5 py-2 text-left text-xs has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0 *:[svg]:text-current *:[svg:not([class*=size-])]:size-4 group/alert relative w-full', {
+  variants: {
+    variant: {
+      default: 'bg-card text-card-foreground',
+      destructive: 'text-destructive bg-card *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current',
+      'inline-warning': 'text-warning flex items-center gap-1.5 has-[>svg]:gap-x-1.5 border-0 bg-transparent p-0',
+    },
+  },
+  defaultVariants: {
+    variant: 'default',
+  },
+})
+
+export type AlertVariants = VariantProps<typeof alertVariants>

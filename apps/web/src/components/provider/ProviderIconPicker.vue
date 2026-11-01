@@ -5,7 +5,8 @@ import { PhMagnifyingGlass, PhSparkle, PhUploadSimple, PhX } from '@phosphor-ico
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import { DialogBody } from '@/components/ui/dialog'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
+import { Empty, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { brandIconUrl, providerIconOptions } from '@/utils/brandIcons'
 import { useI18n } from 'vue-i18n'
 
@@ -67,9 +68,9 @@ function onFileChange(event: Event) {
         :placeholder="t('icons.searchPlaceholder')"
       />
       <InputGroupAddon v-if="search" align="inline-end">
-        <Button variant="ghost" size="icon-xs" :aria-label="t('common.clear')" @click="search = ''">
+        <InputGroupButton size="icon-xs" class="[&>svg:not([class*=size-])]:size-3" :aria-label="t('common.clear')" @click="search = ''">
           <PhX />
-        </Button>
+        </InputGroupButton>
       </InputGroupAddon>
     </InputGroup>
 
@@ -101,9 +102,11 @@ function onFileChange(event: Event) {
         <img :src="brandIconUrl(item.value, isDark)" alt="" class="size-6 object-contain">
       </Button>
     </div>
-    <div v-else class="text-muted-foreground py-8 text-center text-xs">
-      {{ t('icons.noMatches') }}
-    </div>
+    <Empty v-else class="text-muted-foreground flex-none gap-0 p-0 py-8 text-wrap">
+      <EmptyHeader class="max-w-none gap-0">
+        <EmptyTitle class="text-xs font-normal">{{ t('icons.noMatches') }}</EmptyTitle>
+      </EmptyHeader>
+    </Empty>
   </DialogBody>
 
   <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileChange">

@@ -34,8 +34,10 @@ import AppEmpty from '@/components/AppEmpty.vue'
 import AppLoading from '@/components/AppLoading.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Item, ItemActions, ItemContent, ItemGroup } from '@/components/ui/item'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
+import { Toggle } from '@/components/ui/toggle'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import EndpointModal from '@/components/provider/EndpointModal.vue'
 import KeyModal from '@/components/provider/KeyModal.vue'
@@ -546,13 +548,13 @@ function urlParts(path?: string) {
       >
         <AppLoading v-if="configLoading && !endpoints.length" />
 
-        <div
+        <ItemGroup
           v-else
-          class="border-y divide-y"
+          class="border-y divide-y gap-0"
         >
           <!-- 固定端点 1: Base URL -->
-          <div class="group hover:bg-muted/30 flex items-center justify-between gap-4 px-2 py-2.5 transition-colors">
-            <div class="flex min-w-0 flex-1 flex-col gap-1">
+          <Item role="listitem" class="group hover:bg-muted/30 justify-between gap-4 px-2 flex-nowrap duration-150 border-0 border-border not-last:border-b">
+            <ItemContent class="min-w-0">
               <span class="text-xs font-semibold">Base URL</span>
               <div class="flex min-w-0 items-center gap-2">
                 <code
@@ -573,7 +575,7 @@ function urlParts(path?: string) {
                   <PhCopy />
                 </Button>
               </div>
-            </div>
+            </ItemContent>
             <div class="flex shrink-0 items-center">
               <Button
                 variant="ghost"
@@ -586,11 +588,11 @@ function urlParts(path?: string) {
                 <PhPencilSimple />
               </Button>
             </div>
-          </div>
+          </Item>
 
           <!-- 固定端点 2: Models（全路径展示：域名弱化，路径高亮） -->
-          <div class="group hover:bg-muted/30 flex items-center justify-between gap-4 px-2 py-2.5 transition-colors">
-            <div class="flex min-w-0 flex-1 flex-col gap-1">
+          <Item role="listitem" class="group hover:bg-muted/30 justify-between gap-4 px-2 flex-nowrap duration-150 border-0 border-border not-last:border-b">
+            <ItemContent class="min-w-0">
               <span class="text-xs font-semibold">{{ t('endpoints.modelList') }}</span>
               <div class="flex min-w-0 items-center gap-2">
                 <code
@@ -615,7 +617,7 @@ function urlParts(path?: string) {
                   <PhCopy />
                 </Button>
               </div>
-            </div>
+            </ItemContent>
             <div class="flex shrink-0 items-center">
               <Button
                 variant="ghost"
@@ -628,15 +630,16 @@ function urlParts(path?: string) {
                 <PhPencilSimple />
               </Button>
             </div>
-          </div>
+          </Item>
 
           <!-- 生成端点列表 -->
-          <div
+          <Item
             v-for="ep in generateEndpoints"
             :key="ep.id"
-            class="group hover:bg-muted/30 flex items-center justify-between gap-4 px-2 py-2.5 transition-colors"
+            role="listitem"
+            class="group hover:bg-muted/30 justify-between gap-4 px-2 flex-nowrap duration-150 border-0 border-border not-last:border-b"
           >
-            <div class="flex min-w-0 flex-1 flex-col gap-1">
+            <ItemContent class="min-w-0">
               <!-- 第一行：标题（端点类型） + 默认徽章 -->
               <div class="flex items-center gap-2">
                 <span class="text-xs font-semibold">{{ ep.generate }}</span>
@@ -671,20 +674,26 @@ function urlParts(path?: string) {
                   <PhCopy />
                 </Button>
               </div>
-            </div>
+            </ItemContent>
 
             <!-- 右侧操作按钮：默认星标 + 修改 + 删除 -->
-            <div class="flex shrink-0 items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                :class="ep.isDefault ? 'text-primary' : 'text-muted-foreground hover:text-foreground'"
-                :title="ep.isDefault ? t('endpoints.clearDefault') : t('endpoints.setDefault')"
-                :aria-label="ep.isDefault ? t('endpoints.clearDefault') : t('endpoints.setDefault')"
-                @click="handleToggleDefault(ep)"
+            <ItemActions class="shrink-0 gap-1">
+              <Toggle
+                as-child
+                :model-value="ep.isDefault"
+                class="size-7 min-w-0 p-0 aria-pressed:bg-transparent data-[state=on]:bg-transparent data-[state=on]:hover:bg-muted focus-visible:ring-1"
+                @update:model-value="handleToggleDefault(ep)"
               >
-                <PhStar :weight="ep.isDefault ? 'fill' : undefined" />
-              </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  :class="ep.isDefault ? 'text-primary' : 'text-muted-foreground hover:text-foreground'"
+                  :title="ep.isDefault ? t('endpoints.clearDefault') : t('endpoints.setDefault')"
+                  :aria-label="ep.isDefault ? t('endpoints.clearDefault') : t('endpoints.setDefault')"
+                >
+                  <PhStar :weight="ep.isDefault ? 'fill' : undefined" />
+                </Button>
+              </Toggle>
               <Button
                 variant="ghost"
                 size="icon-sm"
@@ -705,14 +714,14 @@ function urlParts(path?: string) {
               >
                 <PhTrashSimple />
               </Button>
-            </div>
-          </div>
+            </ItemActions>
+          </Item>
 
           <!-- 生成端点为空时的极简空态 -->
           <div v-if="!generateEndpoints.length">
             <AppEmpty :title="t('endpoints.empty')" />
           </div>
-        </div>
+        </ItemGroup>
       </TabsContent>
 
       <!-- 2) API 密钥 Tab -->
@@ -727,11 +736,14 @@ function urlParts(path?: string) {
           v-else-if="keys.length"
           ref="keyListEl"
           class="flex flex-col gap-2"
+          role="list"
         >
-          <div
+          <Item
             v-for="k in keys"
             :key="k.id"
-            class="group hover:border-primary/40 hover:bg-muted/20 flex items-center justify-between gap-4 border px-3 py-2.5 transition-colors"
+            role="listitem"
+            class="group hover:border-primary/40 hover:bg-muted/20 justify-between gap-4 border flex-nowrap duration-150"
+            variant="outline"
           >
             <!-- 左侧信息区：拖拽手柄 + 纵向信息流 -->
             <div class="flex min-w-0 flex-1 items-center gap-2">
@@ -743,7 +755,7 @@ function urlParts(path?: string) {
                 <PhDotsSixVertical class="size-4" />
               </div>
 
-              <div class="flex min-w-0 flex-1 flex-col gap-1">
+              <ItemContent class="min-w-0">
                 <!-- 第一行：名称 + 状态徽标 + 有效期 -->
                 <div class="flex flex-wrap items-center gap-2">
                   <span
@@ -802,11 +814,11 @@ function urlParts(path?: string) {
                     <PhCopy v-else />
                   </Button>
                 </div>
-              </div>
+              </ItemContent>
             </div>
 
             <!-- 右侧操作按钮：启用开关 + 测试 + 编辑 + 删除 -->
-            <div class="flex shrink-0 items-center gap-1">
+            <ItemActions class="shrink-0 gap-1">
               <Switch
                 size="sm"
                 :model-value="k.enabled"
@@ -845,8 +857,8 @@ function urlParts(path?: string) {
               >
                 <PhTrashSimple />
               </Button>
-            </div>
-          </div>
+            </ItemActions>
+          </Item>
         </div>
 
         <!-- 空状态 -->

@@ -2,10 +2,11 @@
 import { computed } from 'vue'
 import { useDark } from '@vueuse/core'
 import { brandIconUrl } from '@/utils/brandIcons'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 /**
  * 供应商显示图标：自定义上传图片（data URL）或品牌 logo（@lobehub/icons 静态 PNG，单色品牌随暗色模式切换）优先，
- * 无图标时回退首字母色块
+ * 无图标或图片加载失败时回退首字母色块
  */
 const props = withDefaults(defineProps<{
   /** 品牌 id、自定义图片（data:/http URL）或空串（首字母 fallback） */
@@ -48,21 +49,20 @@ const textClass = computed(() => {
 </script>
 
 <template>
-  <div
-    class="bg-muted text-foreground flex shrink-0 items-center justify-center border"
+  <Avatar
+    class="bg-muted text-foreground items-center justify-center rounded-none border after:hidden"
     :class="boxClass"
   >
-    <img
+    <AvatarImage
       v-if="src"
       :src="src"
       alt=""
-      class="object-contain"
+      class="rounded-none object-contain"
       :class="imgClass"
-    >
-    <span
-      v-else
-      class="text-primary font-semibold"
+    />
+    <AvatarFallback
+      class="text-primary size-auto rounded-none bg-transparent font-semibold"
       :class="textClass"
-    >{{ initial }}</span>
-  </div>
+    >{{ initial }}</AvatarFallback>
+  </Avatar>
 </template>

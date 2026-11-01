@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { apiErrorMessage } from '@/lib/apiErrorMessage'
 import type { SKey, SKeyInput } from '@ai-gate/shared'
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch, useId } from 'vue'
 import { PhFloppyDisk, PhX } from '@phosphor-icons/vue'
 import { toast } from 'vue-sonner'
 import { useProvidersStore } from '@/stores/providers'
@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
+const formId = useId()
 
 const props = defineProps<{
   providerId: number
@@ -106,11 +107,12 @@ async function save() {
       <DialogBody ref="formBody" :aria-label="props.keyItem ? t('keys.edit') : t('keys.create')">
         <FieldGroup>
           <Field :data-invalid="!!nameError">
-            <FieldLabel>{{ t('keys.name') }} <span class="text-destructive">*</span></FieldLabel>
+            <FieldLabel :for="`${formId}-name`">{{ t('keys.name') }} <span class="text-destructive">*</span></FieldLabel>
             <Input
               v-model="form.name"
               :aria-invalid="!!nameError || undefined"
               :placeholder="t('keys.namePlaceholder')"
+              :id="`${formId}-name`"
             />
             <FieldError v-if="nameError">
               {{ nameError }}
@@ -118,12 +120,13 @@ async function save() {
           </Field>
 
           <Field :data-invalid="!!secretError">
-            <FieldLabel>{{ t('keys.secret') }} <span class="text-destructive">*</span></FieldLabel>
+            <FieldLabel :for="`${formId}-secret`">{{ t('keys.secret') }} <span class="text-destructive">*</span></FieldLabel>
             <Input
               v-model="form.secret"
               type="password"
               :aria-invalid="!!secretError || undefined"
               :placeholder="t('keys.secretPlaceholder')"
+              :id="`${formId}-secret`"
             />
             <FieldError v-if="secretError">
               {{ secretError }}
@@ -131,10 +134,11 @@ async function save() {
           </Field>
 
           <Field>
-            <FieldLabel>{{ t('keys.expiresAt') }}</FieldLabel>
+            <FieldLabel :for="`${formId}-expireTime`">{{ t('keys.expiresAt') }}</FieldLabel>
             <Input
               v-model="form.expireTime"
               type="date"
+              :id="`${formId}-expireTime`"
             />
             <FieldDescription>{{ t('keys.expiryHint') }}</FieldDescription>
           </Field>

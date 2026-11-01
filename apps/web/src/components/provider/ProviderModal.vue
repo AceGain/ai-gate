@@ -2,7 +2,7 @@
 import { apiErrorMessage } from '@/lib/apiErrorMessage'
 import type { GenEndpointType, SProvider } from '@ai-gate/shared'
 import { GEN_ENDPOINT_TYPES, GEN_ENDPOINT_DEFAULT_PATHS } from '@ai-gate/shared'
-import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch, useId } from 'vue'
 import { PhArrowLeft, PhCamera, PhFloppyDisk, PhX } from '@phosphor-icons/vue'
 import { toast } from 'vue-sonner'
 import { ApiError } from '@/lib/api'
@@ -20,7 +20,7 @@ import {
 import { Spinner } from '@/components/ui/spinner'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { defaultProviderIcon } from '@/utils/brandIcons'
 import ProviderIconPicker from './ProviderIconPicker.vue'
@@ -28,6 +28,7 @@ import ProviderIcon from './ProviderIcon.vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
+const formId = useId()
 
 /**
  * 供应商新增/编辑弹窗：基本信息（图标、编码、名称、描述、启用）
@@ -276,12 +277,13 @@ async function save() {
 
             <!-- 编码全局唯一，创建后不可修改：编辑态只读禁用 -->
             <Field :data-invalid="!!codeError">
-              <FieldLabel>{{ t('providers.code') }} <span class="text-destructive">*</span></FieldLabel>
+              <FieldLabel :for="`${formId}-code`">{{ t('providers.code') }} <span class="text-destructive">*</span></FieldLabel>
               <Input
                 v-model="form.code"
                 :aria-invalid="!!codeError || undefined"
                 :placeholder="t('providers.codePlaceholder')"
                 :disabled="!!props.provider"
+                :id="`${formId}-code`"
               />
               <FieldError v-if="codeError">
                 {{ codeError }}
@@ -289,11 +291,12 @@ async function save() {
             </Field>
 
             <Field :data-invalid="!!nameError">
-              <FieldLabel>{{ t('common.name') }} <span class="text-destructive">*</span></FieldLabel>
+              <FieldLabel :for="`${formId}-name`">{{ t('common.name') }} <span class="text-destructive">*</span></FieldLabel>
               <Input
                 v-model="form.name"
                 :aria-invalid="!!nameError || undefined"
                 :placeholder="t('providers.namePlaceholder')"
+                :id="`${formId}-name`"
               />
               <FieldError v-if="nameError">
                 {{ nameError }}
@@ -304,11 +307,12 @@ async function save() {
               v-if="!props.provider"
               :data-invalid="!!baseUrlError"
             >
-              <FieldLabel>Base URL <span class="text-destructive">*</span></FieldLabel>
+              <FieldLabel :for="`${formId}-baseUrl`">Base URL <span class="text-destructive">*</span></FieldLabel>
               <Input
                 v-model="form.baseUrl"
                 :aria-invalid="!!baseUrlError || undefined"
                 :placeholder="t('endpoints.basePlaceholder')"
+                :id="`${formId}-baseUrl`"
               />
               <FieldError v-if="baseUrlError">
                 {{ baseUrlError }}
@@ -318,29 +322,35 @@ async function save() {
             <template v-if="!props.provider">
               <!-- 初始生成端点：端点类型 + 端点地址（默认路径自动填充） -->
               <Field>
-                <FieldLabel>{{ t('endpoints.type') }}</FieldLabel>
+                <FieldLabel :for="`${formId}-generate`">{{ t('endpoints.type') }}</FieldLabel>
                 <Select v-model="form.generate">
-                  <SelectTrigger class="w-full">
+                  <SelectTrigger
+                    class="w-full"
+                    :id="`${formId}-generate`"
+                  >
                     <SelectValue :placeholder="t('validation.selectEndpointType')" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem
-                      v-for="item in GEN_ENDPOINT_TYPES"
-                      :key="item"
-                      :value="item"
-                    >
-                      {{ item }}
-                    </SelectItem>
+                    <SelectGroup>
+                      <SelectItem
+                        v-for="item in GEN_ENDPOINT_TYPES"
+                        :key="item"
+                        :value="item"
+                      >
+                        {{ item }}
+                      </SelectItem>
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
               </Field>
 
               <Field :data-invalid="!!generatePathError">
-                <FieldLabel>{{ t('endpoints.path') }} <span class="text-destructive">*</span></FieldLabel>
+                <FieldLabel :for="`${formId}-generatePath`">{{ t('endpoints.path') }} <span class="text-destructive">*</span></FieldLabel>
                 <Input
                   v-model="form.generatePath"
                   :aria-invalid="!!generatePathError || undefined"
                   :placeholder="generatePathPlaceholder"
+                  :id="`${formId}-generatePath`"
                 />
                 <FieldError v-if="generatePathError">
                   {{ generatePathError }}
@@ -349,12 +359,13 @@ async function save() {
 
               <!-- 初始密钥：创建后可在供应商详情页管理 -->
               <Field :data-invalid="!!secretError">
-                <FieldLabel>{{ t('keys.title') }} <span class="text-destructive">*</span></FieldLabel>
+                <FieldLabel :for="`${formId}-secret`">{{ t('keys.title') }} <span class="text-destructive">*</span></FieldLabel>
                 <Input
                   v-model="form.secret"
                   type="password"
                   :aria-invalid="!!secretError || undefined"
                   :placeholder="t('keys.secretPlaceholder')"
+                  :id="`${formId}-secret`"
                 />
                 <FieldError v-if="secretError">
                   {{ secretError }}
@@ -363,11 +374,12 @@ async function save() {
             </template>
 
             <Field>
-              <FieldLabel>{{ t('common.description') }}</FieldLabel>
+              <FieldLabel :for="`${formId}-remark`">{{ t('common.description') }}</FieldLabel>
               <Textarea
                 v-model="form.remark"
                 :rows="2"
                 :placeholder="t('common.optional')"
+                :id="`${formId}-remark`"
               />
             </Field>
           </FieldGroup>

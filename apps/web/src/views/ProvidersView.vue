@@ -16,6 +16,7 @@ import { useProvidersStore } from '@/stores/providers'
 import AppEmpty from '@/components/AppEmpty.vue'
 import AppLoading from '@/components/AppLoading.vue'
 import { Button } from '@/components/ui/button'
+import { Item, ItemActions, ItemContent } from '@/components/ui/item'
 import { Switch } from '@/components/ui/switch'
 import ProviderIcon from '@/components/provider/ProviderIcon.vue'
 import ProviderModal from '@/components/provider/ProviderModal.vue'
@@ -109,11 +110,14 @@ onBeforeUnmount(() => {
       <div
         ref="listEl"
         class="flex min-w-0 flex-col gap-2 pb-1"
+        role="list"
       >
-        <div
+        <Item
           v-for="p in providers"
           :key="p.id"
-          class="group hover:border-primary/40 hover:bg-muted/30 flex min-h-16 min-w-0 items-center gap-3 border px-3.5 py-2.5 transition-colors select-none"
+          class="group hover:border-primary/40 hover:bg-muted/30 min-h-16 min-w-0 gap-3 px-3.5 select-none flex-nowrap duration-150"
+          variant="outline"
+          role="listitem"
         >
           <!-- 拖拽手柄（扩大命中区，hover 高亮）：排序唯一入口 -->
           <div
@@ -131,7 +135,7 @@ onBeforeUnmount(() => {
           />
 
           <!-- 图标右侧信息区（第一行名称，第二行描述，超长省略） -->
-          <div class="flex min-w-0 flex-1 flex-col justify-center gap-1">
+          <ItemContent class="min-w-0 justify-center">
             <span
               class="truncate text-sm font-medium"
               :title="p.name || p.code"
@@ -141,7 +145,7 @@ onBeforeUnmount(() => {
               class="text-muted-foreground truncate text-xs"
               :title="p.remark"
             >{{ p.remark }}</p>
-          </div>
+          </ItemContent>
 
           <!-- 启用开关（紧凑型小尺寸，高 14px / 宽 24px，与 28px 按钮协调） -->
           <Switch
@@ -153,7 +157,7 @@ onBeforeUnmount(() => {
           />
 
           <!-- 配置 / 修改 / 删除 -->
-          <div class="flex shrink-0 items-center gap-1">
+          <ItemActions class="shrink-0 gap-1">
             <Button
               variant="ghost"
               size="icon-sm"
@@ -184,8 +188,8 @@ onBeforeUnmount(() => {
             >
               <PhTrashSimple />
             </Button>
-          </div>
-        </div>
+          </ItemActions>
+        </Item>
       </div>
     </div>
 

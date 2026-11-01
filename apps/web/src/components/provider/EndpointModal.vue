@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { SEndpoint, SEndpointInput, EndpointType } from '@ai-gate/shared'
 import { GEN_ENDPOINT_TYPES, GEN_ENDPOINT_DEFAULT_PATHS } from '@ai-gate/shared'
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch, useId } from 'vue'
 import { useClipboard } from '@vueuse/core'
 import { PhCopy, PhFloppyDisk, PhX } from '@phosphor-icons/vue'
 import { toast } from 'vue-sonner'
@@ -21,10 +21,11 @@ import {
 import { Spinner } from '@/components/ui/spinner'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
+const formId = useId()
 
 const props = withDefaults(defineProps<{
   providerId: number
@@ -204,7 +205,7 @@ async function save() {
         <FieldGroup>
           <!-- 端点类型：修改时只读不可操作；新增 generate 时展示下拉选择 -->
           <Field :data-invalid="!props.endpoint ? !!generateError : false">
-            <FieldLabel>
+            <FieldLabel :for="`${formId}-generate`">
               {{ t('endpoints.type') }}
               <span
                 v-if="!props.endpoint && form.type === 'generate'"
@@ -213,6 +214,7 @@ async function save() {
             </FieldLabel>
             <Input
               v-if="props.endpoint"
+              :id="`${formId}-generate`"
               :model-value="endpointTypeDisplay"
               disabled
             />
@@ -223,17 +225,21 @@ async function save() {
               <SelectTrigger
                 class="w-full"
                 :disabled="availableGenerates.length === 0"
+                :id="`${formId}-generate`"
+                :aria-invalid="!!generateError || undefined"
               >
                 <SelectValue :placeholder="t('validation.selectEndpointType')" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem
-                  v-for="item in availableGenerates"
-                  :key="item"
-                  :value="item"
-                >
-                  {{ item }}
-                </SelectItem>
+                <SelectGroup>
+                  <SelectItem
+                    v-for="item in availableGenerates"
+                    :key="item"
+                    :value="item"
+                  >
+                    {{ item }}
+                  </SelectItem>
+                </SelectGroup>
               </SelectContent>
             </Select>
             <FieldError v-if="!props.endpoint && generateError">
@@ -243,12 +249,13 @@ async function save() {
 
           <!-- 端点地址输入框 -->
           <Field :data-invalid="!!pathError">
-            <FieldLabel>{{ t('endpoints.path') }} <span class="text-destructive">*</span></FieldLabel>
+            <FieldLabel :for="`${formId}-path`">{{ t('endpoints.path') }} <span class="text-destructive">*</span></FieldLabel>
             <Input
               v-model="form.path"
               :aria-invalid="!!pathError || undefined"
               :placeholder="pathPlaceholder"
               :disabled="form.type === 'generate' && !props.endpoint && availableGenerates.length === 0"
+              :id="`${formId}-path`"
             />
             <FieldError v-if="pathError">
               {{ pathError }}

@@ -10,7 +10,7 @@ import type {
   ModelType,
 } from '@ai-gate/shared'
 import { MODEL_EFFORT_LEVELS, MODEL_DEFAULT_CATEGORY, isModelType } from '@ai-gate/shared'
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch, useId } from 'vue'
 import {
   PhArrowsDownUp,
   PhBracketsAngle,
@@ -43,14 +43,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Spinner } from '@/components/ui/spinner'
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Field, FieldError, FieldGroup, FieldLabel, FieldSet, FieldLegend } from '@/components/ui/field'
+import { Empty, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
+const formId = useId()
 
 const props = defineProps<{
   providerId: number
@@ -301,12 +303,13 @@ async function save() {
           <!-- 基础配置：常用必要项 -->
           <!-- 模型编码供应商内唯一，创建后不可修改：编辑态只读禁用 -->
           <Field :data-invalid="!!codeError">
-            <FieldLabel>{{ t('models.code') }} <span class="text-destructive">*</span></FieldLabel>
+            <FieldLabel :for="`${formId}-code`">{{ t('models.code') }} <span class="text-destructive">*</span></FieldLabel>
             <Input
               v-model="form.code"
               :aria-invalid="!!codeError || undefined"
               :placeholder="t('models.codePlaceholder')"
               :disabled="!!props.modelItem"
+              :id="`${formId}-code`"
             />
             <FieldError v-if="codeError">
               {{ codeError }}
@@ -314,24 +317,27 @@ async function save() {
           </Field>
 
           <Field>
-            <FieldLabel>{{ t('models.displayName') }}</FieldLabel>
+            <FieldLabel :for="`${formId}-name`">{{ t('models.displayName') }}</FieldLabel>
             <Input
               v-model="form.name"
               :placeholder="t('models.namePlaceholder')"
+              :id="`${formId}-name`"
             />
           </Field>
 
           <Field>
-            <FieldLabel>{{ t('models.category') }}</FieldLabel>
+            <FieldLabel :for="`${formId}-category`">{{ t('models.category') }}</FieldLabel>
             <Input
               v-model="form.category"
               :placeholder="t('models.categoryPlaceholder')"
+              :id="`${formId}-category`"
             />
           </Field>
 
           <Field>
-            <FieldLabel>{{ t('models.type') }}</FieldLabel>
+            <FieldLabel :id="`${formId}-type`">{{ t('models.type') }}</FieldLabel>
             <ToggleGroup
+              :aria-labelledby="`${formId}-type`"
               :model-value="form.type"
               type="single"
               variant="outline"
@@ -368,16 +374,17 @@ async function save() {
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div class="flex flex-col gap-5 pt-3">
+              <FieldGroup class="pt-3">
                 <!-- 1. 模态支持：ToggleGroup 多选（与模型类型同款交互） -->
                 <Field>
-                  <FieldLabel>{{ t('models.inputModalities') }}</FieldLabel>
+                  <FieldLabel :id="`${formId}-inputModal`">{{ t('models.inputModalities') }}</FieldLabel>
                   <ToggleGroup
                     v-model="form.inputModal"
                     type="multiple"
                     variant="outline"
                     :spacing="2"
                     class="grid w-full grid-cols-3 sm:grid-cols-5"
+                    :aria-labelledby="`${formId}-inputModal`"
                   >
                     <ToggleGroupItem
                       v-for="item in modalityOptions"
@@ -391,13 +398,14 @@ async function save() {
                 </Field>
 
                 <Field>
-                  <FieldLabel>{{ t('models.outputModalities') }}</FieldLabel>
+                  <FieldLabel :id="`${formId}-outputModal`">{{ t('models.outputModalities') }}</FieldLabel>
                   <ToggleGroup
                     v-model="form.outputModal"
                     type="multiple"
                     variant="outline"
                     :spacing="2"
                     class="grid w-full grid-cols-3 sm:grid-cols-5"
+                    :aria-labelledby="`${formId}-outputModal`"
                   >
                     <ToggleGroupItem
                       v-for="item in modalityOptions"
@@ -412,112 +420,116 @@ async function save() {
 
                 <!-- 2. Token 限制与快捷输入（输入框 + 预设按钮） -->
                 <Field>
-                  <FieldLabel>{{ t('models.contextWindow') }}</FieldLabel>
+                  <FieldLabel :for="`${formId}-maxContext`">{{ t('models.contextWindow') }}</FieldLabel>
                   <div class="flex items-center gap-2">
                     <Input
                       v-model.number="form.maxContext"
+                      :id="`${formId}-maxContext`"
                       type="number"
                       :placeholder="t('models.tokenPlaceholder')"
                       :min="0"
                     >
                     </Input>
-                    <div class="flex shrink-0 items-center gap-1">
-                      <Button
+                    <ToggleGroup :model-value="form.maxContext" type="single" :spacing="1" :aria-label="t('models.contextWindow')" class="shrink-0" @update:model-value="v => form.maxContext = typeof v === 'number' ? v : ''">
+                      <ToggleGroupItem
                         v-for="p in contextPresets"
                         :key="p.value"
-                        type="button"
-                        size="xs"
-                        :variant="form.maxContext === p.value ? 'secondary' : 'ghost'"
-                        class="cursor-pointer font-mono"
-                        @click="form.maxContext = form.maxContext === p.value ? '' : p.value"
+                        :value="p.value"
+                        as-child
+                        class="h-6 min-w-0 px-2 font-mono data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground data-[state=on]:hover:bg-secondary/80 focus-visible:ring-1"
                       >
-                        {{ p.label }}
-                      </Button>
-                    </div>
+                        <Button size="xs" :variant="form.maxContext === p.value ? 'secondary' : 'ghost'">{{ p.label }}</Button>
+                      </ToggleGroupItem>
+                    </ToggleGroup>
                   </div>
                 </Field>
 
                 <Field>
-                  <FieldLabel>{{ t('models.maxInputTokens') }}</FieldLabel>
+                  <FieldLabel :for="`${formId}-maxInput`">{{ t('models.maxInputTokens') }}</FieldLabel>
                   <div class="flex items-center gap-2">
                     <Input
                       v-model.number="form.maxInput"
+                      :id="`${formId}-maxInput`"
                       type="number"
                       :placeholder="t('models.tokenPlaceholder')"
                       :min="0"
                     >
                     </Input>
-                    <div class="flex shrink-0 items-center gap-1">
-                      <Button
+                    <ToggleGroup :model-value="form.maxInput" type="single" :spacing="1" :aria-label="t('models.maxInputTokens')" class="shrink-0" @update:model-value="v => form.maxInput = typeof v === 'number' ? v : ''">
+                      <ToggleGroupItem
                         v-for="p in inputPresets"
                         :key="p.value"
-                        type="button"
-                        size="xs"
-                        :variant="form.maxInput === p.value ? 'secondary' : 'ghost'"
-                        class="cursor-pointer font-mono"
-                        @click="form.maxInput = form.maxInput === p.value ? '' : p.value"
+                        :value="p.value"
+                        as-child
+                        class="h-6 min-w-0 px-2 font-mono data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground data-[state=on]:hover:bg-secondary/80 focus-visible:ring-1"
                       >
-                        {{ p.label }}
-                      </Button>
-                    </div>
+                        <Button size="xs" :variant="form.maxInput === p.value ? 'secondary' : 'ghost'">{{ p.label }}</Button>
+                      </ToggleGroupItem>
+                    </ToggleGroup>
                   </div>
                 </Field>
 
                 <Field>
-                  <FieldLabel>{{ t('models.maxOutputTokens') }}</FieldLabel>
+                  <FieldLabel :for="`${formId}-maxOutput`">{{ t('models.maxOutputTokens') }}</FieldLabel>
                   <div class="flex items-center gap-2">
                     <Input
                       v-model.number="form.maxOutput"
+                      :id="`${formId}-maxOutput`"
                       type="number"
                       :placeholder="t('models.tokenPlaceholder')"
                       :min="0"
                     >
                     </Input>
-                    <div class="flex shrink-0 items-center gap-1">
-                      <Button
+                    <ToggleGroup :model-value="form.maxOutput" type="single" :spacing="1" :aria-label="t('models.maxOutputTokens')" class="shrink-0" @update:model-value="v => form.maxOutput = typeof v === 'number' ? v : ''">
+                      <ToggleGroupItem
                         v-for="p in outputPresets"
                         :key="p.value"
-                        type="button"
-                        size="xs"
-                        :variant="form.maxOutput === p.value ? 'secondary' : 'ghost'"
-                        class="cursor-pointer font-mono"
-                        @click="form.maxOutput = form.maxOutput === p.value ? '' : p.value"
+                        :value="p.value"
+                        as-child
+                        class="h-6 min-w-0 px-2 font-mono data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground data-[state=on]:hover:bg-secondary/80 focus-visible:ring-1"
                       >
-                        {{ p.label }}
-                      </Button>
-                    </div>
+                        <Button size="xs" :variant="form.maxOutput === p.value ? 'secondary' : 'ghost'">{{ p.label }}</Button>
+                      </ToggleGroupItem>
+                    </ToggleGroup>
                   </div>
                 </Field>
 
                 <!-- 推理模式 -->
                 <Field>
-                  <FieldLabel>{{ t('models.reasoningMode') }}</FieldLabel>
+                  <FieldLabel :for="`${formId}-reasoning`">{{ t('models.reasoningMode') }}</FieldLabel>
                   <Select v-model="form.reasoning">
-                    <SelectTrigger class="w-full">
+                    <SelectTrigger
+                      class="w-full"
+                      :id="`${formId}-reasoning`"
+                    >
                       <SelectValue :placeholder="t('models.selectReasoningMode')" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem
-                        v-for="item in reasoningOptions"
-                        :key="item.value"
-                        :value="item.value"
-                      >
-                        {{ item.label }}
-                      </SelectItem>
+                      <SelectGroup>
+                        <SelectItem
+                          v-for="item in reasoningOptions"
+                          :key="item.value"
+                          :value="item.value"
+                        >
+                          {{ item.label }}
+                        </SelectItem>
+                      </SelectGroup>
                     </SelectContent>
                   </Select>
                 </Field>
 
                 <!-- 推理档位：平铺复选，仅档位调节模式下动态展示 -->
-                <Field v-if="form.reasoning === 'TOGGLE'">
-                  <FieldLabel>{{ t('models.reasoningEffort') }}</FieldLabel>
+                <FieldSet v-if="form.reasoning === 'TOGGLE'" class="min-w-0 gap-2">
+                  <FieldLegend variant="label" class="mb-2 font-normal leading-snug">{{ t('models.reasoningEffort') }}</FieldLegend>
                   <div class="flex flex-wrap items-center gap-x-4 gap-y-2 pt-0.5">
-                    <label
+                    <FieldLabel
                       v-for="item in effortLevelOptions"
                       :key="item.value"
-                      class="flex cursor-pointer items-center gap-1.5 text-xs select-none"
+                      :for="`${formId}-effort-${item.value}`"
+                      class="cursor-pointer gap-1.5 text-xs leading-4"
                     >
                       <Checkbox
+                        :id="`${formId}-effort-${item.value}`"
                         :model-value="form.effortLevel.includes(item.value)"
                         @update:model-value="() => {
                           const idx = form.effortLevel.indexOf(item.value)
@@ -526,61 +538,67 @@ async function save() {
                         }"
                       />
                       {{ item.label }}
-                    </label>
+                    </FieldLabel>
                   </div>
-                </Field>
+                </FieldSet>
 
                 <!-- 3. 支持生成端点列表（展示完整路径）：整卡可点的复选行 -->
-                <Field>
-                  <FieldLabel>{{ t('endpoints.type') }}</FieldLabel>
+                <FieldSet class="min-w-0 gap-2">
+                  <FieldLegend variant="label" class="mb-2 font-normal leading-snug">{{ t('endpoints.type') }}</FieldLegend>
                   <div
                     v-if="generateEndpointList.length"
                     class="flex flex-col gap-1.5 pt-0.5"
                   >
-                    <label
+                    <FieldLabel
                       v-for="ep in generateEndpointList"
                       :key="ep.id"
-                      class="hover:bg-muted/50 flex cursor-pointer items-center gap-2.5 border px-2.5 py-1.5 transition-colors select-none"
-                      :class="form.generates.includes(ep.type) ? 'border-primary/40 bg-primary/5' : ''"
+                      :for="`${formId}-generate-${ep.id}`"
+                      class="hover:bg-muted/50 has-data-checked:border-primary/40 dark:has-data-checked:border-primary/40 dark:has-data-checked:bg-primary/5 w-full cursor-pointer leading-4 transition-colors [&>[data-slot=field]]:px-2.5 [&>[data-slot=field]]:py-1.5"
                     >
-                      <Checkbox
-                        :model-value="form.generates.includes(ep.type)"
-                        @update:model-value="() => toggleGenerate(ep.type)"
-                      />
-                      <span class="flex min-w-0 flex-1 items-center gap-2">
-                        <span class="text-xs font-semibold shrink-0">{{ ep.type }}</span>
-                        <Badge
-                          v-if="ep.isDefault"
-                          variant="secondary"
-                          class="shrink-0"
-                        >
-                          {{ t('common.default') }}
-                        </Badge>
-                        <span
-                          class="text-muted-foreground min-w-0 flex-1 truncate font-mono text-xs select-all"
-                          :title="ep.fullUrl"
-                        >{{ ep.path || t('common.noData') }}</span>
-                      </span>
-                    </label>
+                      <Field orientation="horizontal" class="gap-2.5">
+                        <Checkbox
+                          :id="`${formId}-generate-${ep.id}`"
+                          :model-value="form.generates.includes(ep.type)"
+                          @update:model-value="() => toggleGenerate(ep.type)"
+                        />
+                        <span class="flex min-w-0 flex-1 items-center gap-2">
+                          <span class="text-xs font-semibold shrink-0">{{ ep.type }}</span>
+                          <Badge
+                            v-if="ep.isDefault"
+                            variant="secondary"
+                            class="shrink-0"
+                          >
+                            {{ t('common.default') }}
+                          </Badge>
+                          <span
+                            class="text-muted-foreground min-w-0 flex-1 truncate font-mono text-xs select-all"
+                            :title="ep.fullUrl"
+                          >{{ ep.path || t('common.noData') }}</span>
+                        </span>
+                      </Field>
+                    </FieldLabel>
                   </div>
-                  <div
+                  <Empty
                     v-else
-                    class="text-muted-foreground flex items-center justify-center border border-dashed bg-muted/20 p-4 text-xs"
+                    class="text-muted-foreground flex-none gap-0 border border-dashed bg-muted/20 p-4 text-wrap"
                   >
-                    {{ t('models.noGenerateEndpoints') }}
-                  </div>
-                </Field>
-              </div>
+                    <EmptyHeader class="max-w-none gap-0">
+                      <EmptyTitle class="text-xs font-normal">{{ t('models.noGenerateEndpoints') }}</EmptyTitle>
+                    </EmptyHeader>
+                  </Empty>
+                </FieldSet>
+              </FieldGroup>
             </CollapsibleContent>
           </Collapsible>
 
           <!-- 描述：识别性补充说明，不属能力配置；恒可见收尾于表单 -->
           <Field>
-            <FieldLabel>{{ t('common.description') }}</FieldLabel>
+            <FieldLabel :for="`${formId}-remark`">{{ t('common.description') }}</FieldLabel>
             <Textarea
               v-model="form.remark"
               :rows="2"
               :placeholder="t('common.optional')"
+              :id="`${formId}-remark`"
             />
           </Field>
         </FieldGroup>
