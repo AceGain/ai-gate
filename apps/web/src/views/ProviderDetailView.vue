@@ -174,7 +174,7 @@ function toggleReveal(id: number) {
 }
 
 function maskSecret(secret: string): string {
-  const dots = '·'.repeat(64)
+  const dots = '·'.repeat(48)
   if (!secret || secret.length <= 12) return dots
   return `${secret.slice(0, 6)}${dots}${secret.slice(-6)}`
 }
@@ -781,7 +781,7 @@ function urlParts(path?: string) {
                 </div>
 
                 <!-- 第二行：密钥密文 + 明文切换 + 快捷复制 -->
-                <div class="flex min-w-0 items-center gap-2">
+                <div class="flex min-w-0 items-center gap-1">
                   <code
                     class="text-muted-foreground truncate text-xs select-all"
                     :title="revealedKeys.has(k.id) ? k.secret : undefined"
@@ -789,30 +789,32 @@ function urlParts(path?: string) {
                     {{ revealedKeys.has(k.id) ? k.secret : maskSecret(k.secret) }}
                   </code>
 
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    class="text-muted-foreground shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-                    :title="revealedKeys.has(k.id) ? t('keys.hideSecret') : t('keys.showSecret')"
-                    :aria-label="revealedKeys.has(k.id) ? t('keys.hideSecret') : t('keys.showSecret')"
-                    @click="toggleReveal(k.id)"
-                  >
-                    <PhEyeSlash v-if="revealedKeys.has(k.id)" />
-                    <PhEye v-else />
-                  </Button>
+                  <div class="flex shrink-0 items-center">
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      class="text-muted-foreground shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                      :title="revealedKeys.has(k.id) ? t('keys.hideSecret') : t('keys.showSecret')"
+                      :aria-label="revealedKeys.has(k.id) ? t('keys.hideSecret') : t('keys.showSecret')"
+                      @click="toggleReveal(k.id)"
+                    >
+                      <PhEyeSlash v-if="revealedKeys.has(k.id)" />
+                      <PhEye v-else />
+                    </Button>
 
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    class="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-                    :class="copiedKeyId === k.id ? 'text-success' : 'text-muted-foreground'"
-                    :title="t('keys.copy')"
-                    :aria-label="t('keys.copy')"
-                    @click="handleCopyKey(k)"
-                  >
-                    <PhCheck v-if="copiedKeyId === k.id" />
-                    <PhCopy v-else />
-                  </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      class="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                      :class="copiedKeyId === k.id ? 'text-success' : 'text-muted-foreground'"
+                      :title="t('keys.copy')"
+                      :aria-label="t('keys.copy')"
+                      @click="handleCopyKey(k)"
+                    >
+                      <PhCheck v-if="copiedKeyId === k.id" />
+                      <PhCopy v-else />
+                    </Button>
+                  </div>
                 </div>
               </ItemContent>
             </div>
