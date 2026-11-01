@@ -85,8 +85,7 @@
     "allAdded": "已新增所有支援的生成端點",
     "clearDefault": "點選以取消預設",
     "setDefault": "設為預設",
-    "empty": "暫無生成端點，點選右上角「新增」以新增",
-    "modelList": "模型清單"
+    "empty": "暫無生成端點，點選右上角「新增」以新增"
   },
   "errors": {
     "modelTestUnsupported": "目前僅支援測試文字與全模態模型",

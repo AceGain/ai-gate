@@ -134,7 +134,7 @@ const modalTitle = computed(() => props.endpoint ? t('endpoints.edit') : t('endp
 /** 端点类型只读显示文本 */
 const endpointTypeDisplay = computed(() => {
   if (form.type === 'base') return 'Base URL'
-  if (form.type === 'models') return t('endpoints.modelList')
+  if (form.type === 'models') return 'Models'
   if (form.type === 'generate') return form.generate || t('endpoints.generatePath')
   return form.type
 })

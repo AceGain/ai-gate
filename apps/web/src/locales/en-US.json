@@ -85,8 +85,7 @@
     "allAdded": "All supported generation endpoints have been added",
     "clearDefault": "Clear default",
     "setDefault": "Set as default",
-    "empty": "No generation endpoints. Click Add in the top right to create one.",
-    "modelList": "Model list"
+    "empty": "No generation endpoints. Click Add in the top right to create one."
   },
   "errors": {
     "modelTestUnsupported": "Testing is currently supported only for Text and Omni models",

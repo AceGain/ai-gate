@@ -85,8 +85,7 @@
     "allAdded": "已添加所有支持的生成端点",
     "clearDefault": "点击取消默认",
     "setDefault": "设为默认",
-    "empty": "暂无生成端点，点击右上角「新增」添加",
-    "modelList": "模型列表"
+    "empty": "暂无生成端点，点击右上角「新增」添加"
   },
   "errors": {
     "modelTestUnsupported": "当前测试仅支持文本和全模态模型",
