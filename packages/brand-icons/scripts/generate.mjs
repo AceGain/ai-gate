@@ -5,6 +5,7 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { collectBrands, assertCompatible, renderAssets } from './catalog.mjs'
+import { parseGenerationOptions, readCompatibilityBaseline } from './compatibility.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const require = createRequire(import.meta.url)
@@ -12,8 +13,8 @@ const read = file => readFile(path.join(root, file), 'utf8')
 const json = async file => JSON.parse(await read(file))
 const normalize = text => text.replace(/\r\n/g, '\n')
 const sha256 = text => createHash('sha256').update(normalize(text)).digest('hex')
-const check = process.argv.includes('--check')
-assert.ok(process.argv.slice(2).every(arg => arg === '--check'), 'Usage: generate.mjs [--check]')
+const { check, baseRef } = parseGenerationOptions(process.argv.slice(2))
+const baseline = readCompatibilityBaseline(root, baseRef)
 
 const [manifest, upstream, snapshot, aliases] = await Promise.all([
   json('package.json'), json('upstream.json'), read('metadata/brands.json'), json('metadata/aliases.json'),
@@ -41,9 +42,7 @@ const darkColorIds = new Set((await Promise.all(light
   .filter(id => id !== undefined))
 const brands = collectBrands(JSON.parse(snapshot), light, dark, aliases, darkColorIds)
 const output = 'src/generated/catalog.json'
-let previous
-try { previous = await json(output) } catch (error) { if (error.code !== 'ENOENT') throw error }
-if (previous) assertCompatible(previous, brands, aliases)
+assertCompatible(baseline.brands, brands, aliases, baseline.aliases)
 
 const outputs = new Map([
   [output, `${JSON.stringify(brands, null, 2)}\n`],
@@ -60,3 +59,4 @@ if (check) {
   for (const [file, content] of outputs) await writeFile(path.join(root, file), content, 'utf8')
 }
 console.log(`${check ? 'Checked' : 'Generated'} ${brands.length} brands from @lobehub/icons-static-png@${assetManifest.version}`)
+console.log(`Compatibility base: ${baseline.commit}`)

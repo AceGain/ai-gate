@@ -56,10 +56,17 @@ export function collectBrands(metadata, lightFiles, darkFiles, aliases, darkColo
 }
 
 /** Persisted IDs must remain resolvable, either directly or through an alias. */
-export function assertCompatible(previous, current, aliases) {
+export function assertCompatible(previous, current, aliases, previousAliases = {}) {
   const ids = new Set(current.map(brand => brand.id))
-  const removed = previous.filter(brand => !ids.has(brand.id) && !ids.has(aliases[brand.id])).map(brand => brand.id)
+  const resolve = id => ids.has(id) ? id : Object.hasOwn(aliases, id) && ids.has(aliases[id]) ? aliases[id] : undefined
+  const removed = previous.filter(brand => !resolve(brand.id)).map(brand => brand.id)
   assert.equal(removed.length, 0, `Removed brand IDs need compatibility aliases: ${removed.join(', ')}`)
+  const removedAliases = Object.keys(previousAliases).filter(alias => !resolve(alias))
+  assert.equal(removedAliases.length, 0, `Removed historical aliases need compatibility mappings: ${removedAliases.join(', ')}`)
+  const redirected = Object.entries(previousAliases)
+    .filter(([alias, target]) => resolve(alias) !== resolve(target))
+    .map(([alias, target]) => `${alias} (${target} -> ${resolve(alias)})`)
+  assert.equal(redirected.length, 0, `Historical aliases changed brand: ${redirected.join(', ')}`)
 }
 
 export function renderAssets(entries) {
