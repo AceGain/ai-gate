@@ -3,6 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@12.15.0",
   "engines": {
     "node": ">=22.13.0"
   },
@@ -16,6 +17,10 @@
     "build:desktop": "pnpm --filter @ai-gate/desktop tauri build",
     "build:server": "pnpm --filter @ai-gate/server build",
     "build:hub": "pnpm --filter @ai-gate/hub build",
+    "generate:brand-icons": "pnpm --filter @ai-gate/brand-icons generate",
+    "check:brand-icons": "pnpm --filter @ai-gate/brand-icons check",
+    "update:brand-icons": "pnpm --filter @ai-gate/brand-icons run update",
+    "test:brand-icons": "pnpm --filter @ai-gate/brand-icons test",
     "typecheck": "pnpm -r typecheck"
   },
   "devDependencies": {

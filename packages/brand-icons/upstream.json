@@ -1,0 +1,15 @@
+{
+  "assets": {
+    "package": "@lobehub/icons-static-png",
+    "version": "2.6.0"
+  },
+  "metadata": {
+    "package": "@lobehub/icons",
+    "version": "6.14.0",
+    "commit": "f0b47c2c3e9213111c09d2a3b5a116af02996aa8",
+    "url": "https://raw.githubusercontent.com/lobehub/lobe-icons/f0b47c2c3e9213111c09d2a3b5a116af02996aa8/src/toc.json",
+    "sourceSha256": "49a77902c6d60987e8fcfbc96b55ce4aebeda2d8a5227a3a4432a8094ca6215a",
+    "snapshotSha256": "c0ccbd7017ea64512828b5399adaf3d0b3fd4dc5bce5f10fc1e0a230092c9153"
+  },
+  "license": "MIT"
+}

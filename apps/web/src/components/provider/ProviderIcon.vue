@@ -5,7 +5,7 @@ import { brandIconUrl } from '@/utils/brandIcons'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 /**
- * 供应商显示图标：自定义上传图片（data URL）或品牌 logo（@lobehub/icons 静态 PNG，单色品牌随暗色模式切换）优先，
+ * 供应商显示图标：自定义上传图片（data URL）或品牌 logo（内部包静态 PNG，按明暗主题选择变体）优先，
  * 无图标或图片加载失败时回退首字母色块
  */
 const props = withDefaults(defineProps<{
