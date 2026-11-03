@@ -20,4 +20,4 @@ allowBuilds:
   better-sqlite3: false
   esbuild: true
 minimumReleaseAgeExclude:
-  - '@lobehub/icons-static-png@2.6.0'
+  - '@lobehub/icons-vue@1.0.0'

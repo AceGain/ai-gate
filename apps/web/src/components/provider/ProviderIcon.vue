@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useDark } from '@vueuse/core'
-import { brandIconUrl } from '@/utils/brandIcons'
+import { computed, defineComponent } from 'vue'
+import { isCustomIcon, resolveBrandIcon } from '@/utils/brandIcons'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 /**
- * 供应商显示图标：自定义上传图片（data URL）或品牌 logo（内部包静态 PNG，按明暗主题选择变体）优先，
+ * 供应商显示图标：自定义图片或 Lobe Icons Vue SVG 优先，
  * 无图标或图片加载失败时回退首字母色块
  */
 const props = withDefaults(defineProps<{
@@ -25,8 +24,13 @@ const initial = computed(() => {
   return ch || '?'
 })
 
-const isDark = useDark()
-const src = computed(() => brandIconUrl(props.icon, isDark.value))
+const src = computed(() => isCustomIcon(props.icon) ? props.icon : '')
+// 每个头像使用自己的响应式首字母，加载中或分包失败时都能显示。
+const iconFallback = defineComponent({
+  inheritAttrs: false,
+  setup: () => () => initial.value,
+})
+const brandIcon = computed(() => resolveBrandIcon(props.icon, iconFallback))
 
 const boxClass = computed(() => {
   if (props.size === 'xl') return 'size-14'
@@ -63,6 +67,9 @@ const textClass = computed(() => {
     <AvatarFallback
       class="text-primary size-auto rounded-none bg-transparent font-semibold"
       :class="textClass"
-    >{{ initial }}</AvatarFallback>
+    >
+      <component v-if="brandIcon" :is="brandIcon" size="100%" class="text-foreground" :class="imgClass" aria-hidden="true" />
+      <template v-else>{{ initial }}</template>
+    </AvatarFallback>
   </Avatar>
 </template>

@@ -1,4 +1,4 @@
-name: Brand icons
+name: Web
 
 on:
   pull_request:
@@ -16,17 +16,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm check:brand-icons
-        env:
-          BRAND_ICONS_BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before != '0000000000000000000000000000000000000000' && github.event.before || 'HEAD' }}
-      - run: pnpm test:brand-icons
-      - run: pnpm --filter @ai-gate/brand-icons typecheck
+      - run: pnpm --filter @ai-gate/web test:icons
       - run: pnpm build:web

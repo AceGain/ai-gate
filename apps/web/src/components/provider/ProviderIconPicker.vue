@@ -1,19 +1,18 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useDark } from '@vueuse/core'
 import { PhMagnifyingGlass, PhSparkle, PhUploadSimple, PhX } from '@phosphor-icons/vue'
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import { DialogBody } from '@/components/ui/dialog'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
 import { Empty, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
-import { brandIconUrl, providerIconOptions } from '@/utils/brandIcons'
+import { providerIconOptions, resolveBrandIcon, resolveBrandId } from '@/utils/brandIcons'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{ selectedIcon: string }>()
 const emit = defineEmits<{ select: [icon: string] }>()
 const { t } = useI18n()
-const isDark = useDark()
+const selectedBrandId = computed(() => resolveBrandId(props.selectedIcon))
 const search = ref('')
 const resultsBody = ref<InstanceType<typeof DialogBody> | null>(null)
 const searchInput = ref<InstanceType<typeof InputGroupInput> | null>(null)
@@ -91,15 +90,15 @@ function onFileChange(event: Event) {
       <Button
         v-for="item in displayedIcons"
         :key="item.value"
-        :variant="props.selectedIcon === item.value ? 'outline' : 'secondary'"
+        :variant="selectedBrandId === item.value ? 'outline' : 'secondary'"
         size="icon-lg"
-        class="w-full"
+        class="w-full [&_svg:not([class*=size-])]:size-6"
         :title="item.label"
         :aria-label="item.label"
-        :aria-pressed="props.selectedIcon === item.value"
+        :aria-pressed="selectedBrandId === item.value"
         @click="emit('select', item.value)"
       >
-        <img :src="brandIconUrl(item.value, isDark)" alt="" class="size-6 object-contain">
+        <component :is="resolveBrandIcon(item.value)" :size="24" aria-hidden="true" />
       </Button>
     </div>
     <Empty v-else class="text-muted-foreground flex-none gap-0 p-0 py-8 text-wrap">
