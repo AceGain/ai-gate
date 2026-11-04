@@ -1,5 +1,5 @@
 import { toc } from '@lobehub/icons-vue/es/toc'
-import { defineAsyncComponent, type Component } from 'vue'
+import { defineAsyncComponent, shallowRef, type Component } from 'vue'
 import importIconBundle from 'virtual:lobe-brand-icon-loader'
 
 /** 持久化 ID 沿用小写品牌名；目录直接使用上游 Vue 包。 */
@@ -15,15 +15,20 @@ const legacyBrandIconKeys = new Map([
 ])
 
 export type BrandIconComponents = Readonly<Record<string, Component>>
+const loadedBrandIcons = shallowRef<BrandIconComponents>()
 let iconBundle: Promise<BrandIconComponents> | undefined
 let loadAttempt = 0
 
 /** 合并并发请求；失败后清除请求缓存，允许选择器重试。 */
 export function loadBrandIcons(): Promise<BrandIconComponents> {
   return iconBundle ??= importIconBundle(loadAttempt++)
-    .then(({ default: icons }) => Object.fromEntries(
-      Object.entries(icons).map(([id, component]) => [id.toLowerCase(), component]),
-    ))
+    .then(({ default: icons }) => {
+      const components = Object.fromEntries(
+        Object.entries(icons).map(([id, component]) => [id.toLowerCase(), component]),
+      )
+      loadedBrandIcons.value = components
+      return components
+    })
     .catch(error => {
       iconBundle = undefined
       throw error
@@ -47,8 +52,12 @@ export function resolveBrandId(icon: string): string | undefined {
 
 export function resolveBrandIcon(icon: string, fallback?: Component) {
   const id = resolveBrandId(icon)
-  const entry = id ? brandIcons.get(id) : undefined
+  if (!id) return undefined
+  const entry = brandIcons.get(id)
   if (!entry) return undefined
+  // 共享分包恢复时通知已有头像，直接使用 SVG，替换其已失败的异步组件。
+  const loaded = loadedBrandIcons.value?.[id]
+  if (loaded) return loaded
   if (!fallback) return entry.component
   return defineAsyncComponent({
     loader: entry.loader,

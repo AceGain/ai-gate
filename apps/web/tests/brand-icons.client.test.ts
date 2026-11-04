@@ -66,7 +66,7 @@ test('loaded custom images can switch to SVGs, initials, and failed image fallba
   assert.deepEqual(warnings, [])
 })
 
-test('picker handles a shared failure once and retries without losing search or selection', async t => {
+test('picker retry restores existing failed avatars without losing search or selection', async t => {
   let requests = 0
   let rejectFirst!: (error: Error) => void
   const firstRequest = new Promise<never>((_, reject) => { rejectFirst = reject })
@@ -86,12 +86,19 @@ test('picker handles a shared failure once and retries without losing search or 
     return vite.ssrLoadModule('virtual:lobe-brand-icons')
   }
   t.after(() => { delete globalThis.__loadTestIconChunk })
+  const { default: ProviderIcon } = await vite.ssrLoadModule('/src/components/provider/ProviderIcon.vue')
   const { default: Picker } = await vite.ssrLoadModule('/src/components/provider/ProviderIconPicker.vue')
   const root = window.document.createElement('div')
   window.document.body.append(root)
   const selected: string[] = []
   const errors: unknown[] = []
-  const app = createApp({ render: () => h(Picker, { selectedIcon: 'googlegemini', onSelect: (id: string) => selected.push(id) }) })
+  const app = createApp({ render: () => h('main', [
+    h('section', { id: 'existing-avatars' }, [
+      h(ProviderIcon, { icon: 'openai', name: 'Alpha' }),
+      h(ProviderIcon, { icon: 'googlegemini', name: 'Beta' }),
+    ]),
+    h(Picker, { selectedIcon: 'googlegemini', onSelect: (id: string) => selected.push(id) }),
+  ]) })
   app.use(createI18n({ legacy: false, locale: 'en-US', messages: { 'en-US': messages } }))
   app.config.errorHandler = error => errors.push(error)
   app.mount(root)
@@ -104,19 +111,27 @@ test('picker handles a shared failure once and retries without losing search or 
   search.dispatchEvent(new window.Event('input', { bubbles: true }))
   rejectFirst(new Error('temporary network failure'))
   await waitFor(() => !!root.querySelector('[role="alert"]'), 'load error missing')
+  await waitFor(() => root.querySelector('#existing-avatars')?.textContent === 'AB', 'failed avatars did not show their own initials')
+  const existingAvatars = [...root.querySelectorAll('#existing-avatars [data-slot="avatar"]')]
   assert.equal(requests, 1)
   assert.equal(root.querySelectorAll('[aria-pressed]').length, 0, 'failed load must not leave blank brand buttons')
   assert.match(root.textContent!, /Unable to load brand icons/)
   const retry = [...root.querySelectorAll('button')].find(button => button.textContent === 'Retry')!
   retry.click()
   await waitFor(() => !!root.querySelector('[aria-pressed="true"] svg'), 'retry did not restore selected brand')
+  await waitFor(() => root.querySelectorAll('#existing-avatars svg').length === 2, 'retry did not restore existing failed avatars')
+  const recoveredAvatars = [...root.querySelectorAll('#existing-avatars [data-slot="avatar"]')]
+  for (const [index, avatar] of existingAvatars.entries()) {
+    assert.equal(recoveredAvatars[index], avatar, 'recovery must update the existing avatar without remounting it')
+  }
   assert.equal(requests, 2)
   assert.equal(search.value, 'gemini')
   const gemini = root.querySelector<HTMLButtonElement>('[aria-label="Gemini (Google)"]')!
   assert.equal(gemini.getAttribute('aria-pressed'), 'true')
   gemini.click()
   assert.deepEqual(selected, ['gemini'])
-  assert.deepEqual(errors, [])
+  assert.equal(errors.length, 2, 'only the two original avatar failures should be reported')
+  for (const error of errors) assert.match(String(error), /temporary network failure/)
 })
 
 test('development retry URLs keep resolving the virtual icon module', async t => {
