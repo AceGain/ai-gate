@@ -207,7 +207,8 @@
     "searchPlaceholder": "Search brand icons…",
     "auto": "Automatic (initial)",
     "upload": "Upload image",
-    "noMatches": "No matching icons"
+    "noMatches": "No matching icons",
+    "loadFailed": "Unable to load brand icons"
   },
   "providers": {
     "enable": "Enable provider",

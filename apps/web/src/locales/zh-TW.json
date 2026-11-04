@@ -207,7 +207,8 @@
     "searchPlaceholder": "搜尋品牌圖示…",
     "auto": "自動（首字母）",
     "upload": "上傳圖片",
-    "noMatches": "找不到符合的圖示"
+    "noMatches": "找不到符合的圖示",
+    "loadFailed": "品牌圖示載入失敗"
   },
   "providers": {
     "enable": "啟用供應商",

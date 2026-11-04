@@ -54,6 +54,7 @@ const textClass = computed(() => {
 
 <template>
   <Avatar
+    :key="src"
     class="bg-muted text-foreground items-center justify-center rounded-none border after:hidden"
     :class="boxClass"
   >

@@ -11,7 +11,7 @@
     "build": "node --import tsx scripts/check-i18n.mjs && vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
-    "test:icons": "node --import tsx --test tests/brand-icons.test.ts",
+    "test:icons": "node --import tsx --test tests/brand-icons*.test.ts",
     "check:i18n": "node --import tsx scripts/check-i18n.mjs"
   },
   "dependencies": {
@@ -40,6 +40,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@types/sortablejs": "^1.15.9",
     "@vitejs/plugin-vue": "^6.0.10",
+    "happy-dom": "^21.0.4",
     "tailwindcss": "^4.3.3",
     "tsx": "catalog:",
     "typescript": "catalog:",

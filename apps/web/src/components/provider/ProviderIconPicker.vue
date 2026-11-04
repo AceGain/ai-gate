@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useAsyncState } from '@vueuse/core'
 import { PhMagnifyingGlass, PhSparkle, PhUploadSimple, PhX } from '@phosphor-icons/vue'
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import { DialogBody } from '@/components/ui/dialog'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
-import { Empty, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
-import { providerIconOptions, resolveBrandIcon, resolveBrandId } from '@/utils/brandIcons'
+import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
+import { Spinner } from '@/components/ui/spinner'
+import { loadBrandIcons, providerIconOptions, resolveBrandId, type BrandIconComponents } from '@/utils/brandIcons'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{ selectedIcon: string }>()
@@ -14,6 +16,7 @@ const emit = defineEmits<{ select: [icon: string] }>()
 const { t } = useI18n()
 const selectedBrandId = computed(() => resolveBrandId(props.selectedIcon))
 const search = ref('')
+const { state: iconComponents, isLoading, error: loadError, executeImmediate: retryIcons } = useAsyncState<BrandIconComponents | undefined>(loadBrandIcons, undefined, { onError: () => {} })
 const resultsBody = ref<InstanceType<typeof DialogBody> | null>(null)
 const searchInput = ref<InstanceType<typeof InputGroupInput> | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -86,7 +89,18 @@ function onFileChange(event: Event) {
   </div>
 
   <DialogBody ref="resultsBody" class="flex-1" :aria-label="t('icons.change')">
-    <div v-if="displayedIcons.length" class="grid grid-cols-[repeat(auto-fill,minmax(2.5rem,1fr))] gap-1.5">
+    <Empty v-if="isLoading" class="py-8">
+      <Spinner />
+    </Empty>
+    <Empty v-else-if="loadError" class="py-8">
+      <EmptyHeader>
+        <EmptyTitle role="alert">{{ t('icons.loadFailed') }}</EmptyTitle>
+      </EmptyHeader>
+      <EmptyContent>
+        <Button variant="outline" @click="retryIcons()">{{ t('common.retry') }}</Button>
+      </EmptyContent>
+    </Empty>
+    <div v-else-if="displayedIcons.length" class="grid grid-cols-[repeat(auto-fill,minmax(2.5rem,1fr))] gap-1.5">
       <Button
         v-for="item in displayedIcons"
         :key="item.value"
@@ -98,7 +112,7 @@ function onFileChange(event: Event) {
         :aria-pressed="selectedBrandId === item.value"
         @click="emit('select', item.value)"
       >
-        <component :is="resolveBrandIcon(item.value)" :size="24" aria-hidden="true" />
+        <component :is="iconComponents?.[item.value]" :size="24" aria-hidden="true" />
       </Button>
     </div>
     <Empty v-else class="text-muted-foreground flex-none gap-0 p-0 py-8 text-wrap">

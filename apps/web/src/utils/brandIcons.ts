@@ -1,5 +1,6 @@
 import { toc } from '@lobehub/icons-vue/es/toc'
 import { defineAsyncComponent, type Component } from 'vue'
+import importIconBundle from 'virtual:lobe-brand-icon-loader'
 
 /** 持久化 ID 沿用小写品牌名；目录直接使用上游 Vue 包。 */
 export const providerIconOptions = toc.map(brand => ({
@@ -13,11 +14,27 @@ const legacyBrandIconKeys = new Map([
   ['mistralai', 'mistral'],
 ])
 
+export type BrandIconComponents = Readonly<Record<string, Component>>
+let iconBundle: Promise<BrandIconComponents> | undefined
+let loadAttempt = 0
+
+/** 合并并发请求；失败后清除请求缓存，允许选择器重试。 */
+export function loadBrandIcons(): Promise<BrandIconComponents> {
+  return iconBundle ??= importIconBundle(loadAttempt++)
+    .then(({ default: icons }) => Object.fromEntries(
+      Object.entries(icons).map(([id, component]) => [id.toLowerCase(), component]),
+    ))
+    .catch(error => {
+      iconBundle = undefined
+      throw error
+    })
+}
+
 // 图标代码首次使用时加载；默认组件按品牌复用，头像可提供独立的回退内容。
 const brandIcons = new Map(toc.map(brand => {
   const loader = async () => {
-    const { default: icons } = await import('virtual:lobe-brand-icons')
-    return icons[brand.id]
+    const icons = await loadBrandIcons()
+    return icons[brand.id.toLowerCase()]
   }
   return [brand.id.toLowerCase(), { loader, component: defineAsyncComponent(loader) }] as const
 }))

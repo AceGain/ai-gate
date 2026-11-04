@@ -207,7 +207,8 @@
     "searchPlaceholder": "搜索品牌图标...",
     "auto": "自动（首字母）",
     "upload": "上传图片",
-    "noMatches": "未找到匹配图标"
+    "noMatches": "未找到匹配图标",
+    "loadFailed": "品牌图标加载失败"
   },
   "providers": {
     "enable": "启用供应商",

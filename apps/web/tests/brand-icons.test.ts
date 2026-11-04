@@ -3,6 +3,8 @@ import { after, test } from 'node:test'
 import { createServer } from 'vite'
 import { createSSRApp, h } from 'vue'
 import { renderToString } from 'vue/server-renderer'
+import baseline from './fixtures/brand-icon-ids.json'
+import { assertBaselineRetained, assertBrandIconCompatibility, readCommittedBaseline } from './helpers/brand-icon-compatibility'
 const vite = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: 'custom' })
 after(() => vite.close())
 const {
@@ -14,6 +16,16 @@ const {
 } = await vite.ssrLoadModule('/src/utils/brandIcons.ts') as typeof import('../src/utils/brandIcons')
 
 test('saved brand IDs and historical aliases keep resolving to the same component', () => {
+  assertBrandIconCompatibility(baseline, resolveBrandId)
+  const previous = readCommittedBaseline()
+  if (previous) {
+    assertBaselineRetained(previous, baseline)
+    assertBrandIconCompatibility(previous, resolveBrandId)
+  }
+  const knownIds = new Set(baseline.ids)
+  for (const { value } of providerIconOptions) {
+    assert.ok(knownIds.has(value), `Append new persisted ID to tests/fixtures/brand-icon-ids.json: ${value}`)
+  }
   for (const [alias, id] of [
     ['googlegemini', 'gemini'],
     ['moonshotai', 'moonshot'],
@@ -38,7 +50,7 @@ test('custom images and unknown IDs use the image or initial fallback path', () 
 })
 
 test('every selectable brand renders SVG without Vue warnings', async () => {
-  assert.ok(providerIconOptions.length >= 357)
+  assert.ok(providerIconOptions.length > 0)
   assert.equal(new Set(providerIconOptions.map(item => item.value)).size, providerIconOptions.length)
   for (const { value, label } of providerIconOptions) {
     assert.ok(label)
