@@ -1,0 +1,50 @@
+{"method":"POST","path":"/api/set/providers","expect":{"status":400},"body":{"code":"bad","name":"Bad"}}
+{"method":"POST","path":"/api/set/providers","expect":{"status":400},"body":{"code":"bad","name":"Bad","baseUrl":"  "}}
+{"method":"POST","path":"/api/set/providers","expect":{"status":400},"body":{"code":"bad","name":"Bad","baseUrl":"https://first.audit.invalid","modelsPath":" "}}
+{"method":"POST","path":"/api/set/providers","expect":{"status":201,"body":{"baseUrl":"https://first.audit.invalid","modelsPath":"/v1/models"}},"body":{"code":"first","name":"First","baseUrl":" https://first.audit.invalid ","apiKey":{"name":"dummy","secret":"dummy-key"}},"save":{"providerId":".id"}}
+{"method":"GET","path":"/api/set/providers/{{providerId}}/endpoints","expect":{"status":200,"body":[]}}
+{"method":"GET","path":"/__audit/state","expect":{"status":200,"body":{"endpointCount":0}}}
+{"method":"GET","path":"/api/set/providers/{{providerId}}/keys","expect":{"status":200},"save":{"keyId":".0.id"}}
+{"method":"POST","path":"/api/set/providers/{{providerId}}/keys/{{keyId}}/test","expect":{"status":200,"body":{"ok":true}}}
+{"method":"GET","path":"/__audit/state","expect":{"status":200,"body":{"lastRequest":{"url":"https://first.audit.invalid/v1/models","auth":"Bearer"}}}}
+{"method":"POST","path":"/api/set/providers/{{providerId}}/endpoints","expect":{"status":201,"body":{"type":"Chat Completions","sort":3}},"body":{"type":" Chat Completions ","path":"/v1/chat/completions","isDefault":true,"sort":3},"save":{"chatId":".id"}}
+{"method":"POST","path":"/api/set/providers/{{providerId}}/endpoints","expect":{"status":409},"body":{"type":"Chat Completions","path":"/different"}}
+{"method":"POST","path":"/api/set/providers/{{providerId}}/endpoints","expect":{"status":400},"body":{"type":"base","generate":"Responses","path":"/x"}}
+{"method":"POST","path":"/api/set/providers/{{providerId}}/endpoints","expect":{"status":400},"body":{"type":"models","generate":"Responses","path":"/x"}}
+{"method":"POST","path":"/api/set/providers/{{providerId}}/endpoints","expect":{"status":400},"body":{"type":"generate","generate":"Responses","path":"/x"}}
+{"method":"POST","path":"/api/set/providers/{{providerId}}/endpoints","expect":{"status":400},"body":{"type":"   ","generate":"Responses","path":"/x"}}
+{"method":"POST","path":"/api/set/providers/{{providerId}}/endpoints","expect":{"status":201,"body":{"type":"Responses","isDefault":true}},"body":{"type":"Responses","path":"/v1/responses","isDefault":true,"sort":2},"save":{"responsesId":".id"}}
+{"method":"GET","path":"/api/set/providers/{{providerId}}/endpoints","expect":{"status":200,"body":[{"type":"Responses","isDefault":true,"sort":2},{"type":"Chat Completions","isDefault":false,"sort":3}]}}
+{"method":"PUT","path":"/api/set/providers/{{providerId}}/endpoints/{{responsesId}}","expect":{"status":409},"body":{"type":"Chat Completions","path":"/collision","isDefault":true}}
+{"method":"GET","path":"/__audit/state","expect":{"status":200,"body":{"defaultCount":1}}}
+{"method":"POST","path":"/api/set/providers/{{providerId}}/endpoints","expect":{"status":201},"body":{"type":"Messages","path":"/v1/messages","isDefault":true},"save":{"messagesId":".id"}}
+{"method":"GET","path":"/__audit/state","expect":{"status":200,"body":{"defaultCount":1}}}
+{"method":"PUT","path":"/api/set/providers/reorder","body":[{"id":"{{providerId}}","sort":7}],"expect":{"status":200,"body":{"ok":true}}}
+{"method":"GET","path":"/api/set/providers/{{providerId}}","expect":{"status":200,"body":{"sort":7}}}
+{"method":"PUT","path":"/api/set/providers/{{providerId}}","expect":{"status":200,"body":{"code":"first","baseUrl":"https://second.audit.invalid/root/","modelsPath":"/catalog/models"}},"body":{"code":"ignored","name":"Changed","baseUrl":"https://second.audit.invalid/root/","modelsPath":"/catalog/models","enabled":true}}
+{"method":"GET","path":"/api/set/providers/{{providerId}}","expect":{"status":200,"body":{"baseUrl":"https://second.audit.invalid/root/","modelsPath":"/catalog/models","enabled":true,"sort":7}}}
+{"method":"PUT","path":"/api/set/providers/{{providerId}}","expect":{"status":400},"body":{"code":"first","name":"Changed","baseUrl":" ","modelsPath":"/catalog/models"}}
+{"method":"PUT","path":"/api/set/providers/{{providerId}}","expect":{"status":400},"body":{"code":"first","name":"Changed","baseUrl":"https://second.audit.invalid/root/"}}
+{"method":"POST","path":"/api/set/providers/{{providerId}}/keys/{{keyId}}/test","expect":{"status":200,"body":{"ok":true}}}
+{"method":"GET","path":"/__audit/state","expect":{"status":200,"body":{"lastRequest":{"url":"https://second.audit.invalid/root/catalog/models","auth":"Messages"}}}}
+{"method":"GET","path":"/api/set/providers/{{providerId}}/models/remote","expect":{"status":200,"body":{"results":[{"ok":true,"models":[{"code":"remote-model"}]}]}}}
+{"method":"POST","path":"/api/set/providers/{{providerId}}/models/import","expect":{"status":201,"body":{"imported":1,"bindings":1}},"body":{"models":[{"code":"remote-model","type":"TEXT"}],"bindings":[{"keyId":"{{keyId}}","codes":["remote-model"]}]}}
+{"method":"GET","path":"/api/set/providers/{{providerId}}/models","expect":{"status":200,"body":[{"generates":["Messages"]}]},"save":{"modelId":".0.id"}}
+{"method":"POST","path":"/api/set/providers/{{providerId}}/models/{{modelId}}/test","expect":{"status":200,"body":{"ok":true}}}
+{"method":"GET","path":"/__audit/state","expect":{"status":200,"body":{"lastRequest":{"url":"https://second.audit.invalid/root/v1/messages","method":"POST","auth":"Messages","model":"remote-model"}}}}
+{"method":"PUT","path":"/api/set/providers/{{providerId}}","expect":{"status":200},"body":{"code":"first","name":"Changed","baseUrl":"https://second.audit.invalid/root/","modelsPath":"https://catalog.audit.invalid/all-models"}}
+{"method":"POST","path":"/api/set/providers/{{providerId}}/keys/{{keyId}}/test","expect":{"status":200,"body":{"ok":true}}}
+{"method":"GET","path":"/__audit/state","expect":{"status":200,"body":{"lastRequest":{"url":"https://catalog.audit.invalid/all-models"}}}}
+{"method":"POST","path":"/api/set/providers","expect":{"status":201},"body":{"code":"second","name":"Second","baseUrl":"https://first.audit.invalid"},"save":{"secondId":".id"}}
+{"method":"POST","path":"/api/set/providers/{{secondId}}/endpoints","expect":{"status":201},"body":{"type":"Responses","path":"/v1/responses"}}
+{"method":"PUT","path":"/api/set/providers/{{secondId}}/endpoints/{{messagesId}}","expect":{"status":404},"body":{"type":"Messages","path":"/wrong"}}
+{"method":"DELETE","path":"/api/set/providers/{{secondId}}/endpoints/{{messagesId}}","expect":{"status":404}}
+{"method":"POST","path":"/api/set/providers/999999/endpoints","expect":{"status":404},"body":{"type":"Responses","path":"/x"}}
+{"method":"DELETE","path":"/api/set/providers/{{providerId}}/endpoints/{{messagesId}}","expect":{"status":200}}
+{"method":"GET","path":"/__audit/state","expect":{"status":200,"body":{"defaultCount":0,"foreignKeyErrors":0}}}
+{"method":"PUT","path":"/api/set/providers/{{providerId}}/endpoints/{{responsesId}}","expect":{"status":200,"body":{"sort":2,"isDefault":true}},"body":{"type":"Responses","path":"/v1/responses","isDefault":true}}
+{"method":"DELETE","path":"/api/set/providers/{{providerId}}","expect":{"status":200}}
+{"method":"GET","path":"/api/set/providers/{{providerId}}/endpoints","expect":{"status":200,"body":[]}}
+{"method":"GET","path":"/api/set/providers/{{providerId}}/keys","expect":{"status":200,"body":[]}}
+{"method":"GET","path":"/api/set/providers/{{providerId}}/models","expect":{"status":200,"body":[]}}
+{"method":"GET","path":"/__audit/state","expect":{"status":200,"body":{"endpointCount":1,"foreignKeyErrors":0}}}

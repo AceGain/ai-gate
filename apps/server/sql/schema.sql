@@ -8,6 +8,8 @@ CREATE TABLE s_provider (
   code TEXT NOT NULL UNIQUE, -- 对外编码，唯一；如 agnes/agnes-2.5-flash；
   name TEXT NOT NULL,
   icon TEXT DEFAULT NULL,
+  base_url TEXT NOT NULL, -- 请求根地址;
+  models_path TEXT NOT NULL DEFAULT '/v1/models', -- 模型列表路径，与 base_url 拼接；
   enabled BOOLEAN NOT NULL DEFAULT FALSE,
   status TEXT NOT NULL DEFAULT 'ACTIVE', -- 状态；ACTIVE：正常，INACTIVE：不可用，ERROR：异常；
   remark TEXT DEFAULT NULL,
@@ -26,18 +28,17 @@ CREATE INDEX s_provider_idx_status ON s_provider (status);
 CREATE TABLE s_endpoint (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   provider_id INTEGER NOT NULL REFERENCES s_provider (id) ON DELETE CASCADE, -- s_provider.id
-  kind TEXT NOT NULL, -- 种类：BASE、MODEL、GEN；
-  type TEXT DEFAULT NULL, -- 类型，例如：GEN 对应 Chat、Responses、Messages；
-  path TEXT NOT NULL, -- 路径，例如：BASE 对应 https://apihub.agnes-ai.com，MODEL 对应 /v1/models，GEN 对应 /v1/chat/completions、/v1/responses、/v1/message；
+  type TEXT NOT NULL, -- 类型，例如：Chat、Responses、Messages；同一供应商每种类型仅一个；
+  path TEXT NOT NULL, -- 路径，例如：/v1/chat/completions、/v1/responses、/v1/messages；
   is_default BOOLEAN NOT NULL DEFAULT FALSE,
   sort INTEGER NOT NULL DEFAULT 0,
   create_time TEXT NOT NULL,
   update_time TEXT NOT NULL
 );
 
-CREATE INDEX s_endpoint_idx_kind_type ON s_endpoint (kind, type);
+CREATE INDEX s_endpoint_idx_type ON s_endpoint (type);
 
-CREATE UNIQUE INDEX s_endpoint_uq_provider_kind_type_path ON s_endpoint (provider_id, kind, type, path);
+CREATE UNIQUE INDEX s_endpoint_uq_provider_type ON s_endpoint (provider_id, type);
 
 -- 密钥
 CREATE TABLE s_key (

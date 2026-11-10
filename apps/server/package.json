@@ -8,8 +8,9 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "test:models": "tsx node_modules/@hono/cli/dist/cli.js batch tests/model-types.jsonl tests/model-types.app.mjs --compact",
-    "test:api": "tsx node_modules/@hono/cli/dist/cli.js batch tests/api-namespaces.jsonl tests/model-types.app.mjs --compact"
+    "test:provider-urls": "node tests/run-api-batch.mjs tests/provider-urls.jsonl tests/provider-urls.app.mjs",
+    "test:models": "node tests/run-api-batch.mjs tests/model-types.jsonl tests/model-types.app.mjs",
+    "test:api": "node tests/run-api-batch.mjs tests/api-namespaces.jsonl tests/model-types.app.mjs"
   },
   "dependencies": {
     "@ai-gate/shared": "workspace:*",

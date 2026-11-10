@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core'
 
 // 出站域（S 域）：s_ 前缀 = 出站（对接的上游供应商），与模板域（hub 的 t_）、
 // 入站域（预留的 r_）职责与领域不同，即使结构暂时相同也不得互相简化合并
@@ -21,6 +21,8 @@ export const sProvider = sqliteTable('s_provider', {
   code: text('code').notNull().unique(),
   name: text('name').notNull(),
   icon: text('icon'),
+  base_url: text('base_url').notNull(),
+  models_path: text('models_path').notNull().default('/v1/models'),
   enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
   status: text('status').notNull().default('ACTIVE'),
   remark: text('remark'),
@@ -33,13 +35,15 @@ export const sEndpoint = sqliteTable('s_endpoint', {
   provider_id: integer('provider_id')
     .notNull()
     .references(() => sProvider.id, { onDelete: 'cascade' }),
-  kind: text('kind').notNull(),
-  type: text('type'),
+  type: text('type').notNull(),
   path: text('path').notNull(),
   is_default: integer('is_default', { mode: 'boolean' }).notNull().default(false),
   sort: integer('sort').notNull().default(0),
   ...timestamps(),
-})
+}, table => [
+  index('s_endpoint_idx_type').on(table.type),
+  uniqueIndex('s_endpoint_uq_provider_type').on(table.provider_id, table.type),
+])
 
 export const sKey = sqliteTable('s_key', {
   id: integer('id').primaryKey({ autoIncrement: true }),

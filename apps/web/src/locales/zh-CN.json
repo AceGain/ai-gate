@@ -53,6 +53,7 @@
     "breadcrumb": "面包屑导航"
   },
   "validation": {
+    "modelsPathRequired": "请输入模型列表路径",
     "selectEndpointType": "请选择端点类型",
     "duplicateEndpointType": "该端点类型已存在",
     "endpointPathRequired": "请输入端点地址",
@@ -90,11 +91,11 @@
   "errors": {
     "modelTestUnsupported": "当前测试仅支持文本和全模态模型",
     "backendUnavailable": "后端服务不可用",
-    "missingBaseEndpoint": "请先在「端点」标签页配置 Base URL",
+    "missingBaseEndpoint": "请先在供应商配置中填写 Base URL",
     "missingGenerateEndpoint": "请先在「端点」标签页配置生成端点",
     "upstreamUnreachable": "无法连接供应商，请检查网络与端点配置",
     "upstreamTimeout": "上游响应超时",
-    "missingModelsEndpoint": "请先在「端点」标签页配置模型列表端点",
+    "missingModelsEndpoint": "请先在供应商配置中填写模型列表路径",
     "noActiveKeys": "没有可用密钥，请先在「密钥」标签页添加并启用",
     "upstreamError": "供应商返回错误，请检查密钥与端点配置",
     "upstreamInvalidResponse": "供应商返回的模型列表格式无法识别",
@@ -211,6 +212,7 @@
     "loadFailed": "品牌图标加载失败"
   },
   "providers": {
+    "modelsPath": "模型列表路径",
     "enable": "启用供应商",
     "edit": "修改供应商",
     "create": "新增供应商",

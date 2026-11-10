@@ -17,6 +17,8 @@ export interface SProvider {
   name: string
   /** 品牌图标 id；空串时前端首字母 fallback */
   icon: string
+  baseUrl: string
+  modelsPath: string
   enabled: boolean
   status: ProviderStatus
   /** 描述备注 */
@@ -32,7 +34,7 @@ export interface SProvider {
 /** 新增时指定的初始生成端点（由服务端在创建事务内写入 s_endpoint 并设为默认） */
 export interface SProviderGenerateEndpointInput {
   /** 生成端点类型，取值见 sEndpoint.ts 的 GEN_ENDPOINT_TYPES */
-  generate: string
+  type: string
   /** 端点地址，如 /v1/chat/completions */
   path: string
 }
@@ -53,8 +55,10 @@ export interface SProviderCreateInput {
   enabled?: boolean
   remark?: string
   sort?: number
-  /** 新增时指定的基础端点 URL（由服务端写入 s_endpoint 表） */
-  baseUrl?: string
+  /** 请求根地址（写入 s_provider.base_url） */
+  baseUrl: string
+  /** 模型列表路径，默认 /v1/models */
+  modelsPath?: string
   /** 新增时指定的初始生成端点（仅创建生效） */
   generateEndpoint?: SProviderGenerateEndpointInput
   /** 新增时指定的初始密钥（仅创建生效） */
@@ -65,6 +69,8 @@ export interface SProviderCreateInput {
 export interface SProviderUpdateInput {
   code: string
   name: string
+  baseUrl: string
+  modelsPath: string
   icon?: string
   enabled?: boolean
   remark?: string
@@ -78,12 +84,13 @@ export const SProviderCreateSchema = v.object({
   code: requiredText,
   name: requiredText,
   baseUrl: requiredText,
+  modelsPath: v.optional(requiredText, '/v1/models'),
   icon: v.optional(v.string(), ''),
   enabled: v.optional(v.boolean(), false),
   remark: v.optional(v.string(), ''),
   sort: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0)), 0),
   generateEndpoint: v.optional(v.object({
-    generate: requiredText,
+    type: v.pipe(requiredText, v.check(value => !['base', 'models', 'generate'].includes(value))),
     path: requiredText,
   })),
   apiKey: v.optional(v.object({
@@ -96,10 +103,13 @@ export const SProviderCreateSchema = v.object({
 export const SProviderUpdateSchema = v.object({
   code: v.string(),
   name: requiredText,
+  baseUrl: requiredText,
+  modelsPath: requiredText,
   icon: v.optional(v.string(), ''),
   enabled: v.optional(v.boolean(), false),
   remark: v.optional(v.string(), ''),
-  sort: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0)), 0),
+  // 编辑连接配置时通常不传 sort；省略表示保留已有排序。
+  sort: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
 })
 
 /** 批量排序请求体：[{id, sort}]（出站域供应商/密钥/模型共用） */

@@ -53,6 +53,7 @@
     "breadcrumb": "Breadcrumb"
   },
   "validation": {
+    "modelsPathRequired": "Enter the models path",
     "selectEndpointType": "Select an endpoint type",
     "duplicateEndpointType": "This endpoint type already exists",
     "endpointPathRequired": "Enter an endpoint URL or path",
@@ -90,11 +91,11 @@
   "errors": {
     "modelTestUnsupported": "Testing is currently supported only for Text and Omni models",
     "backendUnavailable": "Backend service unavailable",
-    "missingBaseEndpoint": "Configure the Base URL in the Endpoints tab first",
+    "missingBaseEndpoint": "Configure the Base URL in provider settings first",
     "missingGenerateEndpoint": "Configure a generation endpoint in the Endpoints tab first",
     "upstreamUnreachable": "Cannot connect to the provider. Check your network and endpoint settings.",
     "upstreamTimeout": "Upstream request timed out",
-    "missingModelsEndpoint": "Configure the model list endpoint in the Endpoints tab first",
+    "missingModelsEndpoint": "Configure the models path in provider settings first",
     "noActiveKeys": "No active keys. Add and enable a key in the Keys tab first.",
     "upstreamError": "The provider returned an error. Check your key and endpoint settings.",
     "upstreamInvalidResponse": "The provider returned an unrecognized model list format",
@@ -211,6 +212,7 @@
     "loadFailed": "Unable to load brand icons"
   },
   "providers": {
+    "modelsPath": "Models path",
     "enable": "Enable provider",
     "edit": "Edit provider",
     "create": "Add provider",

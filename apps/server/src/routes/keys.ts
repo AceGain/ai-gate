@@ -5,6 +5,7 @@ import {Hono} from 'hono'
 import {SKeyInputSchema, SReorderSchema} from '@ai-gate/shared'
 import {
   insertKey,
+  getProvider,
   listEndpoints,
   listKeys,
   removeKey,
@@ -52,16 +53,16 @@ keys.post('/providers/:providerId/keys/:id/test', async (c) => {
   if (!key) return c.json({error: 'KEY_NOT_FOUND'}, 404)
 
   const endpoints = listEndpoints(providerId)
-  const base = endpoints.find(e => e.type === 'base')
-  if (!base?.path?.trim()) return c.json({error: 'MISSING_BASE_ENDPOINT'}, 400)
-  const modelsEndpoint = endpoints.find(e => e.type === 'models')
-  if (!modelsEndpoint?.path?.trim()) return c.json({error: 'MISSING_MODELS_ENDPOINT'}, 400)
+  const provider = getProvider(providerId)
+  if (!provider) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
+  if (!provider.baseUrl.trim()) return c.json({error: 'MISSING_BASE_ENDPOINT'}, 400)
+  if (!provider.modelsPath.trim()) return c.json({error: 'MISSING_MODELS_ENDPOINT'}, 400)
 
-  const defaultGenerate = endpoints.find(e => e.type === 'generate' && e.isDefault)
-    ?? endpoints.find(e => e.type === 'generate')
-  const headers = buildAuthHeaders(defaultGenerate?.generate, key.secret)
+  const defaultGenerate = endpoints.find(e => e.isDefault)
+    ?? endpoints[0]
+  const headers = buildAuthHeaders(defaultGenerate?.type, key.secret)
 
-  const url = joinUrl(base.path.trim(), modelsEndpoint.path.trim())
+  const url = joinUrl(provider.baseUrl.trim(), provider.modelsPath.trim())
   const startedAt = Date.now()
   let res: Response
   try {

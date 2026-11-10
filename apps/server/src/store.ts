@@ -1,7 +1,7 @@
 /**
  * 出站供应商（S 域）与配置持久化层：Drizzle ORM + better-sqlite3（同步 API）
  * 负责 s_* 表行结构与 camelCase API 载荷的双向映射：
- * - s_endpoint.kind/type ↔ API 的 type（base/models/generate）+ generate（生成端点类型）
+ * - s_provider.base_url/models_path ↔ API 的 baseUrl/modelsPath；s_endpoint.type 为生成类型
  * - s_model.config（JSON）↔ API 的模态/Token/推理扁平字段；gen_type（JSON）↔ generates
  * 列表一律按 sort 升序返回
  */
@@ -36,6 +36,8 @@ function toProvider(row: SProviderRow): SProvider {
     code: row.code,
     name: row.name,
     icon: row.icon ?? '',
+    baseUrl: row.base_url,
+    modelsPath: row.models_path,
     enabled: row.enabled,
     status: row.status as SProvider['status'],
     remark: row.remark ?? '',
@@ -45,17 +47,14 @@ function toProvider(row: SProviderRow): SProvider {
   }
 }
 
-const KIND_BY_TYPE = {base: 'BASE', models: 'MODEL', generate: 'GEN'} as const
-const TYPE_BY_KIND = {BASE: 'base', MODEL: 'models', GEN: 'generate'} as const
-
 function toEndpoint(row: SEndpointRow): SEndpoint {
   return {
     id: row.id,
     providerId: row.provider_id,
-    type: TYPE_BY_KIND[row.kind as keyof typeof TYPE_BY_KIND] ?? 'generate',
-    generate: row.kind === 'GEN' ? (row.type ?? '') : '',
+    type: row.type,
     path: row.path,
     isDefault: row.is_default,
+    sort: row.sort,
     createTime: row.create_time,
     updateTime: row.update_time,
   }
@@ -143,13 +142,15 @@ export function getProvider(id: number): SProvider | null {
   return row ? toProvider(row) : null
 }
 
-/** 新增供应商：事务内同时初始化 base 与 models 端点；可选初始化生成端点（设为默认）与初始密钥 */
+/** 新增供应商：保存连接配置，可选在事务内初始化默认生成端点与初始密钥 */
 export function insertProvider(input: SProviderCreateInput): SProvider {
   const id = db.transaction(() => {
     const inserted = db.insert(sProvider).values({
       code: input.code,
       name: input.name,
       icon: input.icon ?? '',
+      base_url: input.baseUrl,
+      models_path: input.modelsPath ?? '/v1/models',
       enabled: input.enabled === true,
       status: 'ACTIVE',
       remark: input.remark ?? '',
@@ -157,16 +158,10 @@ export function insertProvider(input: SProviderCreateInput): SProvider {
     }).returning({id: sProvider.id}).get()
     const providerId = inserted!.id
 
-    db.insert(sEndpoint).values([
-      {provider_id: providerId, kind: 'BASE', type: null, path: input.baseUrl!, is_default: false},
-      {provider_id: providerId, kind: 'MODEL', type: null, path: '/v1/models', is_default: false},
-    ]).run()
-
     if (input.generateEndpoint) {
       db.insert(sEndpoint).values({
         provider_id: providerId,
-        kind: 'GEN',
-        type: input.generateEndpoint.generate,
+        type: input.generateEndpoint.type,
         path: input.generateEndpoint.path,
         is_default: true,
       }).run()
@@ -193,6 +188,8 @@ export function updateProvider(id: number, input: SProviderUpdateInput): SProvid
   const res = db.update(sProvider).set({
     name: input.name,
     icon: input.icon ?? '',
+    base_url: input.baseUrl,
+    models_path: input.modelsPath,
     enabled: input.enabled === true,
     remark: input.remark ?? '',
     ...(input.sort !== undefined ? {sort: input.sort} : {}),
@@ -219,11 +216,11 @@ export function reorderProviders(items: {id: number, sort: number}[]): void {
  * 供应商端点（s_endpoint）
  * ========================================================================= */
 
-/** 查询某供应商的所有端点（按创建时间正序） */
+/** 查询某供应商的所有生成端点（按 sort、创建时间、id 正序） */
 export function listEndpoints(providerId: number): SEndpoint[] {
   return db.select().from(sEndpoint)
     .where(eq(sEndpoint.provider_id, providerId))
-    .orderBy(asc(sEndpoint.create_time))
+    .orderBy(asc(sEndpoint.sort), asc(sEndpoint.create_time), asc(sEndpoint.id))
     .all()
     .map(toEndpoint)
 }
@@ -234,62 +231,60 @@ export function getEndpoint(id: number): SEndpoint | null {
   return row ? toEndpoint(row) : null
 }
 
-/** 按 providerId 和生成端点类型查询 GEN 端点 */
-export function getEndpointByGenerate(providerId: number, generate: string): SEndpoint | null {
+/** 按 providerId 和生成类型查询端点 */
+export function getEndpointByType(providerId: number, type: string): SEndpoint | null {
   const row = db.select().from(sEndpoint).where(
     and(
       eq(sEndpoint.provider_id, providerId),
-      eq(sEndpoint.kind, 'GEN'),
-      eq(sEndpoint.type, generate),
+      eq(sEndpoint.type, type),
     ),
   ).get()
   return row ? toEndpoint(row) : null
 }
 
-/** 新增端点（默认标记仅对 generate 生效，事务内将同供应商其它 GEN 端点取消默认） */
+/** 新增生成端点，事务内维护同供应商默认互斥 */
 export function insertEndpoint(providerId: number, input: SEndpointInput): SEndpoint {
-  const isDefault = input.type === 'generate' && !!input.isDefault
+  const isDefault = !!input.isDefault
   const id = db.transaction(() => {
     if (isDefault) {
       db.update(sEndpoint).set({is_default: false})
-        .where(and(eq(sEndpoint.provider_id, providerId), eq(sEndpoint.kind, 'GEN')))
+        .where(eq(sEndpoint.provider_id, providerId))
         .run()
     }
     const inserted = db.insert(sEndpoint).values({
       provider_id: providerId,
-      kind: KIND_BY_TYPE[input.type],
-      type: input.type === 'generate' ? (input.generate ?? '') : null,
+      type: input.type,
       path: input.path,
       is_default: isDefault,
+      sort: input.sort ?? 0,
     }).returning({id: sEndpoint.id}).get()
     return inserted!.id
   })
   return getEndpoint(id)!
 }
 
-/** 更新端点（默认标记仅对 generate 生效，事务内维护默认互斥） */
+/** 更新生成端点，事务内维护默认互斥 */
 export function updateEndpoint(id: number, input: SEndpointInput): SEndpoint | null {
   const existing = getEndpoint(id)
   if (!existing) return null
 
-  const isDefault = input.type === 'generate' && !!input.isDefault
+  const isDefault = !!input.isDefault
   db.transaction(() => {
     if (isDefault) {
       db.update(sEndpoint).set({is_default: false})
         .where(
           and(
             eq(sEndpoint.provider_id, existing.providerId),
-            eq(sEndpoint.kind, 'GEN'),
             ne(sEndpoint.id, id),
           ),
         )
         .run()
     }
     db.update(sEndpoint).set({
-      kind: KIND_BY_TYPE[input.type],
-      type: input.type === 'generate' ? (input.generate ?? '') : null,
+      type: input.type,
       path: input.path,
       is_default: isDefault,
+      ...(input.sort !== undefined ? {sort: input.sort} : {}),
     }).where(eq(sEndpoint.id, id)).run()
   })
   return getEndpoint(id)

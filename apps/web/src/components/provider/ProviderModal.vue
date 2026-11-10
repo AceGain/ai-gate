@@ -34,7 +34,7 @@ const formId = useId()
 /**
  * 供应商新增/编辑弹窗：基本信息（图标、编码、名称、描述、启用）
  * 新增模式额外初始化端点（端点类型 + 端点地址，默认路径自动填充）与首个密钥；
- * 编辑模式仅维护基本信息，端点/密钥在供应商详情页管理
+ * 新增和编辑均维护供应商连接配置；生成端点/密钥在详情页管理
  */
 const props = defineProps<{
   /** 编辑目标；null = 新增 */
@@ -81,6 +81,7 @@ const form = reactive({
   name: '',
   icon: defaultProviderIcon,
   baseUrl: '',
+  modelsPath: '/v1/models',
   generate: GEN_ENDPOINT_TYPES[0] as GenEndpointType,
   generatePath: '',
   secret: '',
@@ -102,7 +103,8 @@ watch(open, (v) => {
   form.code = props.provider?.code ?? ''
   form.name = props.provider?.name ?? ''
   form.icon = props.provider?.icon ?? defaultProviderIcon
-  form.baseUrl = ''
+  form.baseUrl = props.provider?.baseUrl ?? ''
+  form.modelsPath = props.provider?.modelsPath ?? '/v1/models'
   form.generate = GEN_ENDPOINT_TYPES[0]
   form.generatePath = GEN_ENDPOINT_DEFAULT_PATHS[GEN_ENDPOINT_TYPES[0]]
   form.secret = ''
@@ -149,11 +151,14 @@ const nameError = computed(() =>
   showErrors.value && !form.name.trim() ? t('validation.nameRequired') : undefined,
 )
 
-/** Base URL 校验结果：仅新增模式下校验必填 */
+/** 供应商连接配置在新增和编辑时均必填 */
 const baseUrlInvalidReason = computed(() => {
-  if (props.provider) return undefined
   return form.baseUrl.trim() ? undefined : t('validation.baseUrlRequired')
 })
+
+const modelsPathError = computed(() =>
+  showErrors.value && !form.modelsPath.trim() ? t('validation.modelsPathRequired') : undefined,
+)
 
 const baseUrlError = computed(() =>
   showErrors.value ? baseUrlInvalidReason.value : undefined,
@@ -185,6 +190,7 @@ const canSave = computed(() =>
   !codeInvalidReason.value &&
   !!form.name.trim() &&
   !baseUrlInvalidReason.value &&
+  !!form.modelsPath.trim() &&
   !generatePathInvalidReason.value &&
   !secretInvalidReason.value &&
   !saving.value,
@@ -204,6 +210,8 @@ async function save() {
         code: props.provider.code,
         name: form.name.trim(),
         icon: form.icon,
+        baseUrl: form.baseUrl.trim(),
+        modelsPath: form.modelsPath.trim(),
         enabled: form.enabled,
         remark: form.remark.trim(),
       })
@@ -211,10 +219,11 @@ async function save() {
         code: form.code.trim(),
         name: form.name.trim(),
         icon: form.icon,
+        baseUrl: form.baseUrl.trim(),
+        modelsPath: form.modelsPath.trim(),
         enabled: form.enabled,
         remark: form.remark.trim(),
-        baseUrl: form.baseUrl.trim(),
-        generateEndpoint: {generate: form.generate, path: form.generatePath.trim()},
+        generateEndpoint: {type: form.generate, path: form.generatePath.trim()},
         // 首个密钥名称固定为 default（标识符，不随界面语言本地化）
         apiKey: {name: 'default', secret: form.secret.trim()},
       })
@@ -309,7 +318,6 @@ async function save() {
             </Field>
 
             <Field
-              v-if="!props.provider"
               :data-invalid="!!baseUrlError"
             >
               <FieldLabel :for="`${formId}-baseUrl`">Base URL <span class="text-destructive">*</span></FieldLabel>
@@ -322,6 +330,17 @@ async function save() {
               <FieldError v-if="baseUrlError">
                 {{ baseUrlError }}
               </FieldError>
+            </Field>
+
+            <Field :data-invalid="!!modelsPathError">
+              <FieldLabel :for="`${formId}-modelsPath`">{{ t('providers.modelsPath') }} <span class="text-destructive">*</span></FieldLabel>
+              <Input
+                v-model="form.modelsPath"
+                :aria-invalid="!!modelsPathError || undefined"
+                placeholder="/v1/models"
+                :id="`${formId}-modelsPath`"
+              />
+              <FieldError v-if="modelsPathError">{{ modelsPathError }}</FieldError>
             </Field>
 
             <template v-if="!props.provider">

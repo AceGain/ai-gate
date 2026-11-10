@@ -9,6 +9,7 @@ import type {SKey, SModelInput, ModelType} from '@ai-gate/shared'
 import {
   importModelsWithBindings,
   insertModel,
+  getProvider,
   listEndpoints,
   listKeys,
   listModels,
@@ -137,13 +138,13 @@ models.get('/providers/:providerId/models/remote', async (c) => {
   const providerId = parseId(c.req.param('providerId'))
   if (!providerId) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
   const endpoints = listEndpoints(providerId)
-  const base = endpoints.find(e => e.type === 'base')
-  const modelsEndpoint = endpoints.find(e => e.type === 'models')
-  if (!base?.path?.trim()) return c.json({error: 'MISSING_BASE_ENDPOINT'}, 400)
-  if (!modelsEndpoint?.path?.trim()) return c.json({error: 'MISSING_MODELS_ENDPOINT'}, 400)
+  const provider = getProvider(providerId)
+  if (!provider) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
+  if (!provider.baseUrl.trim()) return c.json({error: 'MISSING_BASE_ENDPOINT'}, 400)
+  if (!provider.modelsPath.trim()) return c.json({error: 'MISSING_MODELS_ENDPOINT'}, 400)
 
-  const defaultGenerate = endpoints.find(e => e.type === 'generate' && e.isDefault)
-    ?? endpoints.find(e => e.type === 'generate')
+  const defaultGenerate = endpoints.find(e => e.isDefault)
+    ?? endpoints[0]
 
   const allKeys = listKeys(providerId)
   const activeKeys = allKeys.filter(k => k.enabled && k.status === 'ACTIVE')
@@ -155,9 +156,9 @@ models.get('/providers/:providerId/models/remote', async (c) => {
     ? activeKeys.filter(k => requestedIds.includes(k.id))
     : activeKeys
 
-  const url = joinUrl(base.path.trim(), modelsEndpoint.path.trim())
+  const url = joinUrl(provider.baseUrl.trim(), provider.modelsPath.trim())
   const results = await mapWithConcurrency(targets, REMOTE_FETCH_CONCURRENCY,
-    key => fetchModelsForKey(url, defaultGenerate?.generate, key))
+    key => fetchModelsForKey(url, defaultGenerate?.type, key))
 
   // 请求中不可用（停用/失效/不存在）的密钥以失败条目返回，便于前端就地提示
   for (const id of requestedIds) {
@@ -202,18 +203,19 @@ models.post('/providers/:providerId/models/:id/test', async (c) => {
   }
 
   const endpoints = listEndpoints(providerId)
-  const base = endpoints.find(e => e.type === 'base')
-  if (!base?.path?.trim()) return c.json({error: 'MISSING_BASE_ENDPOINT'}, 400)
-  const generate = endpoints.find(e => e.type === 'generate' && model.generates.includes(e.generate))
-    ?? endpoints.find(e => e.type === 'generate' && e.isDefault)
-    ?? endpoints.find(e => e.type === 'generate')
+  const provider = getProvider(providerId)
+  if (!provider) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
+  if (!provider.baseUrl.trim()) return c.json({error: 'MISSING_BASE_ENDPOINT'}, 400)
+  const generate = endpoints.find(e => model.generates.includes(e.type))
+    ?? endpoints.find(e => e.isDefault)
+    ?? endpoints[0]
   if (!generate?.path?.trim()) return c.json({error: 'MISSING_GENERATE_ENDPOINT'}, 400)
 
   const keys = listKeys(providerId)
   const key = keys.find(k => k.enabled && k.status === 'ACTIVE')?.secret
 
-  const url = joinUrl(base.path.trim(), generate.path.trim())
-  const {headers, body} = buildTestPayload(generate.generate, model.code, key)
+  const url = joinUrl(provider.baseUrl.trim(), generate.path.trim())
+  const {headers, body} = buildTestPayload(generate.type, model.code, key)
 
   const startedAt = Date.now()
   let res: Response
@@ -259,9 +261,9 @@ models.post('/providers/:providerId/models/import', async (c) => {
   }
 
   const endpoints = listEndpoints(providerId)
-  const defaultGenerate = endpoints.find(e => e.type === 'generate' && e.isDefault)
-    ?? endpoints.find(e => e.type === 'generate')
-  const initialGenerate = defaultGenerate?.generate || ''
+  const defaultGenerate = endpoints.find(e => e.isDefault)
+    ?? endpoints[0]
+  const initialGenerate = defaultGenerate?.type || ''
 
   const items: SModelImportItem[] = data.models.map(item => ({
     input: {

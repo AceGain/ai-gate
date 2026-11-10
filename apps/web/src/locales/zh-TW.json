@@ -53,6 +53,7 @@
     "breadcrumb": "麵包屑導覽"
   },
   "validation": {
+    "modelsPathRequired": "請輸入模型清單路徑",
     "selectEndpointType": "請選擇端點類型",
     "duplicateEndpointType": "此端點類型已存在",
     "endpointPathRequired": "請輸入端點位址",
@@ -90,11 +91,11 @@
   "errors": {
     "modelTestUnsupported": "目前僅支援測試文字與全模態模型",
     "backendUnavailable": "後端服務無法使用",
-    "missingBaseEndpoint": "請先在「端點」分頁設定 Base URL",
+    "missingBaseEndpoint": "請先在供應商設定中填寫 Base URL",
     "missingGenerateEndpoint": "請先在「端點」分頁設定生成端點",
     "upstreamUnreachable": "無法連線至供應商，請檢查網路與端點設定",
     "upstreamTimeout": "上游回應逾時",
-    "missingModelsEndpoint": "請先在「端點」分頁設定模型清單端點",
+    "missingModelsEndpoint": "請先在供應商設定中填寫模型清單路徑",
     "noActiveKeys": "沒有可用金鑰，請先在「金鑰」分頁新增並啟用",
     "upstreamError": "供應商傳回錯誤，請檢查金鑰與端點設定",
     "upstreamInvalidResponse": "無法辨識供應商傳回的模型清單格式",
@@ -211,6 +212,7 @@
     "loadFailed": "品牌圖示載入失敗"
   },
   "providers": {
+    "modelsPath": "模型清單路徑",
     "enable": "啟用供應商",
     "edit": "修改供應商",
     "create": "新增供應商",

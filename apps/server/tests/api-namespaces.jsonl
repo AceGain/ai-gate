@@ -48,14 +48,14 @@
 {"method":"DELETE","path":"/api/temp/providers/1/models/1","expect":{"status":404}}
 {"method":"GET","path":"/","expect":{"status":200,"body":{"status":"ok"}}}
 {"method":"GET","path":"/api/set/providers","expect":{"status":200,"body":[]}}
-{"method":"POST","path":"/api/set/providers","expect":{"status":201,"body":{"code":"namespace-audit"}},"body":{"code":"namespace-audit","name":"Namespace audit","baseUrl":"https://upstream.audit.invalid","generateEndpoint":{"generate":"Chat Completions","path":"/v1/chat/completions"},"apiKey":{"name":"initial","secret":"dummy-initial-key"}},"save":{"providerId":".id"}}
+{"method":"POST","path":"/api/set/providers","expect":{"status":201,"body":{"code":"namespace-audit"}},"body":{"code":"namespace-audit","name":"Namespace audit","baseUrl":"https://upstream.audit.invalid","generateEndpoint":{"path":"/v1/chat/completions","type":"Chat Completions"},"apiKey":{"name":"initial","secret":"dummy-initial-key"}},"save":{"providerId":".id"}}
 {"method":"GET","path":"/api/set/providers/{{providerId}}","expect":{"status":200,"body":{"code":"namespace-audit"}}}
-{"method":"PUT","path":"/api/set/providers/{{providerId}}","expect":{"status":200,"body":{"name":"Updated audit","enabled":true}},"body":{"code":"namespace-audit","name":"Updated audit","enabled":true}}
+{"method":"PUT","path":"/api/set/providers/{{providerId}}","expect":{"status":200,"body":{"name":"Updated audit","enabled":true}},"body":{"code":"namespace-audit","name":"Updated audit","enabled":true,"baseUrl":"https://upstream.audit.invalid","modelsPath":"/v1/models"}}
 {"method":"PUT","path":"/api/set/providers/reorder","expect":{"status":200,"body":{"ok":true}},"body":[{"id":"{{providerId}}","sort":3}]}
 {"method":"GET","path":"/api/set/providers/{{providerId}}","expect":{"status":200,"body":{"sort":3}}}
 {"method":"GET","path":"/api/set/providers/{{providerId}}/endpoints","expect":{"status":200}}
-{"method":"POST","path":"/api/set/providers/{{providerId}}/endpoints","expect":{"status":201,"body":{"generate":"Responses"}},"body":{"type":"generate","generate":"Responses","path":"/v1/responses"},"save":{"endpointId":".id"}}
-{"method":"PUT","path":"/api/set/providers/{{providerId}}/endpoints/{{endpointId}}","expect":{"status":200,"body":{"isDefault":true}},"body":{"type":"generate","generate":"Responses","path":"/v1/responses","isDefault":true}}
+{"method":"POST","path":"/api/set/providers/{{providerId}}/endpoints","expect":{"status":201,"body":{"type":"Responses"}},"body":{"type":"Responses","path":"/v1/responses"},"save":{"endpointId":".id"}}
+{"method":"PUT","path":"/api/set/providers/{{providerId}}/endpoints/{{endpointId}}","expect":{"status":200,"body":{"isDefault":true}},"body":{"type":"Responses","path":"/v1/responses","isDefault":true}}
 {"method":"DELETE","path":"/api/set/providers/{{providerId}}/endpoints/{{endpointId}}","expect":{"status":200,"body":{"ok":true}}}
 {"method":"GET","path":"/api/set/providers/{{providerId}}/keys","expect":{"status":200},"save":{"initialKeyId":".0.id"}}
 {"method":"POST","path":"/api/set/providers/{{providerId}}/keys","expect":{"status":201,"body":{"name":"extra"}},"body":{"name":"extra","secret":"dummy-extra-key","enabled":true},"save":{"keyId":".id"}}

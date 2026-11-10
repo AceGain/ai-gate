@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SKey, SEndpoint, EndpointType, SModel } from '@ai-gate/shared'
+import type { SKey, SEndpoint, SModel } from '@ai-gate/shared'
 import { GEN_ENDPOINT_TYPES, MODEL_DEFAULT_CATEGORY } from '@ai-gate/shared'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -95,37 +95,20 @@ const editModalOpen = ref(false)
 /* ---------------- 2. 端点操作与弹窗 ---------------- */
 const endpointModalOpen = ref(false)
 const editingEndpoint = ref<SEndpoint | null>(null)
-const endpointModalType = ref<EndpointType>('generate')
 
-const baseEndpoint = computed(() => endpoints.value.find(e => e.type === 'base'))
-const modelsEndpoint = computed(() => endpoints.value.find(e => e.type === 'models'))
-const generateEndpoints = computed(() => endpoints.value.filter(e => e.type === 'generate'))
+const generateEndpoints = computed(() => endpoints.value)
 const isAllGeneratesAdded = computed(() => {
-  const addedGenerates = new Set(generateEndpoints.value.map(e => e.generate))
+  const addedGenerates = new Set(generateEndpoints.value.map(e => e.type))
   return GEN_ENDPOINT_TYPES.every(p => addedGenerates.has(p))
 })
 
 function openCreateEndpoint() {
   editingEndpoint.value = null
-  endpointModalType.value = 'generate'
-  endpointModalOpen.value = true
-}
-
-function openEditBaseEndpoint() {
-  editingEndpoint.value = baseEndpoint.value ?? null
-  endpointModalType.value = 'base'
-  endpointModalOpen.value = true
-}
-
-function openEditModelsEndpoint() {
-  editingEndpoint.value = modelsEndpoint.value ?? null
-  endpointModalType.value = 'models'
   endpointModalOpen.value = true
 }
 
 function openEditEndpoint(ep: SEndpoint) {
   editingEndpoint.value = ep
-  endpointModalType.value = ep.type
   endpointModalOpen.value = true
 }
 
@@ -145,7 +128,6 @@ async function handleToggleDefault(ep: SEndpoint) {
   try {
     await store.updateEndpoint(provider.value.id, ep.id, {
       type: ep.type,
-      generate: ep.generate,
       path: ep.path,
       isDefault: nextDefault,
     })
@@ -399,7 +381,7 @@ watch(() => route.query.tab, (tab) => {
 
 /** 全 URL 拆分展示（域名弱化、路径高亮） */
 function urlParts(path?: string) {
-  return splitUrl(baseEndpoint.value?.path, path)
+  return splitUrl(provider.value?.baseUrl, path)
 }
 </script>
 
@@ -552,25 +534,25 @@ function urlParts(path?: string) {
           v-else
           class="border-y divide-y gap-0"
         >
-          <!-- 固定端点 1: Base URL -->
+          <!-- 供应商连接配置：Base URL -->
           <Item role="listitem" class="group hover:bg-muted/30 justify-between gap-4 px-2 flex-nowrap duration-150 border-0 border-border not-last:border-b">
             <ItemContent class="min-w-0">
               <span class="select-none text-xs font-semibold">Base URL</span>
               <div class="flex min-w-0 items-center gap-2">
                 <code
                   class="text-muted-foreground truncate text-xs select-all"
-                  :title="baseEndpoint?.path || t('common.noData')"
+                  :title="provider.baseUrl || t('common.noData')"
                 >
-                  {{ baseEndpoint?.path || t('common.noData') }}
+                  {{ provider.baseUrl || t('common.noData') }}
                 </code>
                 <Button
-                  v-if="baseEndpoint?.path"
+                  v-if="provider.baseUrl"
                   variant="ghost"
                   size="icon-xs"
                   class="text-muted-foreground shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                   :title="t('common.copy')"
                   :aria-label="t('common.copy')"
-                  @click="handleCopy(baseEndpoint.path)"
+                  @click="handleCopy(provider.baseUrl)"
                 >
                   <PhCopy />
                 </Button>
@@ -583,36 +565,36 @@ function urlParts(path?: string) {
                 class="text-muted-foreground hover:text-foreground"
                 :aria-label="t('common.edit')"
                 :title="t('common.edit')"
-                @click="openEditBaseEndpoint"
+                @click="editModalOpen = true"
               >
                 <PhPencilSimple />
               </Button>
             </div>
           </Item>
 
-          <!-- 固定端点 2: Models（全路径展示：域名弱化，路径高亮） -->
+          <!-- 供应商模型列表地址（基地址与 modelsPath 拼接） -->
           <Item role="listitem" class="group hover:bg-muted/30 justify-between gap-4 px-2 flex-nowrap duration-150 border-0 border-border not-last:border-b">
             <ItemContent class="min-w-0">
               <span class="select-none text-xs font-semibold">Models</span>
               <div class="flex min-w-0 items-center gap-2">
                 <code
                   class="truncate text-xs select-all"
-                  :title="urlParts(modelsEndpoint?.path).fullUrl || t('common.noData')"
+                  :title="urlParts(provider.modelsPath).fullUrl || t('common.noData')"
                 >
                   <span
-                    v-if="urlParts(modelsEndpoint?.path).basePart"
+                    v-if="urlParts(provider.modelsPath).basePart"
                     class="text-muted-foreground/70"
-                  >{{ urlParts(modelsEndpoint?.path).basePart }}</span>
-                  <span :class="urlParts(modelsEndpoint?.path).basePart ? 'font-medium' : 'text-muted-foreground'">{{ urlParts(modelsEndpoint?.path).pathPart || t('common.noData') }}</span>
+                  >{{ urlParts(provider.modelsPath).basePart }}</span>
+                  <span :class="urlParts(provider.modelsPath).basePart ? 'font-medium' : 'text-muted-foreground'">{{ urlParts(provider.modelsPath).pathPart || t('common.noData') }}</span>
                 </code>
                 <Button
-                  v-if="urlParts(modelsEndpoint?.path).fullUrl"
+                  v-if="urlParts(provider.modelsPath).fullUrl"
                   variant="ghost"
                   size="icon-xs"
                   class="text-muted-foreground shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                   :title="t('common.copy')"
                   :aria-label="t('common.copy')"
-                  @click="handleCopy(urlParts(modelsEndpoint?.path).fullUrl)"
+                  @click="handleCopy(urlParts(provider.modelsPath).fullUrl)"
                 >
                   <PhCopy />
                 </Button>
@@ -625,7 +607,7 @@ function urlParts(path?: string) {
                 class="text-muted-foreground hover:text-foreground"
                 :aria-label="t('common.edit')"
                 :title="t('common.edit')"
-                @click="openEditModelsEndpoint"
+                @click="editModalOpen = true"
               >
                 <PhPencilSimple />
               </Button>
@@ -642,7 +624,7 @@ function urlParts(path?: string) {
             <ItemContent class="min-w-0">
               <!-- 第一行：标题（端点类型） + 默认徽章 -->
               <div class="flex items-center gap-2">
-                <span class="text-xs font-semibold">{{ ep.generate }}</span>
+                <span class="text-xs font-semibold">{{ ep.type }}</span>
                 <Badge
                   v-if="ep.isDefault"
                   variant="secondary"
@@ -927,7 +909,6 @@ function urlParts(path?: string) {
     v-model:open="endpointModalOpen"
     :provider-id="provider.id"
     :endpoint="editingEndpoint"
-    :default-type="endpointModalType"
     :existing-endpoints="endpoints"
     @saved="() => store.loadEndpoints(provider!.id)"
   />

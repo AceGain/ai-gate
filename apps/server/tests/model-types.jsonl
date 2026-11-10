@@ -3,7 +3,7 @@
 {"method":"POST","path":"/api/providers","body":{"code":"legacy","name":"Legacy"},"expect":{"status":404}}
 {"path":"/api/temp/providers","expect":{"status":404}}
 {"path":"/api/set/providers","expect":{"status":200,"body":[]}}
-{"method":"POST","path":"/api/set/providers","body":{"code":"audit","name":"Model type audit","baseUrl":"https://upstream.audit.invalid","generateEndpoint":{"generate":"Chat Completions","path":"/v1/chat/completions"},"apiKey":{"name":"audit","secret":"dummy-audit-key"}},"expect":{"status":201},"save":{"providerId":".id"}}
+{"method":"POST","path":"/api/set/providers","body":{"code":"audit","name":"Model type audit","baseUrl":"https://upstream.audit.invalid","generateEndpoint":{"path":"/v1/chat/completions","type":"Chat Completions"},"apiKey":{"name":"audit","secret":"dummy-audit-key"}},"expect":{"status":201},"save":{"providerId":".id"}}
 {"path":"/api/set/providers/{{providerId}}","expect":{"status":200,"body":{"code":"audit"}}}
 {"path":"/api/set/providers/{{providerId}}/endpoints","expect":{"status":200}}
 {"path":"/api/set/providers/{{providerId}}/keys","expect":{"status":200}}

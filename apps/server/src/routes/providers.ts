@@ -61,7 +61,7 @@ providers.get('/providers/:id', (c) => {
   return c.json(provider)
 })
 
-/** 新增：事务内初始化 base/models 端点与可选的生成端点、初始密钥 */
+/** 新增：保存连接配置，事务内初始化可选的生成端点与初始密钥 */
 providers.post('/providers', async (c) => {
   const body = await c.req.json<unknown>().catch(() => null)
   const {data, error} = parseBody(SProviderCreateSchema, body)

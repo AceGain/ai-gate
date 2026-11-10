@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SEndpoint, SEndpointInput, EndpointType } from '@ai-gate/shared'
+import type { SEndpoint, SEndpointInput } from '@ai-gate/shared'
 import { GEN_ENDPOINT_TYPES, GEN_ENDPOINT_DEFAULT_PATHS } from '@ai-gate/shared'
 import { computed, reactive, ref, watch, useId } from 'vue'
 import { useClipboard } from '@vueuse/core'
@@ -27,14 +27,11 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 const formId = useId()
 
-const props = withDefaults(defineProps<{
+const props = defineProps<{
   providerId: number
   endpoint: SEndpoint | null
-  defaultType?: EndpointType
   existingEndpoints?: SEndpoint[]
-}>(), {
-  defaultType: 'generate',
-})
+}>()
 
 const emit = defineEmits<{saved: [endpoint: SEndpoint]}>()
 
@@ -43,34 +40,21 @@ const open = defineModel<boolean>('open', {default: false})
 const store = useProvidersStore()
 const {copy} = useClipboard()
 
-const targetType = computed<EndpointType>(() => {
-  return props.endpoint?.type ?? props.defaultType ?? 'generate'
-})
-
-const form = reactive({
-  type: 'generate' as EndpointType,
-  generate: '',
-  path: '',
-  isDefault: false,
-})
+const form = reactive({type: '', path: ''})
 
 const showErrors = ref(false)
 const saving = ref(false)
 const formBody = ref<InstanceType<typeof DialogBody> | null>(null)
 
-/** 基地址端点（用于拼接完整端点预览） */
-const baseEndpoint = computed(() => {
-  const eps = props.existingEndpoints ?? store.endpoints
-  return eps.find(e => e.type === 'base')
-})
+const baseUrl = computed(() => store.providers.find(p => p.id === props.providerId)?.baseUrl)
 
 /** 当前已配置的生成端点类型集合（排除当前正在编辑的端点） */
 const configuredGenerates = computed(() => {
   const eps = props.existingEndpoints ?? store.endpoints
   return new Set(
     eps
-      .filter(e => e.type === 'generate' && (!props.endpoint || e.id !== props.endpoint.id))
-      .map(e => e.generate),
+      .filter(e => !props.endpoint || e.id !== props.endpoint.id)
+      .map(e => e.type),
   )
 })
 
@@ -80,25 +64,18 @@ const availableGenerates = computed(() => {
 })
 
 const showUnavailableDescription = computed(() =>
-  form.type === 'generate' && !props.endpoint && availableGenerates.value.length === 0,
+  !props.endpoint && availableGenerates.value.length === 0,
 )
 
 watch(open, (v) => {
   if (!v) return
-  form.type = targetType.value
-  const initialGenerate = props.endpoint?.generate
-    || (form.type === 'generate' ? (availableGenerates.value[0] ?? '') : '')
-  form.generate = initialGenerate
-  const defaultPath = form.type === 'generate' && form.generate in GEN_ENDPOINT_DEFAULT_PATHS
-    ? GEN_ENDPOINT_DEFAULT_PATHS[form.generate as keyof typeof GEN_ENDPOINT_DEFAULT_PATHS]
-    : ''
-  form.path = props.endpoint?.path || (form.type === 'generate' ? defaultPath : '')
-  form.isDefault = form.type === 'generate' ? (props.endpoint?.isDefault ?? false) : false
+  form.type = props.endpoint?.type || availableGenerates.value[0] || ''
+  const defaultPath = GEN_ENDPOINT_DEFAULT_PATHS[form.type as keyof typeof GEN_ENDPOINT_DEFAULT_PATHS] ?? ''
+  form.path = props.endpoint?.path || defaultPath
   showErrors.value = false
 })
 
-watch(() => form.generate, (newGen, oldGen) => {
-  if (form.type !== 'generate') return
+watch(() => form.type, (newGen, oldGen) => {
   const oldDefault = oldGen && oldGen in GEN_ENDPOINT_DEFAULT_PATHS
     ? GEN_ENDPOINT_DEFAULT_PATHS[oldGen as keyof typeof GEN_ENDPOINT_DEFAULT_PATHS]
     : ''
@@ -110,9 +87,8 @@ watch(() => form.generate, (newGen, oldGen) => {
 })
 
 const generateError = computed(() => {
-  if (form.type !== 'generate') return undefined
-  if (showErrors.value && !form.generate.trim()) return t('validation.selectEndpointType')
-  if (!props.endpoint && configuredGenerates.value.has(form.generate.trim())) {
+  if (showErrors.value && !form.type.trim()) return t('validation.selectEndpointType')
+  if (!props.endpoint && configuredGenerates.value.has(form.type.trim())) {
     return t('validation.duplicateEndpointType')
   }
   return undefined
@@ -122,38 +98,21 @@ const pathError = computed(() =>
   showErrors.value && !form.path.trim() ? t('validation.endpointPathRequired') : undefined,
 )
 
-const canSave = computed(() => {
-  if (saving.value) return false
-  if (!form.path.trim()) return false
-  if (form.type === 'generate') {
-    if (!form.generate.trim()) return false
-    if (!props.endpoint && configuredGenerates.value.has(form.generate.trim())) return false
-  }
-  return true
-})
+const canSave = computed(() =>
+  !saving.value && !!form.path.trim() && !!form.type.trim()
+  && !configuredGenerates.value.has(form.type.trim()),
+)
 
 /** 弹窗标题 */
 const modalTitle = computed(() => props.endpoint ? t('endpoints.edit') : t('endpoints.create'))
 
-/** 端点类型只读显示文本 */
-const endpointTypeDisplay = computed(() => {
-  if (form.type === 'base') return 'Base URL'
-  if (form.type === 'models') return 'Models'
-  if (form.type === 'generate') return form.generate || t('endpoints.generatePath')
-  return form.type
-})
-
-const pathPlaceholder = computed(() => {
-  if (form.type === 'base') return t('endpoints.basePlaceholder')
-  if (form.type === 'models') return '/v1/models'
-  if (form.type === 'generate' && form.generate in GEN_ENDPOINT_DEFAULT_PATHS) {
-    return GEN_ENDPOINT_DEFAULT_PATHS[form.generate as keyof typeof GEN_ENDPOINT_DEFAULT_PATHS]
-  }
-  return t('endpoints.pathPlaceholder')
-})
+const endpointTypeDisplay = computed(() => form.type || t('endpoints.generatePath'))
+const pathPlaceholder = computed(() =>
+  GEN_ENDPOINT_DEFAULT_PATHS[form.type as keyof typeof GEN_ENDPOINT_DEFAULT_PATHS] ?? t('endpoints.pathPlaceholder'),
+)
 
 /** 完整端点地址拆分与预览 */
-const previewUrlParts = computed(() => splitUrl(baseEndpoint.value?.path, form.path.trim()))
+const previewUrlParts = computed(() => splitUrl(baseUrl.value, form.path.trim()))
 
 async function handleCopyPreview() {
   if (!previewUrlParts.value.fullUrl) return
@@ -171,8 +130,7 @@ async function save() {
   saving.value = true
   const isDefault = props.endpoint ? props.endpoint.isDefault : false
   const input: SEndpointInput = {
-    type: form.type,
-    generate: form.type === 'generate' ? form.generate.trim() : '',
+    type: form.type.trim(),
     path: form.path.trim(),
     isDefault,
   }
@@ -210,12 +168,12 @@ async function save() {
 
       <DialogBody ref="formBody" :aria-label="modalTitle">
         <FieldGroup>
-          <!-- 端点类型：修改时只读不可操作；新增 generate 时展示下拉选择 -->
+          <!-- 生成类型：修改时只读，新增时选择未配置的类型 -->
           <Field :data-invalid="!props.endpoint ? !!generateError : false">
             <FieldLabel :for="`${formId}-generate`">
               {{ t('endpoints.type') }}
               <span
-                v-if="!props.endpoint && form.type === 'generate'"
+                v-if="!props.endpoint"
                 class="text-destructive"
               >*</span>
             </FieldLabel>
@@ -227,7 +185,7 @@ async function save() {
             />
             <Select
               v-else
-              v-model="form.generate"
+              v-model="form.type"
             >
               <SelectTrigger
                 class="w-full"
@@ -261,7 +219,7 @@ async function save() {
               v-model="form.path"
               :aria-invalid="!!pathError || undefined"
               :placeholder="pathPlaceholder"
-              :disabled="form.type === 'generate' && !props.endpoint && availableGenerates.length === 0"
+              :disabled="!props.endpoint && availableGenerates.length === 0"
               :id="`${formId}-path`"
             />
             <FieldError v-if="pathError">
@@ -309,7 +267,7 @@ async function save() {
           {{ t('common.cancel') }}
         </Button>
         <Button
-          :disabled="saving || (form.type === 'generate' && !props.endpoint && availableGenerates.length === 0)"
+          :disabled="saving || (!props.endpoint && availableGenerates.length === 0)"
           @click="save"
         >
           <Spinner v-if="saving" data-icon="inline-start" />

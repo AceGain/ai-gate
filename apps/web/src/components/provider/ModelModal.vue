@@ -155,7 +155,7 @@ const outputPresets = [
 
 const effectiveEndpoints = computed(() => props.existingEndpoints ?? store.endpoints)
 
-const baseEndpoint = computed(() => effectiveEndpoints.value.find(e => e.type === 'base'))
+const baseUrl = computed(() => store.providers.find(p => p.id === props.providerId)?.baseUrl)
 
 interface GenerateEndpointItem {
   id: number
@@ -167,12 +167,11 @@ interface GenerateEndpointItem {
 
 const generateEndpointList = computed<GenerateEndpointItem[]>(() => {
   return effectiveEndpoints.value
-    .filter(e => e.type === 'generate')
     .map(ep => ({
       id: ep.id,
-      type: ep.generate || ep.path,
+      type: ep.type,
       path: ep.path,
-      fullUrl: splitUrl(baseEndpoint.value?.path, ep.path).fullUrl,
+      fullUrl: splitUrl(baseUrl.value, ep.path).fullUrl,
       isDefault: ep.isDefault,
     }))
 })
@@ -203,16 +202,15 @@ watch(open, (v) => {
     : ['text']
 
   const availableGenerates = effectiveEndpoints.value
-    .filter(e => e.type === 'generate')
-    .map(e => e.generate || e.path)
+    .map(e => e.type)
   const availableSet = new Set(availableGenerates)
 
   if (props.modelItem?.generates?.length) {
     form.generates = props.modelItem.generates.filter(g => availableSet.has(g))
   } else if (!props.modelItem) {
-    const defaultEp = effectiveEndpoints.value.find(e => e.type === 'generate' && e.isDefault)
-    const firstGen = effectiveEndpoints.value.find(e => e.type === 'generate')
-    const initialGen = (defaultEp?.generate || defaultEp?.path) || (firstGen?.generate || firstGen?.path)
+    const defaultEp = effectiveEndpoints.value.find(e => e.isDefault)
+    const firstGen = effectiveEndpoints.value[0]
+    const initialGen = defaultEp?.type || firstGen?.type
     form.generates = initialGen ? [initialGen] : []
   } else {
     form.generates = []

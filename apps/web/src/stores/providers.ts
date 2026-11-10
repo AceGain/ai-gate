@@ -119,6 +119,8 @@ export const useProvidersStore = defineStore('providers', () => {
           code: prev.code,
           name: prev.name,
           icon: prev.icon,
+          baseUrl: prev.baseUrl,
+          modelsPath: prev.modelsPath,
           enabled,
           remark: prev.remark,
           sort: prev.sort,

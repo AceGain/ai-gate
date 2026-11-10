@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
     "test:icons": "node --import tsx --test tests/brand-icons*.test.ts",
+    "test:provider-urls": "node --import tsx --test tests/provider-urls.client.test.ts",
     "check:i18n": "node --import tsx scripts/check-i18n.mjs"
   },
   "dependencies": {
