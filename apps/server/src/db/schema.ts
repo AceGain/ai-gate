@@ -3,6 +3,7 @@ import { sqliteTable, text, integer, index, uniqueIndex, check } from 'drizzle-o
 
 // 出站域（S 域）：s_ 前缀 = 出站（对接的上游供应商），与模板域（hub 的 t_）、
 // 入站域（r_，对外路由代理）职责与领域不同，即使结构暂时相同也不得互相简化合并
+// 虚拟模型域（v_）保存虚拟模型及其实际模型角色关系。
 // 本文件是 sql/schema.sql 的 Drizzle 镜像，两者必须同步修改；
 // 列的业务含义见 schema.sql 内的注释
 
@@ -86,6 +87,47 @@ export const sRelat = sqliteTable('s_relat', {
   key_id: text('key_id').notNull(),
   model_id: text('model_id').notNull(),
 })
+
+export const vModel = sqliteTable('v_model', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  code: text('code').notNull().unique(),
+  name: text('name'),
+  category: text('category').notNull().default('Default'),
+  kind: text('kind').$type<'GROUP' | 'FUSION' | 'DECISION'>().notNull(),
+  type: text('type').notNull(),
+  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+  status: text('status').notNull().default('ACTIVE'),
+  gen_type: text('gen_type', { mode: 'json' }).$type<string[]>(),
+  config: text('config', { mode: 'json' }).$type<Record<string, unknown>>(),
+  orch_config: text('orch_config', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default({}),
+  timeout: integer('timeout').notNull().default(180000),
+  max_calls: integer('max_calls').notNull().default(16),
+  sort: integer('sort').notNull().default(0),
+  remark: text('remark'),
+  ...timestamps(),
+}, table => [
+  index('v_model_idx_enabled_sort').on(table.enabled, table.sort, table.id),
+])
+
+export const vModelRelat = sqliteTable('v_model_relat', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  v_model_id: integer('v_model_id')
+    .notNull()
+    .references(() => vModel.id, { onDelete: 'cascade' }),
+  s_model_id: integer('s_model_id')
+    .notNull()
+    .references(() => sModel.id, { onDelete: 'restrict' }),
+  role: text('role').$type<'SELECT' | 'WORKER' | 'MERGER' | 'PROPOSER' | 'DECIDER' | 'EXECUTOR'>().notNull(),
+  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+  sort: integer('sort').notNull().default(0),
+  weight: integer('weight').notNull().default(1),
+  remark: text('remark'),
+  ...timestamps(),
+}, table => [
+  uniqueIndex('v_model_relat_uq_model_role_source').on(table.v_model_id, table.role, table.s_model_id),
+  index('v_model_relat_idx_model_role_enabled_sort').on(table.v_model_id, table.role, table.enabled, table.sort, table.id),
+  index('v_model_relat_idx_s_model').on(table.s_model_id),
+])
 
 export const rRoute = sqliteTable('r_route', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -189,6 +231,10 @@ export type SModel = typeof sModel.$inferSelect
 export type NewSModel = typeof sModel.$inferInsert
 export type SRelat = typeof sRelat.$inferSelect
 export type NewSRelat = typeof sRelat.$inferInsert
+export type VModel = typeof vModel.$inferSelect
+export type NewVModel = typeof vModel.$inferInsert
+export type VModelRelat = typeof vModelRelat.$inferSelect
+export type NewVModelRelat = typeof vModelRelat.$inferInsert
 export type RRoute = typeof rRoute.$inferSelect
 export type NewRRoute = typeof rRoute.$inferInsert
 export type REndpoint = typeof rEndpoint.$inferSelect

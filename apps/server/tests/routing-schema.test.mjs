@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 import Database from 'better-sqlite3'
 import { eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
-import { rRoute, rEndpoint, rKey, rModel } from '../src/db/schema.ts'
+import { rRoute, rEndpoint, rKey, rModel, sProvider, sModel, vModel, vModelRelat } from '../src/db/schema.ts'
 
 const serverDir = fileURLToPath(new URL('..', import.meta.url))
 const fullSchema = fs.readFileSync(new URL('../sql/schema.sql', import.meta.url), 'utf8')
@@ -136,6 +136,53 @@ test('source type distinguishes actual and virtual IDs; DIRECT supports null ove
   `).run(route.id), /CHECK/)
 })
 
+test('virtual models persist orchestration JSON and protect role-scoped source references', t => {
+  const { db, sqlite } = fixture(t)
+  const group = db.insert(vModel).values({ code: 'group', kind: 'GROUP', type: 'TEXT' }).returning().get()
+  assert.equal(group.category, 'Default')
+  assert.equal(group.enabled, false)
+  assert.equal(group.status, 'ACTIVE')
+  assert.equal(group.gen_type, null)
+  assert.equal(group.config, null)
+  assert.deepEqual(group.orch_config, {})
+  assert.equal(group.timeout, 180000)
+  assert.equal(group.max_calls, 16)
+  assert.match(group.create_time, /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
+
+  const orchConfig = { PROPOSER: { maxConcurrency: 3, minSuccess: 2 }, EXECUTOR: { strategy: 'WEIGHTED' } }
+  const decision = db.insert(vModel).values({ code: 'decision', kind: 'DECISION', type: 'TEXT',
+    gen_type: ['Responses'], config: { inputModal: ['text', 'image'] }, orch_config: orchConfig,
+  }).returning().get()
+  assert.deepEqual(decision.orch_config, orchConfig)
+  assert.deepEqual(decision.gen_type, ['Responses'])
+  assert.deepEqual(decision.config, { inputModal: ['text', 'image'] })
+  const fusion = db.insert(vModel).values({ code: 'fusion', kind: 'FUSION', type: 'TEXT' }).returning().get()
+  assert.throws(() => db.insert(vModel).values({ code: 'group', kind: 'FUSION', type: 'TEXT' }).run(), /UNIQUE/)
+
+  const provider = db.insert(sProvider).values({ code: 'source', name: 'Source', base_url: 'https://example.invalid' }).returning().get()
+  const source = db.insert(sModel).values({ provider_id: provider.id, code: 'source', type: 'TEXT', gen_type: [], config: {} }).returning().get()
+  const relation = { v_model_id: decision.id, s_model_id: source.id, role: 'PROPOSER' }
+  const saved = db.insert(vModelRelat).values(relation).returning().get()
+  assert.equal(saved.enabled, false)
+  assert.equal(saved.sort, 0)
+  assert.equal(saved.weight, 1)
+  assert.throws(() => db.insert(vModelRelat).values(relation).run(), /UNIQUE/)
+  db.insert(vModelRelat).values({ ...relation, role: 'EXECUTOR' }).run()
+  db.insert(vModelRelat).values({ ...relation, v_model_id: fusion.id, role: 'WORKER' }).run()
+  assert.throws(() => db.insert(vModelRelat).values({ ...relation, v_model_id: 999 }).run(), /FOREIGN KEY/)
+  assert.throws(() => db.insert(vModelRelat).values({ ...relation, s_model_id: 999 }).run(), /FOREIGN KEY/)
+  assert.throws(() => db.delete(sModel).where(eq(sModel.id, source.id)).run(), /FOREIGN KEY/)
+  assert.throws(() => db.delete(sProvider).where(eq(sProvider.id, provider.id)).run(), /FOREIGN KEY/)
+
+  db.delete(vModel).where(eq(vModel.id, decision.id)).run()
+  const remaining = db.select().from(vModelRelat).all()
+  assert.equal(remaining.length, 1)
+  assert.equal(remaining[0].v_model_id, fusion.id)
+  db.delete(vModel).where(eq(vModel.id, fusion.id)).run()
+  db.delete(sModel).where(eq(sModel.id, source.id)).run()
+  assert.deepEqual(sqlite.pragma('foreign_key_check'), [])
+})
+
 test('startup initializes a fresh database and can reopen it', t => {
   const dbPath = temporaryDatabase(t, 'fresh')
   initialize(dbPath)
@@ -208,7 +255,7 @@ test('concurrent startups initialize the same empty database without duplicate D
   for (const result of results) assert.equal(result.exitCode, 0, result.stderr)
   const sqlite = new Database(dbPath)
   try {
-    assert.equal(sqlite.prepare("SELECT count(*) AS count FROM sqlite_master WHERE type = 'table' AND name NOT GLOB 'sqlite_*'").get().count, 9)
+    assert.equal(sqlite.prepare("SELECT count(*) AS count FROM sqlite_master WHERE type = 'table' AND name NOT GLOB 'sqlite_*'").get().count, 11)
     assert.deepEqual(sqlite.pragma('foreign_key_check'), [])
   } finally {
     sqlite.close()

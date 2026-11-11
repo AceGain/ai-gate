@@ -1,6 +1,7 @@
 -- ai-gate server 数据库表结构（SQLite）
 -- 出站域（S 域）：s_ 前缀 = 对接的上游供应商；入站域（R 域）：r_ 前缀 = 对外路由代理；模板域为 hub 的 t_，各域不得合并
--- 全量建表语句：s_provider、s_endpoint、s_key、s_model、s_relat；r_route、r_endpoint、r_key、r_model
+-- 虚拟模型域（V 域）：v_ 前缀 = 虚拟模型及其实际模型角色关系
+-- 全量建表语句：s_provider、s_endpoint、s_key、s_model、s_relat；v_model、v_model_relat；r_route、r_endpoint、r_key、r_model
 
 -- 供应商
 CREATE TABLE s_provider (
@@ -93,6 +94,126 @@ CREATE TABLE s_relat (
 );
 
 CREATE UNIQUE INDEX s_relat_uq_provider_key_model ON s_relat (provider_id, key_id, model_id);
+
+-- 虚拟模型
+CREATE TABLE v_model (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+  code TEXT NOT NULL UNIQUE, -- 内部编码，全局唯一，创建后不可修改；
+  name TEXT DEFAULT NULL, -- 显示名称，为空时展示 code；
+  category TEXT NOT NULL DEFAULT 'Default',
+
+  kind TEXT NOT NULL, -- GROUP：组合；FUSION：融合；DECISION：决策；
+  type TEXT NOT NULL, -- 任务类型，沿用 s_model.type：TEXT、IMAGE、AUDIO、VIDEO、OMNI 等；
+
+  enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  status TEXT NOT NULL DEFAULT 'ACTIVE', -- ACTIVE、INACTIVE、ERROR；
+
+  gen_type TEXT DEFAULT NULL,
+  -- JSON 数组，对外允许的协议；
+  -- NULL：按当前编排能够执行的能力推导；
+  -- 非 NULL：在可执行能力范围内进一步限制；
+
+  config TEXT DEFAULT NULL,
+  -- JSON 对象，对外能力限制，如输入模态、输出上限；
+  -- NULL：不增加限制；
+  -- 不替代关联实际模型的能力配置；
+
+  orch_config TEXT NOT NULL DEFAULT '{}',
+  -- JSON 对象，按角色保存编排配置；
+  --
+  -- GROUP：
+  --   SELECT：选模策略；
+  --
+  -- FUSION：
+  --   WORKER：参与数量、并发数、最低成功数量、提示词等；
+  --   MERGER：汇总模型选模策略、提示词等；
+  --
+  -- DECISION：
+  --   PROPOSER：参与数量、并发数、最低成功数量、提案提示词等；
+  --   DECIDER：决策模型选模策略、决策提示词等；
+  --   EXECUTOR：执行模型选模策略、执行提示词等；
+  --
+  -- 单次选模角色支持：
+  --   strategy：PRIORITY、WEIGHTED、ROUND_ROBIN；
+  --
+  -- 并行角色支持：
+  --   maxParticipants：最多参与数量，NULL 表示全部合格成员；
+  --   maxConcurrency：最大并发数；
+  --   minSuccess：继续下一阶段所需的最少成功结果数；
+  --
+  -- 角色公共配置：
+  --   endpointType：内部调用协议；SELECT 随入站协议；
+  --   timeout：单次调用超时，NULL 继承路由配置；
+  --   deadline：角色阶段总时限，NULL 使用请求剩余时间；
+  --   maxRetries：局部额外重试上限，NULL 不增加局部限制；
+  --   promptTemplate：提示词模板，NULL 使用内置模板；
+  --   requestConfig：模型调用参数；
+
+  timeout INTEGER NOT NULL DEFAULT 180000,
+  -- 整条请求总时限，毫秒，包含排队、全部阶段和重试；
+
+  max_calls INTEGER NOT NULL DEFAULT 16,
+  -- 整条请求最多发起的上游 HTTP 调用数，包含计划调用和重试；
+
+  sort INTEGER NOT NULL DEFAULT 0,
+  remark TEXT DEFAULT NULL,
+  create_time TEXT NOT NULL,
+  update_time TEXT NOT NULL
+);
+
+CREATE INDEX v_model_idx_enabled_sort
+  ON v_model (enabled, sort, id);
+
+
+-- 虚拟模型与实际模型的角色关系
+CREATE TABLE v_model_relat (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+  v_model_id INTEGER NOT NULL
+    REFERENCES v_model (id) ON DELETE CASCADE,
+
+  s_model_id INTEGER NOT NULL
+    REFERENCES s_model (id) ON DELETE RESTRICT,
+
+  role TEXT NOT NULL,
+  -- GROUP：
+  --   SELECT：实际模型候选；
+  --
+  -- FUSION：
+  --   WORKER：并行处理成员；
+  --   MERGER：汇总模型候选；
+  --
+  -- DECISION：
+  --   PROPOSER：并行提案成员；
+  --   DECIDER：决策模型候选；
+  --   EXECUTOR：执行模型候选；
+
+  enabled BOOLEAN NOT NULL DEFAULT FALSE,
+
+  sort INTEGER NOT NULL DEFAULT 0,
+  -- PRIORITY：越小越优先；
+  -- 并行角色：按此顺序选取参与成员；
+  -- 相同 sort 按 id 升序；
+
+  weight INTEGER NOT NULL DEFAULT 1,
+  -- WEIGHTED 策略使用，必须大于 0；
+  -- 其他策略忽略；
+
+  remark TEXT DEFAULT NULL,
+
+  create_time TEXT NOT NULL,
+  update_time TEXT NOT NULL
+);
+
+CREATE UNIQUE INDEX v_model_relat_uq_model_role_source
+  ON v_model_relat (v_model_id, role, s_model_id);
+
+CREATE INDEX v_model_relat_idx_model_role_enabled_sort
+  ON v_model_relat (v_model_id, role, enabled, sort, id);
+
+CREATE INDEX v_model_relat_idx_s_model
+  ON v_model_relat (s_model_id);
 
 -- 入站域：以下为最新表结构，仅用于空库初始化；已有数据库由维护者手动调整。
 -- 路由代理
