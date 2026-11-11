@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { spawnSync } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -9,12 +9,9 @@ import Database from 'better-sqlite3'
 import { eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { rRoute, rEndpoint, rKey, rModel } from '../src/db/schema.ts'
-import { migrateRouteModels } from '../src/db/migrations.ts'
 
 const serverDir = fileURLToPath(new URL('..', import.meta.url))
 const fullSchema = fs.readFileSync(new URL('../sql/schema.sql', import.meta.url), 'utf8')
-const routeMigration = fs.readFileSync(new URL('../sql/migrations/001_add_routes.sql', import.meta.url), 'utf8')
-const outboundSchema = fullSchema.split('-- 入站域：')[0]
 
 function fixture(t) {
   const sqlite = new Database(':memory:')
@@ -24,18 +21,7 @@ function fixture(t) {
   return { sqlite, db: drizzle(sqlite) }
 }
 
-function routingDefinitions(sqlite) {
-  return sqlite.prepare(`
-    SELECT type, name, tbl_name, sql FROM sqlite_master
-    WHERE tbl_name IN ('r_route', 'r_endpoint', 'r_key', 'r_model')
-    ORDER BY type, name
-  `).all().map(row => ({
-    ...row,
-    sql: row.sql?.replaceAll('IF NOT EXISTS ', '').replace(/\s+/g, ' ').trim(),
-  }))
-}
-
-function initialize(dbPath, expectedError) {
+function initialize(dbPath) {
   const result = spawnSync(process.execPath, [
     '--import', 'tsx', '--input-type=module', '-e',
     "const { sqlite } = await import('./src/db/index.ts'); sqlite.close()",
@@ -45,11 +31,6 @@ function initialize(dbPath, expectedError) {
     encoding: 'utf8',
   })
   assert.ifError(result.error)
-  if (expectedError) {
-    assert.notEqual(result.status, 0)
-    assert.match(result.stderr, expectedError)
-    return
-  }
   assert.equal(result.status, 0, result.stderr || result.stdout)
 }
 
@@ -126,17 +107,6 @@ test('route deletion cascades to its endpoints, keys and models without affectin
   assert.deepEqual(sqlite.pragma('foreign_key_check'), [])
 })
 
-test('additive migration matches fresh routing DDL and is safe to run repeatedly', t => {
-  const { sqlite: fresh } = fixture(t)
-  const upgraded = new Database(':memory:')
-  t.after(() => upgraded.close())
-  upgraded.exec(outboundSchema)
-  upgraded.exec(routeMigration)
-  migrateRouteModels(upgraded)
-  migrateRouteModels(upgraded)
-  assert.deepEqual(routingDefinitions(upgraded), routingDefinitions(fresh))
-})
-
 test('source type distinguishes actual and virtual IDs; DIRECT supports null overrides and CUSTOM supports partial overrides', t => {
   const { db, sqlite } = fixture(t)
   const route = db.insert(rRoute).values({ code: 'main', name: 'Main' }).returning().get()
@@ -166,124 +136,81 @@ test('source type distinguishes actual and virtual IDs; DIRECT supports null ove
   `).run(route.id), /CHECK/)
 })
 
-test('legacy populated model migration fails without changing data or indexes', t => {
-  const sqlite = new Database(':memory:')
-  t.after(() => sqlite.close())
-  sqlite.pragma('foreign_keys = ON')
-  sqlite.exec(outboundSchema)
-  sqlite.exec(routeMigration)
-  sqlite.exec(`
-    INSERT INTO r_route (code, name, create_time, update_time)
-    VALUES ('legacy', 'Legacy', datetime('now'), datetime('now'));
-    INSERT INTO r_model (route_id, code, type, gen_type, config, create_time, update_time)
-    VALUES (1, 'legacy-model', 'TEXT', '["Messages"]', '{}', datetime('now'), datetime('now'));
-  `)
-  const definitions = routingDefinitions(sqlite)
-  const rows = sqlite.prepare('SELECT * FROM r_model').all()
-  assert.throws(() => migrateRouteModels(sqlite), /explicit source_type and model_id mappings are required/)
-  assert.deepEqual(sqlite.prepare('SELECT * FROM r_model').all(), rows)
-  assert.deepEqual(routingDefinitions(sqlite), definitions)
-  assert.deepEqual(sqlite.pragma('foreign_key_check'), [])
-})
-
 test('startup initializes a fresh database and can reopen it', t => {
   const dbPath = temporaryDatabase(t, 'fresh')
   initialize(dbPath)
+  const before = new Database(dbPath)
+  before.exec(`
+    INSERT INTO r_route (code, name, create_time, update_time)
+    VALUES ('saved', 'Saved route', datetime('now'), datetime('now'))
+  `)
+  const saved = before.prepare('SELECT * FROM r_route').get()
+  before.close()
   initialize(dbPath)
   const sqlite = new Database(dbPath)
   try {
     assert.equal(sqlite.prepare("SELECT count(*) AS count FROM sqlite_master WHERE type = 'table' AND name IN ('r_route', 'r_endpoint', 'r_key', 'r_model')").get().count, 4)
+    assert.deepEqual(sqlite.prepare('SELECT * FROM r_route').get(), saved)
   } finally {
     sqlite.close()
   }
 })
 
-test('startup upgrades an existing outbound database and preserves data on subsequent starts', t => {
-  const dbPath = temporaryDatabase(t, 'upgrade')
+test('startup leaves an existing database unchanged instead of applying the full schema', t => {
+  const dbPath = temporaryDatabase(t, 'existing')
   const before = new Database(dbPath)
-  before.exec(outboundSchema)
-  before.exec(`
-    INSERT INTO s_provider (code, name, base_url, create_time, update_time)
-    VALUES ('existing', 'Existing provider', 'https://upstream.audit.invalid', datetime('now'), datetime('now'))
-  `)
-  const originalProvider = before.prepare('SELECT * FROM s_provider').get()
+  before.exec("CREATE TABLE existing_data (value TEXT); INSERT INTO existing_data VALUES ('keep')")
+  const definitions = before.prepare('SELECT type, name, sql FROM sqlite_master ORDER BY name').all()
   before.close()
-
   initialize(dbPath)
-  const upgraded = new Database(dbPath)
-  upgraded.exec(`
-    INSERT INTO r_route (code, name, create_time, update_time)
-    VALUES ('saved', 'Saved route', datetime('now'), datetime('now'))
-  `)
-  upgraded.close()
-  initialize(dbPath)
-
   const after = new Database(dbPath)
   try {
-    assert.deepEqual(after.prepare('SELECT * FROM s_provider').get(), originalProvider)
-    assert.equal(after.prepare('SELECT code FROM r_route').get().code, 'saved')
-    assert.deepEqual(after.pragma('foreign_key_check'), [])
+    assert.deepEqual(after.prepare('SELECT type, name, sql FROM sqlite_master ORDER BY name').all(), definitions)
+    assert.equal(after.prepare('SELECT value FROM existing_data').get().value, 'keep')
   } finally {
     after.close()
   }
 })
 
-test('startup upgrades the empty legacy model table while preserving route, key and endpoint data', t => {
-  const dbPath = temporaryDatabase(t, 'legacy')
-  const before = new Database(dbPath)
-  before.exec(outboundSchema)
-  before.exec(routeMigration)
-  before.exec(`
-    INSERT INTO r_route (code, name, create_time, update_time)
-    VALUES ('legacy', 'Legacy', datetime('now'), datetime('now'));
-    INSERT INTO r_key (route_id, name, secret, create_time, update_time)
-    VALUES (1, 'Test', 'test-only-token', datetime('now'), datetime('now'));
-    INSERT INTO r_endpoint (route_id, type, path, create_time, update_time)
-    VALUES (1, 'Messages', '/messages', datetime('now'), datetime('now'));
-  `)
-  const snapshot = ['r_route', 'r_key', 'r_endpoint'].map(table => before.prepare(`SELECT * FROM ${table}`).all())
-  before.close()
-  initialize(dbPath)
-  const upgraded = new Database(dbPath)
-  upgraded.prepare(`
-    INSERT INTO r_model (route_id, source_type, model_id, code, create_time, update_time)
-    VALUES (1, 'V_MODEL', 7, 'fusion', datetime('now'), datetime('now'))
-  `).run()
-  upgraded.close()
-  initialize(dbPath)
-  const after = new Database(dbPath)
+test('concurrent startups initialize the same empty database without duplicate DDL', async t => {
+  const dbPath = temporaryDatabase(t, 'concurrent')
+  // 拉大空库检查到建表之间的间隔，稳定覆盖多个进程同时启动的情况。
+  const code = `
+    const { default: Database } = await import('better-sqlite3');
+    const prepare = Database.prototype.prepare;
+    Database.prototype.prepare = function(query, ...args) {
+      const statement = prepare.call(this, query, ...args);
+      if (query.includes('sqlite_master') && query.includes('LIMIT 1')) {
+        const get = statement.get.bind(statement);
+        statement.get = (...params) => {
+          const value = get(...params);
+          if (!value) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 700);
+          return value;
+        };
+      }
+      return statement;
+    };
+    const { sqlite } = await import('./src/db/index.ts'); sqlite.close();
+  `
+  const start = () => new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, ['--import', 'tsx', '--input-type=module', '-e', code], {
+      cwd: serverDir,
+      env: { ...process.env, AI_GATE_DB_PATH: dbPath },
+      stdio: ['ignore', 'ignore', 'pipe'],
+      timeout: 15000,
+    })
+    let stderr = ''
+    child.stderr.on('data', chunk => { stderr += chunk })
+    child.on('error', reject)
+    child.on('close', exitCode => resolve({ exitCode, stderr }))
+  })
+  const results = await Promise.all([start(), start()])
+  for (const result of results) assert.equal(result.exitCode, 0, result.stderr)
+  const sqlite = new Database(dbPath)
   try {
-    assert.deepEqual(['r_route', 'r_key', 'r_endpoint'].map(table => after.prepare(`SELECT * FROM ${table}`).all()), snapshot)
-    const model = after.prepare('SELECT * FROM r_model').get()
-    assert.equal(model.source_type, 'V_MODEL')
-    assert.equal(model.model_id, 7)
-    assert.equal(model.mode, 'DIRECT')
-    const { sqlite: fresh } = fixture(t)
-    assert.deepEqual(routingDefinitions(after), routingDefinitions(fresh))
+    assert.equal(sqlite.prepare("SELECT count(*) AS count FROM sqlite_master WHERE type = 'table' AND name NOT GLOB 'sqlite_*'").get().count, 9)
+    assert.deepEqual(sqlite.pragma('foreign_key_check'), [])
   } finally {
-    after.close()
-  }
-})
-
-test('startup refuses to guess legacy source mappings and preserves the populated model', t => {
-  const dbPath = temporaryDatabase(t, 'unmapped')
-  const before = new Database(dbPath)
-  before.exec(outboundSchema)
-  before.exec(routeMigration)
-  before.exec(`
-    INSERT INTO r_route (code, name, create_time, update_time)
-    VALUES ('legacy', 'Legacy', datetime('now'), datetime('now'));
-    INSERT INTO r_model (route_id, code, type, gen_type, config, create_time, update_time)
-    VALUES (1, 'unmapped', 'TEXT', '[]', '{}', datetime('now'), datetime('now'));
-  `)
-  const snapshot = before.prepare('SELECT * FROM r_model').all()
-  before.close()
-  initialize(dbPath, /explicit source_type and model_id mappings are required/)
-  const after = new Database(dbPath)
-  try {
-    assert.deepEqual(after.prepare('SELECT * FROM r_model').all(), snapshot)
-    assert.ok(!after.pragma('table_info(r_model)').some(column => column.name === 'model_id'))
-  } finally {
-    after.close()
+    sqlite.close()
   }
 })

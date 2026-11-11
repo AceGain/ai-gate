@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url'
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import * as schema from './schema.js'
-import { migrateRouteModels } from './migrations.js'
 
 const dbFile = process.env.AI_GATE_DB_PATH || fileURLToPath(new URL('../../data/server.db', import.meta.url))
 const schemaFile = fileURLToPath(new URL('../../sql/schema.sql', import.meta.url))
@@ -17,23 +16,15 @@ sqlite.pragma('journal_mode = WAL')
 sqlite.pragma('foreign_keys = ON')
 sqlite.pragma('busy_timeout = 5000')
 
-// 空库时执行全量 DDL；schema.sql 没有 IF NOT EXISTS，已有表时重复执行会报错
-const initialized = sqlite
-  .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 's_provider'")
-  .get()
-if (!initialized) {
-  sqlite.transaction(() => {
+// 在同一个写事务内检查并初始化，避免两个进程同时判定为空库后重复建表。
+// 仅在没有业务表的空库执行最新全量 DDL；已有数据库的结构调整由维护者手动处理。
+sqlite.transaction(() => {
+  const initialized = sqlite
+    .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name NOT GLOB 'sqlite_*' LIMIT 1")
+    .get()
+  if (!initialized) {
     sqlite.exec(fs.readFileSync(schemaFile, 'utf8'))
-  })()
-} else {
-  // 初次引入入站域时补建旧基线，再按表结构升级；已升级库不重放旧索引定义。
-  const routeSchemaFile = fileURLToPath(new URL('../../sql/migrations/001_add_routes.sql', import.meta.url))
-  sqlite.transaction(() => {
-    if (!sqlite.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'r_route'").get()) {
-      sqlite.exec(fs.readFileSync(routeSchemaFile, 'utf8'))
-    }
-    migrateRouteModels(sqlite)
-  })()
-}
+  }
+}).immediate()
 
 export const db = drizzle(sqlite, { schema })

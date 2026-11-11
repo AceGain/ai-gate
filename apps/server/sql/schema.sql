@@ -94,7 +94,7 @@ CREATE TABLE s_relat (
 
 CREATE UNIQUE INDEX s_relat_uq_provider_key_model ON s_relat (provider_id, key_id, model_id);
 
--- 入站域：已有库通过 migrations/001_add_routes.sql、002_route_model_sources.sql 升级至本结构。
+-- 入站域：以下为最新表结构，仅用于空库初始化；已有数据库由维护者手动调整。
 -- 路由代理
 CREATE TABLE r_route (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
