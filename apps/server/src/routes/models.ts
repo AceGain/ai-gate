@@ -20,6 +20,7 @@ import {
 import type {SModelImportItem} from '../store.js'
 import {buildAuthHeaders, extractUpstreamDetail, joinUrl} from '../upstream.js'
 import {isUniqueViolation, parseBody, parseId} from './providers.js'
+import { RouteSourceInUseError } from '../route-store.js'
 
 export const models = new Hono()
 
@@ -327,6 +328,11 @@ models.put('/providers/:providerId/models/:id', async (c) => {
 models.delete('/providers/:providerId/models/:id', (c) => {
   const id = parseId(c.req.param('id'))
   if (!id) return c.json({error: 'MODEL_NOT_FOUND'}, 404)
-  if (!removeModel(id)) return c.json({error: 'MODEL_NOT_FOUND'}, 404)
-  return c.json({ok: true})
+  try {
+    if (!removeModel(id)) return c.json({error: 'MODEL_NOT_FOUND'}, 404)
+    return c.json({ok: true})
+  } catch (err) {
+    if (err instanceof RouteSourceInUseError) return c.json({error: 'ROUTE_SOURCE_IN_USE'}, 409)
+    throw err
+  }
 })

@@ -1,0 +1,57 @@
+{"path":"/api/set/routes","expect":{"status":200,"body":[]}}
+{"path":"/api/set/routes/model-sources","expect":{"status":200,"body":[{"id":1,"code":"source-model","providerName":"Test provider","enabled":true}]}}
+{"method":"POST","path":"/api/set/routes","body":{"code":" main ","name":"Main","enabled":true},"expect":{"status":201,"body":{"id":1,"code":"main","mode":"SHARED","prefixPath":"/v1","modelsPath":"/models","host":null,"port":null,"timeout":60000,"maxRetries":0,"strategy":"PRIORITY","sort":0}}}
+{"method":"POST","path":"/api/set/routes","body":{"code":"main","name":"Duplicate","prefixPath":"/other"},"expect":{"status":409,"body":{"error":"DUPLICATE_ROUTE_CODE"}}}
+{"method":"POST","path":"/api/set/routes","body":{"code":"other","name":"Other"},"expect":{"status":409,"body":{"error":"DUPLICATE_ROUTE_PREFIX"}}}
+{"method":"POST","path":"/api/set/routes","body":{"code":"bad","name":"Bad","prefixPath":"/../api"},"expect":{"status":400}}
+{"method":"POST","path":"/api/set/routes","body":{"code":"bad","name":"Bad","timeout":0},"expect":{"status":400}}
+{"method":"POST","path":"/api/set/routes","body":{"code":"bad","name":"Bad","timeout":2147483648},"expect":{"status":400}}
+{"method":"POST","path":"/api/set/routes","body":{"code":"bad","name":"Bad","maxRetries":-1},"expect":{"status":400}}
+{"method":"POST","path":"/api/set/routes","body":{"code":"bad","name":"Bad","mode":"DEDICATED"},"expect":{"status":400}}
+{"method":"POST","path":"/api/set/routes","body":{"code":"bad","name":"Bad","mode":"DEDICATED","host":"127.0.0.1","port":65536},"expect":{"status":400}}
+{"method":"POST","path":"/api/set/routes","body":{"code":"dedicated","name":"Dedicated","mode":"DEDICATED","host":"LOCALHOST","port":5074},"expect":{"status":201,"body":{"id":2,"host":"localhost","port":5074,"sort":1}}}
+{"method":"POST","path":"/api/set/routes","body":{"code":"duplicate-listener","name":"Duplicate","mode":"DEDICATED","host":"localhost","port":5074},"expect":{"status":409,"body":{"error":"DUPLICATE_ROUTE_LISTENER"}}}
+{"method":"PUT","path":"/api/set/routes/1","body":{"code":"changed-code","name":"Changed","prefixPath":"/gateway","modelsPath":"/catalog","timeout":2500,"maxRetries":3,"icon":"openai","remark":"Test","enabled":true},"expect":{"status":200,"body":{"code":"main","name":"Changed","prefixPath":"/gateway","timeout":2500,"maxRetries":3}}}
+{"method":"PATCH","path":"/api/set/routes/1/enabled","body":{"enabled":false},"expect":{"status":200,"body":{"enabled":false,"modelsPath":"/catalog","timeout":2500,"maxRetries":3,"icon":"openai","remark":"Test"}}}
+{"method":"PATCH","path":"/api/set/routes/1/enabled","body":{"enabled":"false"},"expect":{"status":400}}
+{"method":"PUT","path":"/api/set/routes/reorder","body":[{"id":2,"sort":0},{"id":1,"sort":1}],"expect":{"status":200}}
+{"path":"/api/set/routes","expect":{"status":200,"body":[{"id":2,"sort":0},{"id":1,"sort":1}]}}
+{"method":"PUT","path":"/api/set/routes/reorder","body":[{"id":2,"sort":3},{"id":999,"sort":1}],"expect":{"status":404}}
+{"path":"/api/set/routes/2","expect":{"status":200,"body":{"sort":0}}}
+{"method":"PUT","path":"/api/set/routes/reorder","body":[{"id":2,"sort":0},{"id":2,"sort":1}],"expect":{"status":400}}
+{"path":"/api/set/routes/999/endpoints","expect":{"status":404}}
+{"method":"POST","path":"/api/set/routes/1/endpoints","body":{"type":"Chat Completions","path":"/chat/completions","enabled":true},"expect":{"status":201,"body":{"id":1,"routeId":1,"enabled":true}}}
+{"method":"POST","path":"/api/set/routes/1/endpoints","body":{"type":"Chat Completions","path":"/other"},"expect":{"status":409,"body":{"error":"DUPLICATE_ROUTE_ENDPOINT"}}}
+{"method":"POST","path":"/api/set/routes/1/endpoints","body":{"type":"Messages","path":"/chat/completions"},"expect":{"status":409}}
+{"method":"POST","path":"/api/set/routes/1/endpoints","body":{"type":"Messages","path":"/catalog"},"expect":{"status":409}}
+{"method":"POST","path":"/api/set/routes/1/endpoints","body":{"type":"base","path":"/other"},"expect":{"status":400}}
+{"method":"POST","path":"/api/set/routes/1/endpoints","body":{"type":"Responses","path":"https://example.invalid"},"expect":{"status":400}}
+{"method":"POST","path":"/api/set/routes/2/endpoints","body":{"type":"Responses","path":"/responses","enabled":true},"expect":{"status":201,"body":{"id":2,"routeId":2}}}
+{"method":"PUT","path":"/api/set/routes/2/endpoints/1","body":{"type":"Messages","path":"/messages"},"expect":{"status":404}}
+{"method":"PATCH","path":"/api/set/routes/2/endpoints/1/enabled","body":{"enabled":false},"expect":{"status":404}}
+{"method":"DELETE","path":"/api/set/routes/2/endpoints/1","expect":{"status":404}}
+{"method":"PUT","path":"/api/set/routes/1/endpoints/reorder","body":[{"id":2,"sort":7}],"expect":{"status":404}}
+{"method":"PUT","path":"/api/set/routes/1/endpoints/1","body":{"type":"Chat Completions","path":"/generate","enabled":true,"sort":4},"expect":{"status":200,"body":{"path":"/generate","sort":4}}}
+{"method":"PATCH","path":"/api/set/routes/1/endpoints/1/enabled","body":{"enabled":false},"expect":{"status":200,"body":{"path":"/generate","sort":4,"enabled":false}}}
+{"method":"PUT","path":"/api/set/routes/1","body":{"name":"Collision","modelsPath":"/generate"},"expect":{"status":409}}
+{"method":"POST","path":"/api/set/routes/1/keys","body":{"name":"Client","secret":"test-only-secret","expireTime":"2030-01-01","enabled":true,"remark":"key remark"},"expect":{"status":201,"body":{"id":1,"routeId":1,"expireTime":"2030-01-01"}}}
+{"method":"POST","path":"/api/set/routes/1/keys","body":{"name":"Bad","secret":" "},"expect":{"status":400}}
+{"method":"POST","path":"/api/set/routes/1/keys","body":{"name":"Bad","secret":"test-only","expireTime":"not-a-date"},"expect":{"status":400}}
+{"method":"PATCH","path":"/api/set/routes/1/keys/1/enabled","body":{"enabled":false},"expect":{"status":200,"body":{"secret":"test-only-secret","expireTime":"2030-01-01","remark":"key remark","enabled":false}}}
+{"method":"PUT","path":"/api/set/routes/1/keys/1","body":{"name":"Updated","secret":"updated-test-only","enabled":true,"expireTime":null},"expect":{"status":200,"body":{"name":"Updated","expireTime":null}}}
+{"method":"POST","path":"/api/set/routes/1/models","body":{"modelId":999,"code":"public"},"expect":{"status":400,"body":{"error":"ROUTE_SOURCE_NOT_FOUND"}}}
+{"method":"POST","path":"/api/set/routes/1/models","body":{"sourceType":"V_MODEL","modelId":1,"code":"public"},"expect":{"status":400}}
+{"method":"POST","path":"/api/set/routes/1/models","body":{"modelId":1,"code":"public-model","name":"Published","enabled":true},"expect":{"status":201,"body":{"id":1,"routeId":1,"sourceType":"S_MODEL","mode":"DIRECT","sourceCode":"source-model","providerName":"Test provider"}}}
+{"method":"POST","path":"/api/set/routes/1/models","body":{"modelId":1,"code":"public-model"},"expect":{"status":409,"body":{"error":"DUPLICATE_ROUTE_MODEL_CODE"}}}
+{"method":"POST","path":"/api/set/routes/2/models","body":{"modelId":1,"code":"public-model"},"expect":{"status":201,"body":{"id":2,"routeId":2}}}
+{"method":"PUT","path":"/api/set/routes/1/models/1","body":{"modelId":1,"code":"new-alias","name":"Updated","enabled":true},"expect":{"status":200,"body":{"code":"new-alias","name":"Updated"}}}
+{"method":"PUT","path":"/api/set/routes/1/models/reorder","body":[{"id":1,"sort":8}],"expect":{"status":200}}
+{"method":"PATCH","path":"/api/set/routes/1/models/1/enabled","body":{"enabled":false},"expect":{"status":200,"body":{"code":"new-alias","sort":8,"enabled":false}}}
+{"method":"DELETE","path":"/api/set/routes/2/models/1","expect":{"status":404}}
+{"method":"DELETE","path":"/api/set/routes/2/endpoints/2","expect":{"status":200}}
+{"method":"DELETE","path":"/api/set/routes/1","expect":{"status":200}}
+{"path":"/api/set/routes/1","expect":{"status":404}}
+{"path":"/api/set/routes/1/keys","expect":{"status":404}}
+{"path":"/__audit/routes","expect":{"status":200,"body":{"routes":1,"endpoints":0,"keys":0,"models":1,"foreignKeyErrors":0}}}
+{"method":"DELETE","path":"/api/set/routes/2","expect":{"status":200}}
+{"path":"/__audit/routes","expect":{"status":200,"body":{"routes":0,"endpoints":0,"keys":0,"models":0,"foreignKeyErrors":0}}}

@@ -3,6 +3,16 @@ import type { MessageKey } from '@/i18n'
 import { ApiError } from './api'
 
 const errorKeys: Readonly<Record<string, MessageKey>> = {
+  ROUTE_NOT_FOUND: 'routes.notFound',
+  ROUTE_RECORD_NOT_FOUND: 'routes.recordNotFound',
+  ROUTE_SOURCE_NOT_FOUND: 'routes.sourceMissing',
+  ROUTE_MODEL_UNSUPPORTED: 'routes.unsupportedModel',
+  ROUTE_SOURCE_IN_USE: 'routes.sourceInUse',
+  DUPLICATE_ROUTE_CODE: 'routes.duplicateCode',
+  DUPLICATE_ROUTE_PREFIX: 'routes.duplicatePrefix',
+  DUPLICATE_ROUTE_LISTENER: 'routes.duplicateListener',
+  DUPLICATE_ROUTE_ENDPOINT: 'routes.duplicateEndpoint',
+  DUPLICATE_ROUTE_MODEL_CODE: 'routes.duplicateModelCode',
   PROVIDER_NOT_FOUND: 'errors.providerNotFound',
   ENDPOINT_NOT_FOUND: 'errors.endpointNotFound',
   KEY_NOT_FOUND: 'errors.keyNotFound',

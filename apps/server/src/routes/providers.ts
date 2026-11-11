@@ -5,6 +5,7 @@
 import {Hono} from 'hono'
 import * as v from 'valibot'
 import {SProviderCreateSchema, SProviderUpdateSchema, SReorderSchema} from '@ai-gate/shared'
+import { RouteSourceInUseError } from '../route-store.js'
 import {
   getProvider,
   insertProvider,
@@ -97,6 +98,11 @@ providers.put('/providers/:id', async (c) => {
 providers.delete('/providers/:id', (c) => {
   const id = parseId(c.req.param('id'))
   if (!id) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
-  if (!removeProvider(id)) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
-  return c.json({ok: true})
+  try {
+    if (!removeProvider(id)) return c.json({error: 'PROVIDER_NOT_FOUND'}, 404)
+    return c.json({ok: true})
+  } catch (err) {
+    if (err instanceof RouteSourceInUseError) return c.json({error: 'ROUTE_SOURCE_IN_USE'}, 409)
+    throw err
+  }
 })

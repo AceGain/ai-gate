@@ -20,6 +20,7 @@ import type {
 import {MODEL_DEFAULT_CATEGORY} from '@ai-gate/shared'
 import {db} from './db/index.js'
 import {sEndpoint, sKey, sModel, sProvider, sRelat} from './db/schema.js'
+import { modelHasRouteReferences, providerHasRouteReferences, RouteSourceInUseError } from './route-store.js'
 
 /* =========================================================================
  * 行结构映射
@@ -199,8 +200,10 @@ export function updateProvider(id: number, input: SProviderUpdateInput): SProvid
 
 /** 按 id 删除供应商（端点/密钥/模型由外键级联删除） */
 export function removeProvider(id: number): boolean {
-  const res = db.delete(sProvider).where(eq(sProvider.id, id)).run()
-  return res.changes > 0
+  return db.transaction(() => {
+    if (providerHasRouteReferences(id)) throw new RouteSourceInUseError()
+    return db.delete(sProvider).where(eq(sProvider.id, id)).run().changes > 0
+  })
 }
 
 /** 批量更新供应商排序（单事务） */
@@ -412,8 +415,10 @@ export function updateModel(id: number, input: SModelInput): SModel | null {
 
 /** 删除模型 */
 export function removeModel(id: number): boolean {
-  const res = db.delete(sModel).where(eq(sModel.id, id)).run()
-  return res.changes > 0
+  return db.transaction(() => {
+    if (modelHasRouteReferences(id)) throw new RouteSourceInUseError()
+    return db.delete(sModel).where(eq(sModel.id, id)).run().changes > 0
+  })
 }
 
 /** 批量更新模型排序 */

@@ -35,8 +35,17 @@ const router = createRouter({
         {
           path: 'routes',
           name: 'routes',
-          component: () => import('@/views/HomeView.vue'),
+          component: () => import('@/views/RoutesView.vue'),
           meta: { titleKey: 'nav.routes' },
+        },
+        {
+          path: 'routes/:id',
+          name: 'route-detail',
+          component: () => import('@/views/RouteDetailView.vue'),
+          meta: {
+            titleKey: 'common.configure',
+            breadcrumbs: [{ labelKey: 'nav.routes', to: '/routes' }, { labelKey: 'common.configure' }],
+          },
         },
         {
           path: 'models',

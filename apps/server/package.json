@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
+    "test:routes": "node tests/run-api-batch.mjs tests/routes.jsonl tests/routes.app.mjs && node --import tsx --test tests/routes-integrity.test.mjs",
     "test:routing-schema": "node --import tsx --test tests/routing-schema.test.mjs",
     "test:provider-urls": "node tests/run-api-batch.mjs tests/provider-urls.jsonl tests/provider-urls.app.mjs",
     "test:models": "node tests/run-api-batch.mjs tests/model-types.jsonl tests/model-types.app.mjs",

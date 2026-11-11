@@ -4,6 +4,7 @@ import { endpoints } from './routes/endpoints.js'
 import { keys } from './routes/keys.js'
 import { models } from './routes/models.js'
 import { providers } from './routes/providers.js'
+import { routes } from './routes/routes.js'
 
 const app = new Hono()
 
@@ -15,6 +16,7 @@ app.route('/api/set', providers)
 app.route('/api/set', endpoints)
 app.route('/api/set', keys)
 app.route('/api/set', models)
+app.route('/api/set', routes)
 
 app.get('/', (c) => {
   return c.json({ status: 'ok' })
