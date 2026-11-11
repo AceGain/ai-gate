@@ -21,7 +21,15 @@ const initialized = sqlite
   .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 's_provider'")
   .get()
 if (!initialized) {
-  sqlite.exec(fs.readFileSync(schemaFile, 'utf8'))
+  sqlite.transaction(() => {
+    sqlite.exec(fs.readFileSync(schemaFile, 'utf8'))
+  })()
+} else {
+  // 已有库增量补建入站表和索引；可重复执行，不改写出站域或已有入站数据。
+  const routeSchemaFile = fileURLToPath(new URL('../../sql/migrations/001_add_routes.sql', import.meta.url))
+  sqlite.transaction(() => {
+    sqlite.exec(fs.readFileSync(routeSchemaFile, 'utf8'))
+  })()
 }
 
 export const db = drizzle(sqlite, { schema })
