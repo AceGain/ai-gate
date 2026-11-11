@@ -1,4 +1,4 @@
--- 已有数据库增量补建入站域；与 ../schema.sql 的入站域定义保持同步。
+-- 入站域初始版本；后续由 002_route_model_sources.sql 升级 r_model。
 -- 路由代理
 CREATE TABLE IF NOT EXISTS r_route (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

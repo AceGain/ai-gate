@@ -94,7 +94,7 @@ CREATE TABLE s_relat (
 
 CREATE UNIQUE INDEX s_relat_uq_provider_key_model ON s_relat (provider_id, key_id, model_id);
 
--- 入站域：以下定义与 migrations/001_add_routes.sql 保持同步。
+-- 入站域：已有库通过 migrations/001_add_routes.sql、002_route_model_sources.sql 升级至本结构。
 -- 路由代理
 CREATE TABLE r_route (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -168,14 +168,17 @@ CREATE INDEX r_key_idx_status ON r_key (status);
 CREATE TABLE r_model (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   route_id INTEGER NOT NULL REFERENCES r_route (id) ON DELETE CASCADE, -- r_route.id；
+  source_type TEXT NOT NULL DEFAULT 'S_MODEL', -- S_MODEL：s_model；V_MODEL：v_model；
+  model_id INTEGER NOT NULL, -- 来源表的 id；由应用层验证来源存在性和删除引用；
+  mode TEXT NOT NULL DEFAULT 'DIRECT', -- DIRECT：采用来源能力配置；CUSTOM：基于来源能力配置覆盖；
   code TEXT NOT NULL, -- 对外编码，路由内唯一，不同路由可重复；如 gpt-4o；
   name TEXT DEFAULT NULL, -- 为 NULL 时默认展示 code；
   category TEXT DEFAULT 'Default',
   enabled BOOLEAN NOT NULL DEFAULT FALSE,
   status TEXT NOT NULL DEFAULT 'ACTIVE', -- ACTIVE：正常；INACTIVE：不可用；ERROR：异常；
-  type TEXT NOT NULL, -- TEXT、IMAGE、AUDIO、VIDEO、OMNI、EMBEDDING、RERANK、CLASS；
-  gen_type TEXT NOT NULL CHECK (json_valid(gen_type)), -- 允许的入站协议：Chat、Responses、Messages；
-  config TEXT NOT NULL CHECK (json_valid(config)), -- 模型配置；
+  type TEXT DEFAULT NULL, -- CUSTOM 类型覆盖；NULL 时继承；DIRECT 不使用；
+  gen_type TEXT DEFAULT NULL CHECK (gen_type IS NULL OR json_valid(gen_type)), -- CUSTOM 入站协议数组覆盖，整体替换；NULL 时继承；
+  config TEXT DEFAULT NULL CHECK (config IS NULL OR json_valid(config)), -- CUSTOM 配置对象覆盖，按顶层键合并；NULL 时继承；
   remark TEXT DEFAULT NULL,
   sort INTEGER NOT NULL DEFAULT 0,
   create_time TEXT NOT NULL,
@@ -184,8 +187,8 @@ CREATE TABLE r_model (
 
 CREATE UNIQUE INDEX r_model_uq_route_code ON r_model (route_id, code);
 
-CREATE INDEX r_model_idx_enabled ON r_model (enabled);
+CREATE INDEX r_model_idx_route_enabled_sort ON r_model (route_id, enabled, sort, id);
 
 CREATE INDEX r_model_idx_status ON r_model (status);
 
-CREATE INDEX r_model_idx_type ON r_model (type);
+CREATE INDEX r_model_idx_source_model ON r_model (source_type, model_id);

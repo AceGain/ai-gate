@@ -155,24 +155,28 @@ export const rModel = sqliteTable('r_model', {
   route_id: integer('route_id')
     .notNull()
     .references(() => rRoute.id, { onDelete: 'cascade' }),
+  // 多态来源不能建立单表外键；存在性和删除引用由后续业务层校验。
+  source_type: text('source_type').$type<'S_MODEL' | 'V_MODEL'>().notNull().default('S_MODEL'),
+  model_id: integer('model_id').notNull(),
+  mode: text('mode').$type<'DIRECT' | 'CUSTOM'>().notNull().default('DIRECT'),
   code: text('code').notNull(),
   name: text('name'),
   category: text('category').default('Default'),
   enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
   status: text('status').notNull().default('ACTIVE'),
-  type: text('type').notNull(),
-  gen_type: text('gen_type', { mode: 'json' }).$type<string[]>().notNull(),
-  config: text('config', { mode: 'json' }).$type<Record<string, unknown>>().notNull(),
+  type: text('type'),
+  gen_type: text('gen_type', { mode: 'json' }).$type<string[]>(),
+  config: text('config', { mode: 'json' }).$type<Record<string, unknown>>(),
   remark: text('remark'),
   sort: integer('sort').notNull().default(0),
   ...timestamps(),
 }, table => [
   uniqueIndex('r_model_uq_route_code').on(table.route_id, table.code),
-  index('r_model_idx_enabled').on(table.enabled),
+  index('r_model_idx_route_enabled_sort').on(table.route_id, table.enabled, table.sort, table.id),
   index('r_model_idx_status').on(table.status),
-  index('r_model_idx_type').on(table.type),
-  check('r_model_gen_type_json', sql`json_valid(${table.gen_type})`),
-  check('r_model_config_json', sql`json_valid(${table.config})`),
+  index('r_model_idx_source_model').on(table.source_type, table.model_id),
+  check('r_model_gen_type_json', sql`${table.gen_type} IS NULL OR json_valid(${table.gen_type})`),
+  check('r_model_config_json', sql`${table.config} IS NULL OR json_valid(${table.config})`),
 ])
 
 export type SProvider = typeof sProvider.$inferSelect

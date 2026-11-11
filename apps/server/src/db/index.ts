@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import * as schema from './schema.js'
+import { migrateRouteModels } from './migrations.js'
 
 const dbFile = process.env.AI_GATE_DB_PATH || fileURLToPath(new URL('../../data/server.db', import.meta.url))
 const schemaFile = fileURLToPath(new URL('../../sql/schema.sql', import.meta.url))
@@ -25,10 +26,13 @@ if (!initialized) {
     sqlite.exec(fs.readFileSync(schemaFile, 'utf8'))
   })()
 } else {
-  // 已有库增量补建入站表和索引；可重复执行，不改写出站域或已有入站数据。
+  // 初次引入入站域时补建旧基线，再按表结构升级；已升级库不重放旧索引定义。
   const routeSchemaFile = fileURLToPath(new URL('../../sql/migrations/001_add_routes.sql', import.meta.url))
   sqlite.transaction(() => {
-    sqlite.exec(fs.readFileSync(routeSchemaFile, 'utf8'))
+    if (!sqlite.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'r_route'").get()) {
+      sqlite.exec(fs.readFileSync(routeSchemaFile, 'utf8'))
+    }
+    migrateRouteModels(sqlite)
   })()
 }
 
