@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useAsyncState } from '@vueuse/core'
+import { computed, onBeforeUnmount, onMounted, ref, shallowReactive, watch, type ComponentPublicInstance } from 'vue'
+import { useIntersectionObserver } from '@vueuse/core'
 import { PhMagnifyingGlass, PhSparkle, PhUploadSimple, PhX } from '@phosphor-icons/vue'
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
@@ -8,7 +8,7 @@ import { DialogBody } from '@/components/ui/dialog'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
 import { Empty, EmptyContent, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { Spinner } from '@/components/ui/spinner'
-import { loadBrandIcons, providerIconOptions, resolveBrandId, type BrandIconComponents } from '@/utils/brandIcons'
+import { getLoadedBrandIcon, loadBrandIcon, providerIconOptions, resolveBrandId } from '@/utils/brandIcons'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{ selectedIcon: string }>()
@@ -16,7 +16,9 @@ const emit = defineEmits<{ select: [icon: string] }>()
 const { t } = useI18n()
 const selectedBrandId = computed(() => resolveBrandId(props.selectedIcon))
 const search = ref('')
-const { state: iconComponents, isLoading, error: loadError, executeImmediate: retryIcons } = useAsyncState<BrandIconComponents | undefined>(loadBrandIcons, undefined, { onError: () => {} })
+const iconButtons = shallowReactive(new Map<string, HTMLElement>())
+const pendingIcons = shallowReactive(new Set<string>())
+const failedIcons = shallowReactive(new Set<string>())
 const resultsBody = ref<InstanceType<typeof DialogBody> | null>(null)
 const searchInput = ref<InstanceType<typeof InputGroupInput> | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -28,6 +30,47 @@ const displayedIcons = computed(() => {
     !query || item.value.toLowerCase().includes(query) || item.label.toLowerCase().includes(query)
   ))
 })
+
+// 错误状态跟随当前搜索结果，避免提示改变布局后因图标离开视口而反复显隐。
+const failedDisplayedIcons = computed(() => displayedIcons.value.filter(item =>
+  failedIcons.has(item.value) && !getLoadedBrandIcon(item.value),
+))
+
+function requestIcon(id: string) {
+  if (pendingIcons.has(id) || getLoadedBrandIcon(id)) return
+  pendingIcons.add(id)
+  failedIcons.delete(id)
+  void loadBrandIcon(id)
+    .catch(() => { failedIcons.add(id) })
+    .finally(() => { pendingIcons.delete(id) })
+}
+
+function retryIcons() {
+  for (const item of failedDisplayedIcons.value) requestIcon(item.value)
+}
+
+function setIconButton(id: string, button: Element | ComponentPublicInstance | null) {
+  if (button) {
+    const element = '$el' in button ? button.$el : button
+    if (element instanceof HTMLElement) iconButtons.set(id, element)
+  } else {
+    iconButtons.delete(id)
+  }
+}
+
+// 只请求滚动区域内可见的品牌；搜索和滚动不会预加载整组 SVG。
+useIntersectionObserver(
+  () => [...iconButtons.values()],
+  entries => {
+    for (const entry of entries) {
+      const id = entry.target.getAttribute('data-brand-id')!
+      // 搜索可能已移除目标，忽略旧观察器排队中的通知。
+      if (iconButtons.get(id) !== entry.target) continue
+      if (entry.isIntersecting && !failedIcons.has(id)) requestIcon(id)
+    }
+  },
+  { root: () => resultsBody.value?.viewport },
+)
 
 watch(search, () => {
   resultsBody.value?.viewport?.scrollTo({ top: 0 })
@@ -89,10 +132,7 @@ function onFileChange(event: Event) {
   </div>
 
   <DialogBody ref="resultsBody" class="flex-1" :aria-label="t('icons.change')">
-    <Empty v-if="isLoading" class="py-8">
-      <Spinner />
-    </Empty>
-    <Empty v-else-if="loadError" class="py-8">
+    <Empty v-if="failedDisplayedIcons.length" class="py-8">
       <EmptyHeader>
         <EmptyTitle role="alert">{{ t('icons.loadFailed') }}</EmptyTitle>
       </EmptyHeader>
@@ -100,10 +140,12 @@ function onFileChange(event: Event) {
         <Button variant="outline" @click="retryIcons()">{{ t('common.retry') }}</Button>
       </EmptyContent>
     </Empty>
-    <div v-else-if="displayedIcons.length" class="grid grid-cols-[repeat(auto-fill,minmax(2.5rem,1fr))] gap-1.5">
+    <div v-if="displayedIcons.length" class="grid grid-cols-[repeat(auto-fill,minmax(2.5rem,1fr))] gap-1.5">
       <Button
         v-for="item in displayedIcons"
+        :ref="button => setIconButton(item.value, button)"
         :key="item.value"
+        :data-brand-id="item.value"
         :variant="selectedBrandId === item.value ? 'outline' : 'secondary'"
         size="icon-lg"
         class="w-full [&_svg:not([class*=size-])]:size-6"
@@ -111,8 +153,11 @@ function onFileChange(event: Event) {
         :aria-label="item.label"
         :aria-pressed="selectedBrandId === item.value"
         @click="emit('select', item.value)"
+        @focus="requestIcon(item.value)"
       >
-        <component :is="iconComponents?.[item.value]" :size="24" aria-hidden="true" />
+        <component v-if="getLoadedBrandIcon(item.value)" :is="getLoadedBrandIcon(item.value)" :size="24" aria-hidden="true" />
+        <Spinner v-else-if="pendingIcons.has(item.value)" />
+        <span v-else aria-hidden="true">{{ item.label.charAt(0) }}</span>
       </Button>
     </div>
     <Empty v-else class="text-muted-foreground flex-none gap-0 p-0 py-8 text-wrap">

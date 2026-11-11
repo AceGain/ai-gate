@@ -1,6 +1,6 @@
 import { toc } from '@lobehub/icons-vue/es/toc'
-import { defineAsyncComponent, shallowRef, type Component } from 'vue'
-import importIconBundle from 'virtual:lobe-brand-icon-loader'
+import { defineAsyncComponent, shallowReactive, type Component } from 'vue'
+import iconLoaders from 'virtual:lobe-brand-icon-loader'
 
 /** 持久化 ID 沿用小写品牌名；目录直接使用上游 Vue 包。 */
 export const providerIconOptions = toc.map(brand => ({
@@ -14,33 +14,39 @@ const legacyBrandIconKeys = new Map([
   ['mistralai', 'mistral'],
 ])
 
-export type BrandIconComponents = Readonly<Record<string, Component>>
-const loadedBrandIcons = shallowRef<BrandIconComponents>()
-let iconBundle: Promise<BrandIconComponents> | undefined
-let loadAttempt = 0
+const loadedBrandIcons = shallowReactive(new Map<string, Component>())
+const iconRequests = new Map<string, Promise<Component>>()
+const loadAttempts = new Map<string, number>()
 
-/** 合并并发请求；失败后清除请求缓存，允许选择器重试。 */
-export function loadBrandIcons(): Promise<BrandIconComponents> {
-  return iconBundle ??= importIconBundle(loadAttempt++)
-    .then(({ default: icons }) => {
-      const components = Object.fromEntries(
-        Object.entries(icons).map(([id, component]) => [id.toLowerCase(), component]),
-      )
-      loadedBrandIcons.value = components
-      return components
+/** 按品牌合并并发请求并缓存；单个品牌失败不影响其他图标。 */
+export function loadBrandIcon(icon: string): Promise<Component> {
+  const id = resolveBrandId(icon)
+  if (!id) return Promise.reject(new Error(`Unknown brand icon: ${icon}`))
+  const existing = iconRequests.get(id)
+  if (existing) return existing
+  const attempt = loadAttempts.get(id) ?? 0
+  loadAttempts.set(id, attempt + 1)
+  const request = iconLoaders[id](attempt)
+    .then(({ default: component }) => {
+      loadedBrandIcons.set(id, component)
+      return component
     })
     .catch(error => {
-      iconBundle = undefined
+      iconRequests.delete(id)
       throw error
     })
+  iconRequests.set(id, request)
+  return request
+}
+
+export function getLoadedBrandIcon(icon: string): Component | undefined {
+  const id = resolveBrandId(icon)
+  return id ? loadedBrandIcons.get(id) : undefined
 }
 
 // 图标代码首次使用时加载；默认组件按品牌复用，头像可提供独立的回退内容。
 const brandIcons = new Map(toc.map(brand => {
-  const loader = async () => {
-    const icons = await loadBrandIcons()
-    return icons[brand.id.toLowerCase()]
-  }
+  const loader = () => loadBrandIcon(brand.id.toLowerCase())
   return [brand.id.toLowerCase(), { loader, component: defineAsyncComponent(loader) }] as const
 }))
 
@@ -55,8 +61,8 @@ export function resolveBrandIcon(icon: string, fallback?: Component) {
   if (!id) return undefined
   const entry = brandIcons.get(id)
   if (!entry) return undefined
-  // 共享分包恢复时通知已有头像，直接使用 SVG，替换其已失败的异步组件。
-  const loaded = loadedBrandIcons.value?.[id]
+  // 同一品牌重试成功时通知已有头像，替换其已失败的异步组件。
+  const loaded = loadedBrandIcons.get(id)
   if (loaded) return loaded
   if (!fallback) return entry.component
   return defineAsyncComponent({

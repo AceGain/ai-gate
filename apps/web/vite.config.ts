@@ -10,9 +10,9 @@ const brandIconImports = toc.map(brand =>
   `@lobehub/icons-vue/es/${brand.id}/components/${brand.param.hasColor ? 'Color' : 'Mono'}`,
 )
 
-// 从上游目录直接导入每个品牌的展示变体，避免动态查找图标全集带入文字标、头像等代码。
+// 每个品牌生成独立入口；注册表只包含加载函数，不静态引入 SVG。
 function lobeBrandIcons(): Plugin {
-  const id = 'virtual:lobe-brand-icons'
+  const iconPrefix = 'virtual:lobe-brand-icon/'
   const loaderId = 'virtual:lobe-brand-icon-loader'
   let isBuild = false
   let devBase = '/'
@@ -21,24 +21,28 @@ function lobeBrandIcons(): Plugin {
     configResolved(config) { isBuild = config.command === 'build'; devBase = config.base },
     resolveId(source) {
       const requestId = source.split('?')[0]
-      if (requestId === id || requestId === loaderId) return `\0${source}`
+      if (requestId === loaderId || requestId.startsWith(iconPrefix)) return `\0${source}`
     },
     load(source, options) {
       const requestId = source.split('?')[0]
       if (requestId === `\0${loaderId}`) {
-        if (options?.ssr) return `export default () => import('${id}')`
-        const url = isBuild
-          ? `import.meta.ROLLUP_FILE_URL_${this.emitFile({ type: 'chunk', id, preserveSignature: 'strict' })}`
-          : JSON.stringify(`${devBase}@id/__x00__${id}`)
-        // 更换重试请求 URL，避开浏览器对失败动态导入的缓存；不刷新或丢弃表单。
-        return `export default (attempt) => import(/* @vite-ignore */ ${url} + (attempt ? '?retry=' + attempt : ''))`
+        const entries = toc.map(brand => {
+          const key = brand.id.toLowerCase()
+          const id = `${iconPrefix}${key}`
+          if (options?.ssr) return `${JSON.stringify(key)}: () => import('${id}')`
+          const url = isBuild
+            ? `import.meta.ROLLUP_FILE_URL_${this.emitFile({ type: 'chunk', id, name: `brand-${key}`, preserveSignature: 'strict' })}`
+            : JSON.stringify(`${devBase}@id/__x00__${id}`)
+          // 每个品牌独立重试，避开浏览器对失败动态导入的缓存。
+          return `${JSON.stringify(key)}: attempt => import(/* @vite-ignore */ ${url} + (attempt ? '?retry=' + attempt : ''))`
+        })
+        return `export default {${entries.join(',')}}`
       }
-      if (requestId !== `\0${id}`) return
-      const imports = brandIconImports.map((specifier, index) =>
-        `import icon${index} from '${specifier}'`,
-      )
-      const entries = toc.map((brand, index) => `${JSON.stringify(brand.id)}: icon${index}`)
-      return `${imports.join('\n')}\nexport default {${entries.join(',')}}`
+      if (!requestId.startsWith(`\0${iconPrefix}`)) return
+      const key = requestId.slice(iconPrefix.length + 1)
+      const index = toc.findIndex(brand => brand.id.toLowerCase() === key)
+      if (index < 0) return
+      return `export { default } from '${brandIconImports[index]}'`
     },
   }
 }

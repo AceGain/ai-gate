@@ -90,7 +90,7 @@ test('provider avatars keep their own initials when the icon chunk fails to load
       name: 'simulate-icon-chunk-failure',
       enforce: 'pre',
       load(id) {
-        if (id === '\0virtual:lobe-brand-icons') {
+        if (id.startsWith('\0virtual:lobe-brand-icon/')) {
           return 'throw new Error("simulated icon chunk load failure")'
         }
       },
