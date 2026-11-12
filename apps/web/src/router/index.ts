@@ -50,7 +50,7 @@ const router = createRouter({
         {
           path: 'models',
           name: 'models',
-          component: () => import('@/views/HomeView.vue'),
+          component: () => import('@/views/VirtualModelsView.vue'),
           meta: { titleKey: 'nav.models' },
         },
         {

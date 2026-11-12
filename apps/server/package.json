@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test:routes": "node tests/run-api-batch.mjs tests/routes.jsonl tests/routes.app.mjs && node --import tsx --test tests/routes-integrity.test.mjs",
     "test:routing-schema": "node --import tsx --test tests/routing-schema.test.mjs",
+    "test:virtual-models": "node tests/run-api-batch.mjs tests/virtual-models.jsonl tests/virtual-models.app.mjs && node tests/run-api-batch.mjs tests/virtual-models-edge.jsonl tests/virtual-models.app.mjs",
     "test:provider-urls": "node tests/run-api-batch.mjs tests/provider-urls.jsonl tests/provider-urls.app.mjs",
     "test:models": "node tests/run-api-batch.mjs tests/model-types.jsonl tests/model-types.app.mjs",
     "test:api": "node tests/run-api-batch.mjs tests/api-namespaces.jsonl tests/model-types.app.mjs"

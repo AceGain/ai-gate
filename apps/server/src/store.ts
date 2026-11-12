@@ -21,6 +21,7 @@ import {MODEL_DEFAULT_CATEGORY} from '@ai-gate/shared'
 import {db} from './db/index.js'
 import {sEndpoint, sKey, sModel, sProvider, sRelat} from './db/schema.js'
 import { modelHasRouteReferences, providerHasRouteReferences, RouteSourceInUseError } from './route-store.js'
+import { modelHasVirtualReferences, providerHasVirtualReferences, VirtualSourceInUseError } from './virtual-model-store.js'
 
 /* =========================================================================
  * 行结构映射
@@ -202,6 +203,7 @@ export function updateProvider(id: number, input: SProviderUpdateInput): SProvid
 export function removeProvider(id: number): boolean {
   return db.transaction(() => {
     if (providerHasRouteReferences(id)) throw new RouteSourceInUseError()
+    if (providerHasVirtualReferences(id)) throw new VirtualSourceInUseError()
     return db.delete(sProvider).where(eq(sProvider.id, id)).run().changes > 0
   })
 }
@@ -417,6 +419,7 @@ export function updateModel(id: number, input: SModelInput): SModel | null {
 export function removeModel(id: number): boolean {
   return db.transaction(() => {
     if (modelHasRouteReferences(id)) throw new RouteSourceInUseError()
+    if (modelHasVirtualReferences(id)) throw new VirtualSourceInUseError()
     return db.delete(sModel).where(eq(sModel.id, id)).run().changes > 0
   })
 }

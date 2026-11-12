@@ -21,6 +21,7 @@ import type {SModelImportItem} from '../store.js'
 import {buildAuthHeaders, extractUpstreamDetail, joinUrl} from '../upstream.js'
 import {isUniqueViolation, parseBody, parseId} from './providers.js'
 import { RouteSourceInUseError } from '../route-store.js'
+import { VirtualSourceInUseError } from '../virtual-model-store.js'
 
 export const models = new Hono()
 
@@ -333,6 +334,7 @@ models.delete('/providers/:providerId/models/:id', (c) => {
     return c.json({ok: true})
   } catch (err) {
     if (err instanceof RouteSourceInUseError) return c.json({error: 'ROUTE_SOURCE_IN_USE'}, 409)
+    if (err instanceof VirtualSourceInUseError) return c.json({error: 'VIRTUAL_SOURCE_IN_USE'}, 409)
     throw err
   }
 })

@@ -14,6 +14,7 @@
     "test:icons": "node --import tsx --test tests/brand-icons*.test.ts",
     "test:provider-urls": "node --import tsx --test tests/provider-urls.client.test.ts",
     "test:routes": "node --import tsx --test tests/routes.client.test.ts",
+    "test:virtual-models": "node --import tsx --test tests/virtual-models.client.test.ts",
     "check:i18n": "node --import tsx scripts/check-i18n.mjs"
   },
   "dependencies": {

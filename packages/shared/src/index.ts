@@ -3,9 +3,10 @@
  * - t_ / T*：模板域（hub 维护的供应商模板：t_provider、t_endpoint、t_model）
  * - s_ / S*：出站域（server 对接的上游供应商：s_provider、s_endpoint、s_key、s_model、s_relat）
  * - r_ / R*：入站域（网关对外暴露的入口配置）
- * 三域职责与所属领域不同，即使结构暂时相同也不得省略前缀互相简化合并；
+ * - v_ / V*：虚拟模型域（虚拟模型及其实际模型角色关系）
+ * 各域职责与所属领域不同，即使结构暂时相同也不得省略前缀互相简化合并；
  * 状态/模态等跨域取值词汇（ProviderStatus、ModelType、GEN_ENDPOINT_TYPES 等）暂共享，真正分化时再按域拆分。
- * 本包包含出站域（S）、模板域（T）与入站域（R）的前后端共用结构。
+ * 本包包含出站域（S）、模板域（T）、入站域（R）与虚拟模型域（V）的前后端共用结构。
  */
 import * as v from 'valibot'
 
@@ -20,6 +21,7 @@ export * from './sEndpoint.js'
 export * from './sKey.js'
 export * from './sModel.js'
 export * from './rRoute.js'
+export * from './vModel.js'
 
 export * from './tProvider.js'
 export * from './tEndpoint.js'

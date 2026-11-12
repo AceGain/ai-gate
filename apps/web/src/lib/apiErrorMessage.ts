@@ -3,6 +3,14 @@ import type { MessageKey } from '@/i18n'
 import { ApiError } from './api'
 
 const errorKeys: Readonly<Record<string, MessageKey>> = {
+  VIRTUAL_MODEL_NOT_FOUND: 'virtualModels.notFound',
+  VIRTUAL_MEMBER_NOT_FOUND: 'virtualModels.memberNotFound',
+  VIRTUAL_SOURCE_NOT_FOUND: 'virtualModels.sourceMissing',
+  VIRTUAL_SOURCE_IN_USE: 'virtualModels.sourceInUse',
+  VIRTUAL_MODEL_IN_USE: 'virtualModels.inUse',
+  VIRTUAL_MODEL_IMMUTABLE: 'virtualModels.immutableHint',
+  VIRTUAL_MODEL_NOT_READY: 'virtualModels.notReady',
+  DUPLICATE_VIRTUAL_MODEL: 'virtualModels.duplicate',
   ROUTE_NOT_FOUND: 'routes.notFound',
   ROUTE_RECORD_NOT_FOUND: 'routes.recordNotFound',
   ROUTE_SOURCE_NOT_FOUND: 'routes.sourceMissing',

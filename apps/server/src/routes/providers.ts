@@ -6,6 +6,7 @@ import {Hono} from 'hono'
 import * as v from 'valibot'
 import {SProviderCreateSchema, SProviderUpdateSchema, SReorderSchema} from '@ai-gate/shared'
 import { RouteSourceInUseError } from '../route-store.js'
+import { VirtualSourceInUseError } from '../virtual-model-store.js'
 import {
   getProvider,
   insertProvider,
@@ -103,6 +104,7 @@ providers.delete('/providers/:id', (c) => {
     return c.json({ok: true})
   } catch (err) {
     if (err instanceof RouteSourceInUseError) return c.json({error: 'ROUTE_SOURCE_IN_USE'}, 409)
+    if (err instanceof VirtualSourceInUseError) return c.json({error: 'VIRTUAL_SOURCE_IN_USE'}, 409)
     throw err
   }
 })
